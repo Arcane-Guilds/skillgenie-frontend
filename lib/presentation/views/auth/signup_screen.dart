@@ -172,8 +172,8 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                               if (!RegExp(r'^(?=.*[A-Z]).*$').hasMatch(value)) {
                                 return 'Password must contain at least one uppercase letter';
                               }
-                              if (!RegExp(r'^(?=.*[!@#\$&*~]).*$').hasMatch(value)) {
-                                return 'Password must contain at least one special character (!@#\$&*~)';
+                              if (!RegExp(r'^(?=.*[!?=@#\$&*~\.\.\.]).*$').hasMatch(value)) {
+                                return 'Password must contain at least one special character (!@#\$&*~=?)';
                               }
                               if (!RegExp(r'^(?=.*[0-9]).*$').hasMatch(value)) {
                                 return 'Password must contain at least one number';

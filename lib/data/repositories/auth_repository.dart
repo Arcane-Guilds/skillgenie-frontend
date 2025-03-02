@@ -70,6 +70,12 @@ class AuthRepository {
     await prefs.setString("refreshToken", tokens.refreshToken);
   }
 
+  Future<void> saveTokens(Tokens tokens) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("accessToken", tokens.accessToken);
+    await prefs.setString("refreshToken", tokens.refreshToken);
+  }
+
   Future<Tokens?> getTokens() async {
     final prefs = await SharedPreferences.getInstance();
     final String? accessToken = prefs.getString("accessToken");

@@ -15,6 +15,9 @@ class AuthViewModel extends ChangeNotifier {
   String? _userId;
   String? get userId => _userId;
 
+  /// Returns true if the user is authenticated (has valid tokens and user data)
+  bool get isAuthenticated => _tokens != null && _user != null;
+
   Future<void> signIn(String email, String password) async {
     try {
       AuthResponse authResponse = await _authRepository.signIn(email, password);
@@ -69,9 +72,9 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<void> resetPassword(
-    String email,
-    String newPassword,
-  ) async {
+      String email,
+      String newPassword,
+      ) async {
     try {
       await _authRepository.resetPassword(email, newPassword);
     } on Exception catch (e) {

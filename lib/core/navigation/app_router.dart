@@ -1,5 +1,7 @@
 import 'package:frontend/data/models/evaluation_question.dart';
 import 'package:frontend/presentation/views/game/games_screens.dart';
+import 'package:frontend/presentation/views/game/game_page.dart';
+import 'package:frontend/presentation/views/summary/summary_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -41,6 +43,17 @@ class ShellScaffold extends StatelessWidget {
   }
 }
 
+Page<void> _buildTransitionPage(Widget child) {
+  return CustomTransitionPage(
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        FadeTransition(
+      opacity: animation,
+      child: child,
+    ),
+  );
+}
+
 // Define navigation
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -80,7 +93,6 @@ final appRouter = GoRouter(
         return ResetPasswordScreen(email: email);
       },
     ),
-    //GoRoute(path:'/evaluation', builder: (context, state) => const EvaluationScreen()),
     GoRoute(
       path: '/quiz/:userId',
       builder: (context, state) {
@@ -91,7 +103,7 @@ final appRouter = GoRouter(
         );
       },
     ),
-     GoRoute(
+    GoRoute(
       path: '/evaluation',
       builder: (context, state) {
         final args = state.extra as Map<String, dynamic>;
@@ -104,12 +116,26 @@ final appRouter = GoRouter(
         );
       },
     ),
-
-    // Shell Route for Bottom Navigation Screens
+    GoRoute(
+      path: '/game',
+      pageBuilder: (context, state) => _buildTransitionPage(const Game()),
+      routes: [
+        GoRoute(
+          path: 'summary',
+          pageBuilder: (context, state) {
+            final bool won = state.extra as bool;
+            return _buildTransitionPage(
+              SummaryPage(
+                won: won,
+              ),
+            );
+          },
+        ),
+      ],
+    ),
     ShellRoute(
       builder: (context, state, child) {
         int index = _getTabIndex(state.fullPath ?? '/home');
-
         return ShellScaffold(
           currentIndex: index,
           child: child,

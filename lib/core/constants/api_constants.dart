@@ -1,6 +1,6 @@
 class ApiConstants {
 
-  static const String baseUrl = 'https://b675-196-235-76-104.ngrok-free.app';
+  static const String baseUrl = 'https://9629-196-224-118-27.ngrok-free.app';
 
   static const String signup = '$baseUrl/auth/signup';
   static const String signin = '$baseUrl/auth/signin';

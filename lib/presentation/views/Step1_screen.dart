@@ -16,7 +16,7 @@ class Step1Screen extends StatelessWidget {
           children: [
             // Greeting text with party name
             Align(
-              alignment: Alignment.centerLeft, // Adjusted alignment
+              alignment: Alignment.center, // Adjusted alignment
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
@@ -45,8 +45,8 @@ class Step1Screen extends StatelessWidget {
             // Genie image
             Image.asset(
               'assets/images/genie.png',
-              height: 200,
-              width: 200,
+              height: 400,
+              width: 400,
             ),
             const SizedBox(height: 24),
 

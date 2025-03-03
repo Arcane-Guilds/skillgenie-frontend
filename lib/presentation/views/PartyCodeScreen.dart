@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:skillGenie/presentation/views/ChallengesScreen.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+//import 'challenges_screen.dart'; // Import ChallengesScreen
 
 class PartyCodeScreen extends StatefulWidget {
   const PartyCodeScreen({Key? key}) : super(key: key);
@@ -82,6 +84,22 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void _goToChallengeScreen() {
+    final String partyCode = _partyCodeController.text.trim();
+    if (partyCode.isEmpty) {
+      _showSnackbar('Please generate or enter a valid party code');
+      return;
+    }
+
+    // Navigate to ChallengesScreen and pass the party code
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChallengesScreen(partyCode: partyCode),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,6 +158,11 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                       ElevatedButton(
                           onPressed: _joinParty, child: const Text('Join')),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _goToChallengeScreen,
+                    child: const Text('Go to Challenge'),
                   ),
                 ],
               ),

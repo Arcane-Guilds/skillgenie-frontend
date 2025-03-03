@@ -1,28 +1,33 @@
-//import 'package:date_format/date_format.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-//import 'package:frontend/presentation/views/Step1_screen.dart';
-//import 'ChallengesHomePage.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:skillGenie/presentation/views/Step1_screen.dart';
+import 'package:http/http.dart' as http;
+import 'step1_screen.dart'; // Make sure Step1Screen is imported
 
 class Constants {
   static const primaryColor = Colors.deepPurple; // Or any color you prefer
 }
 
-class Plant {
-  final String name;
-  final String category;
-  final String imageURL;
-  final double price;
-  bool isFavorited;
+class Challenge {
+  final String title;
+  final String difficulty;
+  final List<String> languages;
 
-  Plant({
-    required this.name,
-    required this.category,
-    required this.imageURL,
-    required this.price,
-    this.isFavorited = false,
+  Challenge({
+    required this.title,
+    required this.difficulty,
+    required this.languages,
   });
+
+  // Factory constructor to create Challenge from JSON response
+  factory Challenge.fromJson(Map<String, dynamic> json) {
+    return Challenge(
+      title: json['title'] ?? 'No Title', // Default to 'No Title' if null
+      difficulty: json['difficulty'] ??
+          'No Difficulty', // Default to 'No Difficulty' if null
+      languages: List<String>.from(
+          json['languages'] ?? []), // Default to empty list if null
+    );
+  }
 }
 
 class LibraryScreen extends StatefulWidget {
@@ -33,122 +38,28 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  List<Plant> _plantList = [
-    Plant(
-      name: 'Plant 1',
-      category: 'Indoor',
-      imageURL: 'assets/images/ch1.jpg',
-      price: 9.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 2',
-      category: 'Outdoor',
-      imageURL: 'https://example.com/plant2.jpg',
-      price: 12.99,
-      isFavorited: true,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-    Plant(
-      name: 'Plant 3',
-      category: 'Garden',
-      imageURL: 'https://example.com/plant3.jpg',
-      price: 15.99,
-      isFavorited: false,
-    ),
-  ];
-  bool toggleIsFavorited(bool isFavorited) {
-    return !isFavorited; // Simply toggles the boolean value
+  List<Challenge> _challengesList = [];
+
+  // Fetch challenges from API
+  Future<void> fetchChallenges() async {
+    final response =
+        await http.get(Uri.parse('http://localhost:3000/challenges'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      setState(() {
+        _challengesList = data.map((json) => Challenge.fromJson(json)).toList();
+      });
+    } else {
+      // Handle error when API call fails
+      throw Exception('Failed to load challenges');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchChallenges();
   }
 
   @override
@@ -159,31 +70,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     // Challenge categories
     List<String> _challengesTypes = [
       'Recommended',
-      'Indoor',
-      'Indoor',
-      'Indoor',
-      'Indoor',
-      'Indoor',
-      'Indoor',
-      'Outdoor',
-      'Outdoor',
-      'Outdoor',
-      'Outdoor',
-      'Garden',
-      'Garden',
-      'Garden',
-      'Garden',
-      'Garden',
-      'Garden',
-      'Garden',
-      'Supplement',
-      'Supplement',
-      'Supplement',
-      'Supplement',
-      'Supplement',
-      'Supplement',
-      'Supplement',
-      'Supplement',
     ];
 
     return Scaffold(
@@ -272,22 +158,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
 
-            // Plant list section
+            // Challenges list section (Horizontal scroll)
             SizedBox(
               height: size.height * 0.3, // Ensure it has a fixed height
               child: ListView.builder(
-                itemCount: _plantList.length,
+                itemCount: _challengesList.length,
                 scrollDirection: Axis.horizontal,
                 itemBuilder: (BuildContext context, int index) {
+                  final challenge = _challengesList[index];
+
                   return GestureDetector(
                     onTap: () {
+                      // Navigate to Step1Screen with the challenge title
                       Navigator.push(
-                          context,
-                          PageTransition(
-                              child: Step1Screen(
-                                name: _plantList[index].name,
-                              ),
-                              type: PageTransitionType.bottomToTop));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Step1Screen(
+                            name:
+                                challenge.title, // Passing the challenge title
+                          ),
+                        ),
+                      );
                     },
                     child: Container(
                       width: 300,
@@ -302,16 +193,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               width: 50,
                               child: IconButton(
                                 onPressed: () {
-                                  setState(() {
-                                    bool isFavorited = toggleIsFavorited(
-                                        _plantList[index].isFavorited);
-                                    _plantList[index].isFavorited = isFavorited;
-                                  });
+                                  // Handle favorite button if needed
                                 },
                                 icon: Icon(
-                                  _plantList[index].isFavorited
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
+                                  Icons.favorite_border,
                                   color: Constants.primaryColor,
                                 ),
                                 iconSize: 30,
@@ -326,48 +211,38 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             left: 50,
                             right: 50,
                             bottom: 50,
-                            child: Image.asset(_plantList[index].imageURL),
-                          ),
-                          Positioned(
-                            bottom: 15,
-                            left: 20,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _plantList[index].category,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  _plantList[index].name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 15,
-                            right: 20,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                r'$' +
-                                    _plantList[index].price.toStringAsFixed(2),
-                                style: TextStyle(
-                                    color: Constants.primaryColor,
-                                    fontSize: 16),
+                              height:
+                                  100, // Adjust to fit the title and category
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      challenge.title,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      challenge.difficulty,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Languages: ${challenge.languages.join(', ')}',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -383,11 +258,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
 
-            // List of new challenges section
+            // New challenges section (Vertical scroll)
             Container(
               padding: const EdgeInsets.only(left: 16, bottom: 20, top: 20),
               child: const Text(
-                'New challenges',
+                'All challenges',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18.0,
@@ -398,59 +273,78 @@ class _LibraryScreenState extends State<LibraryScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               height: size.height * .5,
               child: ListView.builder(
-                  itemCount: _plantList.length,
+                  itemCount: _challengesList.length,
                   scrollDirection: Axis.vertical,
                   physics: const BouncingScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      height: 80.0,
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      margin: const EdgeInsets.only(bottom: 10, top: 10),
-                      width: size.width,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 60.0,
-                                height: 60.0,
-                                decoration: BoxDecoration(
-                                  color:
-                                      Constants.primaryColor.withOpacity(0.8),
-                                  shape: BoxShape.circle,
+                    final challenge = _challengesList[index];
+
+                    return GestureDetector(
+                      onTap: () {
+                        // Navigate to Step1Screen with the challenge title
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Step1Screen(
+                              name: challenge
+                                  .title, // Passing the challenge title
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        height: 80.0,
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        margin: const EdgeInsets.only(bottom: 10, top: 10),
+                        width: size.width,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Container(
+                                  width: 60.0,
+                                  height: 60.0,
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Constants.primaryColor.withOpacity(0.8),
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
-                              ),
-                              Positioned(
-                                bottom: 5,
-                                left: 10,
-                                right: 10,
-                                child: SizedBox(
-                                  height: 80.0,
-                                  child:
-                                      Image.asset(_plantList[index].imageURL),
+                                Positioned(
+                                  bottom: 5,
+                                  left: 10,
+                                  right: 10,
+                                  child: SizedBox(
+                                    height: 80.0,
+                                    child: Container(
+                                      color: Constants.primaryColor
+                                          .withOpacity(0.2),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              Positioned(
+                                Positioned(
                                   bottom: 10,
                                   left: 80,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(_plantList[index].category),
-                                      Text(_plantList[index].name),
+                                      Text(challenge.difficulty),
+                                      Text(challenge.title),
                                     ],
-                                  ))
-                            ],
-                          ),
-                        ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }),

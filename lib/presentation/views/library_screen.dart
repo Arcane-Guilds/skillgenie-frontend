@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'step1_screen.dart'; // Make sure Step1Screen is imported
 
-class Constants {
-  static const primaryColor = Colors.deepPurple; // Or any color you prefer
-}
+
 
 class Challenge {
   final String title;
@@ -75,7 +73,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Challenges Library'),
-        backgroundColor: Constants.primaryColor,
+        //backgroundColor: Constants.primaryColor,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -115,7 +113,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       ],
                     ),
                     decoration: BoxDecoration(
-                      color: Constants.primaryColor.withOpacity(.1),
+                      color: Theme.of(context).primaryColor.withOpacity(.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
@@ -148,7 +146,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               ? FontWeight.bold
                               : FontWeight.w300,
                           color: selectedIndex == index
-                              ? Constants.primaryColor
+                              ? Theme.of(context).primaryColor
                               : Colors.black,
                         ),
                       ),
@@ -197,7 +195,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                 },
                                 icon: Icon(
                                   Icons.favorite_border,
-                                  color: Constants.primaryColor,
+                                  color: Theme.of(context).primaryColor,
                                 ),
                                 iconSize: 30,
                               ),
@@ -249,7 +247,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         ],
                       ),
                       decoration: BoxDecoration(
-                        color: Constants.primaryColor,
+                        color: Theme.of(context).primaryColor,
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
@@ -313,7 +311,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                   height: 60.0,
                                   decoration: BoxDecoration(
                                     color:
-                                        Constants.primaryColor.withOpacity(0.8),
+                                    Theme.of(context).primaryColor.withOpacity(0.8),
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -324,7 +322,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                   child: SizedBox(
                                     height: 80.0,
                                     child: Container(
-                                      color: Constants.primaryColor
+                                      color: Theme.of(context).primaryColor
                                           .withOpacity(0.2),
                                     ),
                                   ),

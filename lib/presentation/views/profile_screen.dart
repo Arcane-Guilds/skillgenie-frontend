@@ -258,10 +258,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('My Profile'),
-            backgroundColor: Theme
-                .of(context)
-                .colorScheme
-                .primary,
             foregroundColor: Colors.white,
             elevation: 0,
             actions: [
@@ -307,15 +303,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Theme
-                .of(context)
-                .colorScheme
-                .primary,
-            Theme
-                .of(context)
-                .colorScheme
-                .primary
-                .withOpacity(0.7),
+            Colors.white,
+            Theme.of(context).primaryColor.withOpacity(0.1),
           ],
         ),
       ),

@@ -5,7 +5,7 @@ import 'package:skillGenie/presentation/views/home/home_content.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-import '../../data/models/user_model.dart';
+import '../../../data/models/user_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => const GeminiChatBot()),
           );
         },
-        backgroundColor: const Color(0xFF8470FF), // Purple color
+        backgroundColor: Theme.of(context).primaryColor, // Purple color
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
         child: const Icon(Icons.assistant, size: 28),

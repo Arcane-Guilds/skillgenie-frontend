@@ -29,19 +29,19 @@ class CustomBottomNavBar extends StatelessWidget {
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF8470FF),
+        selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey.shade400,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.games),
+            icon: Icon(Icons.games_outlined),
             label: 'Games',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book),
+            icon: Icon(Icons.book_outlined),
             label: 'Library',
           ),
           BottomNavigationBarItem(
@@ -77,3 +77,4 @@ class CustomBottomNavBar extends StatelessWidget {
     }
   }
 }
+

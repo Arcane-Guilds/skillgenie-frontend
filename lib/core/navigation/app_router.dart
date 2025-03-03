@@ -12,7 +12,7 @@ import '../../presentation/views/auth/password/otpverification_screen.dart';
 import '../../presentation/views/auth/password/resetpassword_screen.dart';
 import '../../presentation/views/hangman/evaluation_screen.dart';
 import '../../presentation/views/hangman/quiz_screen.dart';
-import '../../presentation/views/home_screen.dart';
+import '../../presentation/views/home/home_screen.dart';
 import '../../presentation/views/auth/login_screen.dart';
 import '../../presentation/views/onboarding_screen.dart';
 import '../../presentation/views/auth/signup_screen.dart';

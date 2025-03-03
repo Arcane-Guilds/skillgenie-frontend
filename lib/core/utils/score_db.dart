@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:frontend/core/utils/user_scores.dart';
+import 'package:skillGenie/core/utils/user_scores.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 

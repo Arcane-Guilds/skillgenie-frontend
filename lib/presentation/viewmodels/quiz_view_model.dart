@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/constants/api_constants.dart';
-import 'package:frontend/data/models/evaluation_question.dart';
-import 'package:frontend/data/models/quiz_question.dart';
+import 'package:skillGenie/core/constants/api_constants.dart';
+import 'package:skillGenie/data/models/evaluation_question.dart';
+import 'package:skillGenie/data/models/quiz_question.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 

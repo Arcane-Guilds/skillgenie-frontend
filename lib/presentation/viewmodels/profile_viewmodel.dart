@@ -18,6 +18,10 @@ class ProfileViewModel extends ChangeNotifier {
   DateTime? _lastApiCallTime;
   static const apiCallDebounceTime = Duration(seconds: 2);
 
+  // Image upload state
+  double _uploadProgress = 0;
+  bool _isUploadingImage = false;
+
   ProfileViewModel({
     required ProfileRepository profileRepository,
     required AuthViewModel authViewModel,
@@ -36,6 +40,10 @@ class ProfileViewModel extends ChangeNotifier {
 
   bool get canMakeApiCall => _lastApiCallTime == null ||
       DateTime.now().difference(_lastApiCallTime!) > apiCallDebounceTime;
+
+  // Image upload getters
+  double get uploadProgress => _uploadProgress;
+  bool get isUploadingImage => _isUploadingImage;
 
   // Initialize profile
   Future<void> _initializeProfile() async {
@@ -100,8 +108,52 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   // Update profile image with progress tracking
-  Future<void> updateProfileImage(File newProfileImage) async {
+  Future<void> updateProfileImage(File newProfileImage, {Function(double)? onProgress}) async {
     if (_currentProfile == null) return;
+
+    final previousProfile = _currentProfile;
+    _uploadProgress = 0;
+    _isUploadingImage = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Upload the new image to Cloudinary
+      final cloudinaryUrl = await _profileRepository.uploadProfileImage(
+        newProfileImage,
+        onProgress: (progress) {
+          _uploadProgress = progress;
+          if (onProgress != null) {
+            onProgress(progress);
+          }
+          notifyListeners();
+        },
+      );
+
+      if (cloudinaryUrl != null) {
+        // Update the profile with the new image URL
+        _currentProfile = _currentProfile!.copyWith(avatar: cloudinaryUrl);
+        _isCacheValid = true;
+        _lastFetchTime = DateTime.now();
+      } else {
+        throw Exception('Failed to upload image to Cloudinary');
+      }
+    } catch (e) {
+      // Rollback on failure
+      _currentProfile = previousProfile;
+      _errorMessage = 'Failed to update profile image: ${e.toString()}';
+      throw e;
+    } finally {
+      _isUploadingImage = false;
+      notifyListeners();
+    }
+  }
+
+  // Delete profile image
+  Future<bool> deleteProfileImage() async {
+    if (_currentProfile == null || _currentProfile!.avatar == null) {
+      return false;
+    }
 
     final previousProfile = _currentProfile;
 
@@ -109,21 +161,23 @@ class ProfileViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      // Upload the new image
-      final avatar = await _profileRepository.uploadProfileImage(newProfileImage);
+      // Delete the profile image from Cloudinary
+      final success = await _profileRepository.deleteProfileImage();
 
-      if (avatar != null) {
-        // Update the profile with the new image URL
-        _currentProfile = _currentProfile!.copyWith(avatar: avatar);
-        await _profileRepository.updateUserProfile(_currentProfile!);
+      if (success) {
+        // Update the profile with null avatar
+        _currentProfile = _currentProfile!.copyWith(avatar: null);
         _isCacheValid = true;
         _lastFetchTime = DateTime.now();
+        return true;
+      } else {
+        throw Exception('Failed to delete profile image');
       }
     } catch (e) {
       // Rollback on failure
       _currentProfile = previousProfile;
-      _errorMessage = 'Failed to update profile image: ${e.toString()}';
-      throw e;
+      _errorMessage = 'Failed to delete profile image: ${e.toString()}';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -220,5 +274,43 @@ class ProfileViewModel extends ChangeNotifier {
   void invalidateCache() {
     _isCacheValid = false;
     notifyListeners();
+  }
+
+  // Reset upload progress
+  void resetUploadProgress() {
+    _uploadProgress = 0;
+    _isUploadingImage = false;
+    notifyListeners();
+  }
+
+  // Update username with optimistic updates
+  Future<void> updateUsername(String newUsername) async {
+    if (_currentProfile == null) return;
+
+    final previousProfile = _currentProfile;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Optimistic update
+      _currentProfile = _currentProfile!.copyWith(username: newUsername);
+      notifyListeners();
+
+      // Call the repository to update the username
+      await _profileRepository.updateUsername(newUsername);
+
+      // Update cache
+      _isCacheValid = true;
+      _lastFetchTime = DateTime.now();
+    } catch (e) {
+      // Rollback on failure
+      _currentProfile = previousProfile;
+      _errorMessage = 'Failed to update username: ${e.toString()}';
+      throw e;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

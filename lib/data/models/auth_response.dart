@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:frontend/data/models/tokens.dart';
+import 'package:skillGenie/data/models/tokens.dart';
 
 class AuthResponse {
   final String message;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/presentation/views/hangman/score_screen.dart';
-import 'package:frontend/core/utils/score_db.dart' as score_database;
+import 'package:skillGenie/presentation/views/hangman/score_screen.dart';
+import 'package:skillGenie/core/utils/score_db.dart' as score_database;
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../../../core/utils/user_scores.dart';

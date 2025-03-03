@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/repositories/profile_repository.dart';
 import '../constants/api_constants.dart';
+import '../constants/cloudinary_constants.dart';
 import '../services/profile_service.dart';
 import '../services/storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -33,7 +34,10 @@ Future<void> setupServiceLocator() async {
   );
 
   serviceLocator.registerSingleton<StorageService>(
-    StorageService(),
+    StorageService(
+      cloudName: CloudinaryConstants.cloudName,
+      uploadPreset: CloudinaryConstants.uploadPreset,
+    ),
   );
 
   // Repositories

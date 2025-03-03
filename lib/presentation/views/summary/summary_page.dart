@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:frontend/globals.dart';
+import 'package:skillGenie/globals.dart';
 
 class SummaryPage extends StatelessWidget {
   final bool won;

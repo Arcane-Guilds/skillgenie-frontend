@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/widgets/buttom_custom_navbar.dart';
-import 'package:frontend/presentation/views/gemini_ai.dart';
-import 'package:frontend/presentation/views/home/home_content.dart';
+import 'package:skillGenie/core/widgets/buttom_custom_navbar.dart';
+import 'package:skillGenie/presentation/views/gemini_ai.dart';
+import 'package:skillGenie/presentation/views/home/home_content.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 

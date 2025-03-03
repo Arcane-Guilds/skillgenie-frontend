@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
-import 'package:frontend/data/repositories/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:skillGenie/data/repositories/auth_repository.dart';
 import '../../data/models/api_exception.dart';
 import '../../data/models/user_model.dart';
+import '../constants/cloudinary_constants.dart';
 
 class ProfileService {
   final http.Client _client;
@@ -139,7 +141,7 @@ class ProfileService {
       if (tokens == null) {
         throw ApiException('No authentication tokens found', 401, 'Unauthorized');
       }
-      final response = await _client.patch( // Fix: Change to PATCH user/profile
+      final response = await _client.patch(
         Uri.parse('$_baseUrl/user/profile'),
         headers: {
           'Authorization': 'Bearer ${tokens.accessToken}',
@@ -171,7 +173,7 @@ class ProfileService {
         throw ApiException('No authentication tokens found', 401, 'Unauthorized');
       }
       final response = await _client.delete(
-        Uri.parse('$_baseUrl/user/profile'), // Fix: Correct endpoint
+        Uri.parse('$_baseUrl/user/profile'),
         headers: {
           'Authorization': 'Bearer ${tokens.accessToken}',
         },
@@ -252,6 +254,209 @@ class ProfileService {
       }
       throw ApiException(
         'Network error while changing password',
+        500,
+        e.toString(),
+      );
+    }
+  }
+
+  Future<void> updateProfileImage(String imageUrl) async {
+    try {
+      final tokens = await _authService.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+
+      // Log the request for debugging
+      log('Sending profile image update request to: $_baseUrl/user/profile');
+
+      final response = await _client.patch(
+        Uri.parse('$_baseUrl/user/profile'),
+        headers: {
+          'Authorization': 'Bearer ${tokens.accessToken}',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'avatar': imageUrl,
+        }),
+      );
+
+      // Log the response status for debugging
+      log('Profile image update response status: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          'Failed to update profile image',
+          response.statusCode,
+          response.body,
+        );
+      }
+
+      // Update the cached profile with the new image URL
+      final cachedProfile = await getCachedProfile();
+      if (cachedProfile != null) {
+        final updatedProfile = cachedProfile.copyWith(avatar: imageUrl);
+        await _cacheProfile(updatedProfile);
+      }
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        'Network error while updating profile image',
+        500,
+        e.toString(),
+      );
+    }
+  }
+
+  /// Upload profile image directly to Cloudinary via the backend
+  Future<String?> uploadProfileImageToCloudinary(
+      http.MultipartFile imageFile,
+      {Function(double)? onProgress}
+      ) async {
+    try {
+      final tokens = await _authService.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+
+      // Create a multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${CloudinaryConstants.uploadEndpoint}'),
+      );
+
+      // Add authorization header
+      request.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
+
+      // Add the file to the request
+      request.files.add(imageFile);
+
+      // Send the request with progress tracking
+      final streamedResponse = await request.send();
+
+      // Track upload progress if callback provided
+      if (onProgress != null) {
+        int total = imageFile.length;
+        int received = 0;
+
+        streamedResponse.stream.listen((List<int> chunk) {
+          received += chunk.length;
+          final progress = received / total;
+          onProgress(progress.clamp(0.0, 1.0));
+        });
+      }
+
+      // Get the response
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201) {
+        // Parse the response to get the Cloudinary URL
+        final responseData = json.decode(response.body);
+        if (responseData['success'] == true && responseData['url'] != null) {
+          final cloudinaryUrl = responseData['url'] as String;
+
+          // Update the user profile with the new image URL
+          await updateProfileImage(cloudinaryUrl);
+
+          return cloudinaryUrl;
+        }
+      }
+
+      throw ApiException(
+        'Failed to upload profile image',
+        response.statusCode,
+        response.body,
+      );
+    } catch (e) {
+      log('Error uploading profile image to Cloudinary: $e');
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        'Network error while uploading profile image',
+        500,
+        e.toString(),
+      );
+    }
+  }
+
+  /// Delete profile image from Cloudinary via the backend
+  Future<bool> deleteProfileImageFromCloudinary() async {
+    try {
+      final tokens = await _authService.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+
+      final response = await _client.delete(
+        Uri.parse('${CloudinaryConstants.deleteEndpoint}'),
+        headers: {
+          'Authorization': 'Bearer ${tokens.accessToken}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return responseData['success'] == true;
+      }
+
+      throw ApiException(
+        'Failed to delete profile image',
+        response.statusCode,
+        response.body,
+      );
+    } catch (e) {
+      log('Error deleting profile image from Cloudinary: $e');
+      return false;
+    }
+  }
+
+  Future<void> updateUsername(String username) async {
+    try {
+      final tokens = await _authService.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+
+      // Log the request for debugging
+      log('Sending username update request to: $_baseUrl/user/profile');
+
+      final response = await _client.patch(
+        Uri.parse('$_baseUrl/user/profile'),
+        headers: {
+          'Authorization': 'Bearer ${tokens.accessToken}',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'username': username,
+        }),
+      );
+
+      // Log the response status for debugging
+      log('Username update response status: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          'Failed to update username',
+          response.statusCode,
+          response.body,
+        );
+      }
+
+      // Update the cached profile with the new username
+      final cachedProfile = await getCachedProfile();
+      if (cachedProfile != null) {
+        final updatedProfile = cachedProfile.copyWith(username: username);
+        await _cacheProfile(updatedProfile);
+      }
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        'Network error while updating username',
         500,
         e.toString(),
       );

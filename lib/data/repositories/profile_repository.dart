@@ -1,11 +1,13 @@
 import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import '../../core/services/profile_service.dart';
 import '../../core/services/storage_service.dart';
 import '../models/user_model.dart';
 import '../models/api_exception.dart';
 
-/// Repository that handles all profile-related data operations
-/// Acts as a single source of truth for profile data
 class ProfileRepository {
   final ProfileService _profileService;
   final StorageService _storageService;
@@ -55,10 +57,60 @@ class ProfileRepository {
     }
   }
 
-  /// Update the user's profile image
-  Future<String?> uploadProfileImage(File image) async {
+  /// Upload and update the user's profile image
+  /// Returns the Cloudinary URL of the uploaded image
+  Future<String?> uploadProfileImage(File image, {Function(double)? onProgress}) async {
     try {
-      return await _storageService.uploadProfileImage(image);
+      // Method 1: Direct upload to Cloudinary from the client
+      // This is faster but less secure
+      final cloudinaryUrl = await _storageService.uploadProfileImage(
+        image,
+        onProgress: onProgress,
+      );
+
+      if (cloudinaryUrl != null) {
+        // Update the user profile with the new image URL
+        await _profileService.updateProfileImage(cloudinaryUrl);
+        return cloudinaryUrl;
+      }
+
+      // If direct upload fails, try uploading via the backend
+      return await _uploadViaBackend(image, onProgress: onProgress);
+    } catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  /// Upload profile image via the backend
+  /// This is more secure but slightly slower
+  Future<String?> _uploadViaBackend(File image, {Function(double)? onProgress}) async {
+    try {
+      // Create a multipart file from the image
+      final fileExtension = path.extension(image.path).replaceAll('.', '');
+      final mimeType = lookupMimeType(image.path) ?? 'image/$fileExtension';
+
+      final multipartFile = http.MultipartFile(
+        'file',
+        image.openRead(),
+        await image.length(),
+        filename: path.basename(image.path),
+        contentType: MediaType.parse(mimeType),
+      );
+
+      // Upload the image via the backend
+      return await _profileService.uploadProfileImageToCloudinary(
+        multipartFile,
+        onProgress: onProgress,
+      );
+    } catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  /// Delete the user's profile image
+  Future<bool> deleteProfileImage() async {
+    try {
+      return await _profileService.deleteProfileImageFromCloudinary();
     } catch (e) {
       throw _handleException(e);
     }
@@ -136,11 +188,60 @@ class ProfileRepository {
       );
     }
 
-    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>=+-_]').hasMatch(password)) {
+    if (!RegExp(r'[!@#\$%\^&\*\(\),.?":{}|<>=+\-_]').hasMatch(password)) {
       throw ApiException(
         'Password must contain at least one special character',
         400,
         'Invalid password',
+      );
+    }
+  }
+
+  /// Update the user's username
+  Future<void> updateUsername(String username) async {
+    try {
+      // Validate username
+      _validateUsername(username);
+
+      // Call the service to update the username
+      await _profileService.updateUsername(username);
+    } catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  /// Validate username requirements
+  void _validateUsername(String username) {
+    if (username.isEmpty) {
+      throw ApiException(
+        'Username cannot be empty',
+        400,
+        'Invalid username',
+      );
+    }
+
+    if (username.length < 3) {
+      throw ApiException(
+        'Username must be at least 3 characters long',
+        400,
+        'Invalid username',
+      );
+    }
+
+    if (username.length > 30) {
+      throw ApiException(
+        'Username must be less than 30 characters long',
+        400,
+        'Invalid username',
+      );
+    }
+
+    // Only allow alphanumeric characters, underscores, and hyphens
+    if (!RegExp(r'^[a-zA-Z0-9_\-]+$').hasMatch(username)) {
+      throw ApiException(
+        'Username can only contain letters, numbers, underscores, and hyphens',
+        400,
+        'Invalid username',
       );
     }
   }

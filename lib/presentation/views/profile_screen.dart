@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/presentation/views/settings_screen.dart';
+import 'package:skillGenie/presentation/views/settings_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 
 import '../../core/widgets/app_error_widget.dart';
 import '../../data/models/user_model.dart';
 import '../viewmodels/profile_viewmodel.dart';
 import '../../core/errors/error_handler.dart';
+import '../../core/constants/cloudinary_constants.dart';
 
 
 
@@ -24,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = false;
   File? _imageFile;
   bool _isUploadingImage = false;
+  double _uploadProgress = 0;
 
   // Controllers
   late TextEditingController _bioController;
@@ -92,40 +95,118 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 95,
       );
 
       if (image != null) {
         setState(() {
           _imageFile = File(image.path);
-          _isUploadingImage = true;
         });
 
-        try {
-          final profileViewModel = Provider.of<ProfileViewModel>(
-              context, listen: false);
-          await profileViewModel.updateProfileImage(_imageFile!);
-          if (mounted) {
-            _showSuccessSnackBar('Profile picture updated successfully!');
-          }
-        } catch (e) {
-          if (mounted) {
-            _showErrorSnackBar(
-                'Failed to update profile picture. Please try again.');
-          }
-        } finally {
-          if (mounted) {
-            setState(() {
-              _isUploadingImage = false;
-            });
-          }
-        }
+        _showImageConfirmationDialog();
       }
     } catch (e) {
       _showErrorSnackBar('Failed to pick image. Please try again.');
     }
+  }
+
+  void _showImageConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Update Profile Picture'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _imageFile!,
+                    height: 200,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                if (_isUploadingImage) ...[
+                  const SizedBox(height: 16),
+                  LinearProgressIndicator(
+                    value: _uploadProgress,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${(_uploadProgress * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: _isUploadingImage
+                    ? null
+                    : () {
+                  setState(() => _imageFile = null);
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: _isUploadingImage
+                    ? null
+                    : () async {
+                  setDialogState(() {
+                    _isUploadingImage = true;
+                  });
+
+                  try {
+                    final profileViewModel = Provider.of<ProfileViewModel>(
+                        context,
+                        listen: false
+                    );
+
+                    await profileViewModel.updateProfileImage(
+                      _imageFile!,
+                      onProgress: (progress) {
+                        setDialogState(() {
+                          _uploadProgress = progress;
+                        });
+                      },
+                    );
+
+                    if (mounted) {
+                      Navigator.pop(context);
+                      _showSuccessSnackBar('Profile picture updated successfully!');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      Navigator.pop(context);
+                      _showErrorSnackBar('Failed to update profile picture: ${e.toString()}');
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() {
+                        _isUploadingImage = false;
+                        _uploadProgress = 0;
+                        _imageFile = null;
+                      });
+                    }
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   Future _saveBio() async {
@@ -361,16 +442,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (profile?.avatar != null && profile!.avatar!.isNotEmpty) {
-      return Image.asset(
-        'assets/images/${profile.avatar}.png',
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) =>
-        const CircleAvatar(
-          radius: 60,
-          backgroundColor: Colors.grey,
-          child: Icon(Icons.person, size: 60, color: Colors.white),
-        ),
-      );
+      // Check if the avatar is a Cloudinary URL
+      if (profile.avatar!.startsWith('http')) {
+        // Apply Cloudinary transformations for optimized delivery
+        final transformedUrl = CloudinaryConstants.getProfileImageUrl(profile.avatar!);
+
+        return CachedNetworkImage(
+          imageUrl: transformedUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: Colors.grey[300],
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          errorWidget: (context, url, error) => _buildDefaultAvatar(),
+        );
+      } else {
+        // Fallback to local asset if not a URL
+        return Image.asset(
+          'assets/images/${profile.avatar}.png',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
+        );
+      }
     }
 
     return _buildDefaultAvatar();

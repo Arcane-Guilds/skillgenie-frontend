@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/utils/hangman_words.dart';
+import 'package:skillGenie/core/utils/hangman_words.dart';
 
 
 import '../../../core/widgets/action_button.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/presentation/views/game/game_page.dart';
-import 'package:frontend/presentation/views/hangman/homegame_screen.dart';
+import 'package:skillGenie/presentation/views/game/game_page.dart';
+import 'package:skillGenie/presentation/views/hangman/homegame_screen.dart';
 
 
 class GamesScreen extends StatelessWidget {

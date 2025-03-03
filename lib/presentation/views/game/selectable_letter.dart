@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/presentation/views/game/selected_letter.dart';
+import 'package:skillGenie/presentation/views/game/selected_letter.dart';
 import 'package:provider/provider.dart';
-import 'package:frontend/globals.dart';
+import 'package:skillGenie/globals.dart';
 
 import '../../../data/models/game_model.dart';
 

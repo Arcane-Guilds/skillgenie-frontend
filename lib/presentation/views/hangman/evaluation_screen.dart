@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/dracula.dart';
-import 'package:frontend/data/models/evaluation_question.dart';
-import 'package:frontend/presentation/viewmodels/quiz_view_model.dart';
+import 'package:skillGenie/data/models/evaluation_question.dart';
+import 'package:skillGenie/presentation/viewmodels/quiz_view_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/presentation/views/game/selectable_letter.dart';
-import 'package:frontend/presentation/views/game/selected_letter.dart';
+import 'package:skillGenie/presentation/views/game/selectable_letter.dart';
+import 'package:skillGenie/presentation/views/game/selected_letter.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/controllers/game_controller.dart';

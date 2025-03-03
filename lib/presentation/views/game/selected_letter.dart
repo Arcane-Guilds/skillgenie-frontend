@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:frontend/globals.dart';
-import 'package:frontend/data/models/game_model.dart';
+import 'package:skillGenie/globals.dart';
+import 'package:skillGenie/data/models/game_model.dart';
 
 import '../../../core/controllers/game_controller.dart';
 

@@ -3,10 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 
-import 'package:frontend/core/utils/alphabet.dart';
+import 'package:skillGenie/core/utils/alphabet.dart';
 
-import 'package:frontend/core/utils/hangman_words.dart';
-import 'package:frontend/core/utils/score_db.dart' as score_database;
+import 'package:skillGenie/core/utils/hangman_words.dart';
+import 'package:skillGenie/core/utils/score_db.dart' as score_database;
 
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';

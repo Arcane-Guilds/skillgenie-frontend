@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:skillGenie/core/widgets/buttom_custom_navbar.dart';
 import 'package:skillGenie/presentation/views/gemini_ai.dart';
 import 'package:skillGenie/presentation/views/home/home_content.dart';
+import 'package:skillGenie/presentation/views/lesson_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -63,17 +64,35 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: const HomeContent(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const GeminiChatBot()),
-          );
-        },
-        backgroundColor: Theme.of(context).primaryColor, // Purple color
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.assistant, size: 28),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GeminiChatBot()),
+              );
+            },
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.assistant, size: 28),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) =>  LessonView()),
+              );
+            },
+            backgroundColor: Colors.blue, // Couleur différente pour le distinguer
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.school, size: 28),
+          ),
+        ],
       ),
     );
   }

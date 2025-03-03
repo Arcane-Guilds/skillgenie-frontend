@@ -60,6 +60,13 @@ dependencies:
   mime: ^2.0.0
   sqflite: ^2.3.0
   flag: ^6.0.0
+  syncfusion_flutter_pdf: ^28.2.6
+  file_picker: ^9.0.0
+  ffmpeg_kit_flutter: ^6.0.3
+  flutter_pdfview: ^1.4.0
+  ffmpeg_cli: ^0.3.0
+  flutter_tts: ^4.2.2
+
 
   # UI Elements & Animations
   rflutter_alert: ^2.0.7

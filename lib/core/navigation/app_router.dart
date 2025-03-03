@@ -18,7 +18,6 @@ import '../../presentation/views/onboarding_screen.dart';
 import '../../presentation/views/auth/signup_screen.dart';
 import '../../presentation/views/splash_screen.dart';
 import '../../presentation/views/profile_screen.dart';
-import '../../presentation/views/favorites_screen.dart';
 import '../../presentation/views/library_screen.dart';
 import '../../presentation/views/notifications_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';

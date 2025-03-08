@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 import '../../../data/models/quiz_question.dart';
 import '../../viewmodels/quiz_view_model.dart';
-
-
 
 class QuizPage extends StatelessWidget {
   final String userId;
@@ -80,6 +77,33 @@ class QuizPage extends StatelessWidget {
             ),
             const Text(
               'Getting ready for your learning journey...',
+              style: TextStyle(
+                fontFamily: 'Comic Sans MS',
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEvaluationLoading(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Lottie.asset(
+              'assets/images/loading.json',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
+              repeat: true,
+            ),
+            const Text(
+              'Generating your personalized evaluation...',
               style: TextStyle(
                 fontFamily: 'Comic Sans MS',
                 fontSize: 18,
@@ -253,198 +277,186 @@ class QuizPage extends StatelessWidget {
     );
   }
 
-  // Option Button with Lottie Feedback
+  // Option Button with Animated Selection
   Widget _buildOptionButton(QuizViewModel quizVM, QuizQuestion question, String option) {
     final isSelected = quizVM.answers[question.id] == option;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      child: Material(
-        borderRadius: BorderRadius.circular(15),
-        color: isSelected ? const Color(0xFF0D08FF).withOpacity(0.1) : Colors.transparent,
-        child: InkWell(
-          onTap: () => quizVM.setAnswer(question.id, option),
+    
+    return GestureDetector(
+      onTap: () {
+        quizVM.setAnswer(question.id, option);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0D08FF).withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(15),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: isSelected ? const Color(0xFF0D08FF) : Colors.grey[300]!,
-                width: 2,
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0D08FF) : Colors.grey.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                option,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'Comic Sans MS',
+                  color: isSelected ? const Color(0xFF0D08FF) : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
-            child: Row(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: isSelected
-                      ? Lottie.asset(
-                          'assets/images/check.json',
-                          width: 24,
-                          height: 24,
-                        )
-                      : const Icon(Icons.radio_button_unchecked, color: Colors.grey),
+            if (isSelected)
+              Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0D08FF),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Text(
-                    option,
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Motivational Message
+  Widget _buildMotivationalMessage(QuizViewModel quizVM) {
+    final messages = [
+      "You're doing great! Keep going!",
+      "Almost there! You're making excellent progress!",
+      "Your answers help us personalize your learning experience!",
+      "Every question brings you closer to your learning goals!",
+      "You're on your way to becoming a coding master!"
+    ];
+    
+    final messageIndex = (quizVM.currentQuestionIndex % messages.length);
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Text(
+        messages[messageIndex],
+        style: const TextStyle(
+          fontFamily: 'Comic Sans MS',
+          fontSize: 16,
+          color: Colors.grey,
+          fontStyle: FontStyle.italic,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  // Continue Button
+  Widget _buildContinueButton(QuizViewModel quizVM, BuildContext context) {
+    final isLastQuestion = quizVM.currentQuestionIndex == quizVM.questions.length - 1;
+    final hasAnswer = quizVM.answers.containsKey(quizVM.currentQuestion!.id);
+    
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (quizVM.currentQuestionIndex > 0)
+            ElevatedButton(
+              onPressed: () {
+                quizVM.previousQuestion();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[200],
+                foregroundColor: Colors.black87,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.arrow_back_ios, size: 16),
+                  SizedBox(width: 5),
+                  Text(
+                    'Previous',
                     style: TextStyle(
                       fontSize: 16,
-                      color: isSelected ? const Color(0xFF0D08FF) : Colors.black,
                       fontFamily: 'Comic Sans MS',
                     ),
                   ),
+                ],
+              ),
+            )
+          else
+            const SizedBox(width: 120), // Placeholder for balance
+          
+          ElevatedButton(
+            onPressed: hasAnswer
+                ? () async {
+                    if (isLastQuestion) {
+                      // Show loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                      
+                      // Submit quiz
+                      final success = await quizVM.submitQuiz();
+                      
+                      // Close loading dialog
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                      
+                      if (success && context.mounted) {
+                        // Navigate to evaluation screen
+                        context.go('/evaluation', extra: {
+                          'questions': quizVM.evaluationQuestions,
+                          'userId': userId,
+                        });
+                      }
+                    } else {
+                      quizVM.nextQuestion();
+                    }
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D08FF),
+              disabledBackgroundColor: Colors.grey,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isLastQuestion ? 'Submit' : 'Continue',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Comic Sans MS',
+                    color: Colors.white,
+                  ),
                 ),
+                const SizedBox(width: 5),
+                const Icon(Icons.arrow_forward_ios, size: 16),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
-
-  // Motivational Message with Lottie Animation
-  Widget _buildMotivationalMessage(QuizViewModel quizVM) {
-    final messages = [
-      'You’re doing great! 🌟',
-      'Keep it up! 💪',
-      'Learning is fun! 🎉',
-      'Awesome progress! 🚀',
-      'You’re a star! ⭐️'
-    ];
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      child: Padding(
-        key: ValueKey(quizVM.currentQuestionIndex),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Column(
-          children: [
-            Lottie.asset(
-              'assets/images/motivation.json',
-              width: 100,
-              height: 100,
-              repeat: false,
-            ),
-            Text(
-              messages[quizVM.currentQuestionIndex % messages.length],
-              style: const TextStyle(
-                fontSize: 18,
-                color: Color(0xFFFF9500),
-                fontFamily: 'Comic Sans MS',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Continue Button with Lottie Feedback
-  Widget _buildContinueButton(QuizViewModel quizVM, BuildContext context) {
-  final hasAnswer = quizVM.answers.containsKey(quizVM.currentQuestion?.id);
-  final isLastQuestion = quizVM.currentQuestionIndex == quizVM.questions.length - 1;
-
-  return Container(
-    margin: const EdgeInsets.all(20),
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 50,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: hasAnswer
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF0D08FF).withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                )
-              ]
-            : null,
-      ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0D08FF),
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
-          ),
-          elevation: 0,
-        ),
-        onPressed: hasAnswer
-            ? () async {
-                if (isLastQuestion) {
-                  final success = await quizVM.submitQuiz();
-                  if (success && context.mounted) {
-                    if (quizVM.evaluationError == null) {
-                      // Wait for evaluation generation to complete
-                      while (quizVM.isGeneratingEvaluation) {
-                        await Future.delayed(const Duration(milliseconds: 100));
-                      }
-
-                      if (quizVM.evaluationQuestions.isNotEmpty) {
-                        context.push(
-                          '/evaluation',
-                          extra: {
-                            'questions': quizVM.evaluationQuestions,
-                            'userId': quizVM.userId,
-                          },
-                        );
-                      }
-                    }
-                  }
-                } else {
-                  quizVM.nextQuestion();
-                }
-              }
-            : null,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: Text(
-            isLastQuestion ? 'Finish Learning! 🎓' : 'Continue →',
-            key: ValueKey(isLastQuestion),
-            style: const TextStyle(
-              fontSize: 18,
-              fontFamily: 'Comic Sans MS',
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-  Widget _buildEvaluationLoading(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Lottie.asset(
-              'assets/images/loading.json',
-              width: 200,
-              height: 200,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'AI is generating your personalized evaluation...',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
-                fontFamily: 'Comic Sans MS',
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            const CircularProgressIndicator(
-              color: Color(0xFF0D08FF),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+} 

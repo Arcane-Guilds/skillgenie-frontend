@@ -4,16 +4,19 @@ import 'package:provider/provider.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/service_locator.dart';
 import 'core/theme/app_theme.dart';
-import 'presentation/viewmodels/auth_viewmodel.dart';
+import 'presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'presentation/viewmodels/profile_viewmodel.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables first
+  await dotenv.load(fileName: ".env");
+  
   // Initialize dependency injection
   await setupServiceLocator();
-
+  
   runApp(const MyApp());
 }
 

@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'step1_screen.dart'; // Make sure Step1Screen is imported
-
-
+import '../../../core/constants/api_constants.dart';
+import 'step1_screen.dart';
 
 class Challenge {
   final String title;
@@ -28,20 +27,20 @@ class Challenge {
   }
 }
 
-class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+class ChallengesLibraryScreen extends StatefulWidget {
+  const ChallengesLibraryScreen({super.key});
 
   @override
-  _LibraryScreenState createState() => _LibraryScreenState();
+  _ChallengesLibraryScreenState createState() => _ChallengesLibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> {
+class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
   List<Challenge> _challengesList = [];
 
   // Fetch challenges from API
   Future<void> fetchChallenges() async {
     final response =
-        await http.get(Uri.parse('http://localhost:3000/challenges'));
+        await http.get(Uri.parse('${ApiConstants.baseUrl}/challenges'));
 
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
@@ -247,8 +246,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         ],
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
+                        color: Theme.of(context).primaryColor.withOpacity(.8),
                         borderRadius: BorderRadius.circular(20),
+                        image: DecorationImage(
+                          image: NetworkImage(
+                              'https://source.unsplash.com/random?sig=$index&coding'),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.7),
+                            BlendMode.darken,
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -256,100 +264,106 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
 
-            // New challenges section (Vertical scroll)
-            Container(
-              padding: const EdgeInsets.only(left: 16, bottom: 20, top: 20),
-              child: const Text(
-                'All challenges',
+            // Popular challenges section
+            const Padding(
+              padding: EdgeInsets.only(left: 12, top: 20),
+              child: Text(
+                'Popular Challenges',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18.0,
+                  fontSize: 18,
                 ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              height: size.height * .5,
-              child: ListView.builder(
-                  itemCount: _challengesList.length,
-                  scrollDirection: Axis.vertical,
-                  physics: const BouncingScrollPhysics(),
-                  itemBuilder: (BuildContext context, int index) {
-                    final challenge = _challengesList[index];
 
-                    return GestureDetector(
-                      onTap: () {
-                        // Navigate to Step1Screen with the challenge title
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Step1Screen(
-                              name: challenge
-                                  .title, // Passing the challenge title
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        height: 80.0,
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        margin: const EdgeInsets.only(bottom: 10, top: 10),
-                        width: size.width,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Container(
-                                  width: 60.0,
-                                  height: 60.0,
-                                  decoration: BoxDecoration(
-                                    color:
-                                    Theme.of(context).primaryColor.withOpacity(0.8),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 5,
-                                  left: 10,
-                                  right: 10,
-                                  child: SizedBox(
-                                    height: 80.0,
-                                    child: Container(
-                                      color: Theme.of(context).primaryColor
-                                          .withOpacity(0.2),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 10,
-                                  left: 80,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(challenge.difficulty),
-                                      Text(challenge.title),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+            // Popular challenges list (Vertical list)
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _challengesList.length,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              itemBuilder: (BuildContext context, int index) {
+                final challenge = _challengesList[index];
+
+                return GestureDetector(
+                  onTap: () {
+                    // Navigate to Step1Screen with the challenge title
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Step1Screen(
+                          name: challenge.title, // Passing the challenge title
                         ),
                       ),
                     );
-                  }),
+                  },
+                  child: Container(
+                    height: 80,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 1,
+                          blurRadius: 1,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: DecorationImage(
+                              image: NetworkImage(
+                                  'https://source.unsplash.com/random?sig=${index + 10}&coding'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                challenge.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                'Difficulty: ${challenge.difficulty}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.grey[400],
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
       ),
     );
   }
-}
+} 

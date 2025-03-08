@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+const String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const int maxFinalLetters = 5;
+const int maxSelectableLetters = 10;
+
 const wordlist = [
   { "word": "array", "hint": "A data structure that stores multiple values in a single variable" },
   { "word": "debug", "hint": "The process of finding and fixing errors in code" },
@@ -13,7 +17,6 @@ const wordlist = [
   { "word": "merge", "hint": "A process of combining multiple data sets or branches in coding" }
 ];
 
-
 const Duration gameAnimationDuration = Duration(milliseconds: 300);
 const Curve gameAnimationCurve = Curves.easeInQuart;
 const Curve gameShakeAnimationCurve = SawTooth(4);
@@ -22,6 +25,7 @@ const BoxShadow gameBoxShadow = BoxShadow(
   color: Colors.black12,
   blurRadius: 10,
 );
+
 BoxDecoration curvedBox = BoxDecoration(borderRadius: BorderRadius.circular(8));
 const backgroundBoxColor = Color.fromRGBO(131, 100, 232, .4);
 const winBackgroundGradient = LinearGradient(
@@ -37,4 +41,4 @@ const lossBackgroundGradient = LinearGradient(
     Color.fromRGBO(234, 87, 83, 1),
   ],
   end: Alignment(0, 1),
-);
+); 

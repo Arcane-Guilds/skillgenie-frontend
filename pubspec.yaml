@@ -72,6 +72,7 @@ dependencies:
   rflutter_alert: ^2.0.7
   page_transition: ^2.2.1
   flutter_code_editor: ^0.3.2
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
@@ -97,6 +98,7 @@ flutter:
     - assets/images/check.json
     - assets/images/motivation.json
     - assets/images/error.json
+    - .env
     - assets/images/avatar1.png
     - assets/images/avatar2.png
     - assets/images/avatar3.png
@@ -118,5 +120,5 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/genie.png"
+  image_path: "assets/images/genie.png"
   min_sdk_android: 21

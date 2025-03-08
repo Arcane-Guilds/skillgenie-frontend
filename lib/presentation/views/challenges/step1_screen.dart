@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-//import 'party_code_screen.dart'; // Import the PartyCodeScreen
-import 'PartyCodeScreen.dart'; // Import the PartyCodeViewModel
+
+import 'party_code_screen.dart';
+
 
 class Step1Screen extends StatelessWidget {
   final String name; // Name passed from previous screen

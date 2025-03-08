@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'dart:io';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/models/user_model.dart';
-import 'auth_viewmodel.dart';
+import '../../data/models/api_exception.dart';
+import 'auth/auth_viewmodel.dart';
 
 class ProfileViewModel extends ChangeNotifier {
   final ProfileRepository _profileRepository;
@@ -48,269 +49,364 @@ class ProfileViewModel extends ChangeNotifier {
   // Initialize profile
   Future<void> _initializeProfile() async {
     if (_authViewModel.isAuthenticated) {
-      await getUserProfile();
+      try {
+        await getUserProfile();
+      } catch (e) {
+        // Handle initialization errors silently
+        if (e is ApiException && e.statusCode == 401) {
+          // Handle expired token by logging out
+          await _handleAuthError();
+        }
+      }
     }
   }
 
-  // Get user profile with caching
+  // Handle authentication errors
+  Future<void> _handleAuthError() async {
+    // Clear local profile data
+    _currentProfile = null;
+    _isCacheValid = false;
+    
+    // Log the user out to force re-authentication
+    await _authViewModel.signOut();
+    
+    notifyListeners();
+  }
+
+  // Get user profile
   Future<User> getUserProfile({bool forceRefresh = false}) async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
+
     if (!forceRefresh && isCacheValid && _currentProfile != null) {
       return _currentProfile!;
     }
 
-    // Prevent rapid successive API calls
-    if (!canMakeApiCall) {
-      return _currentProfile ?? (throw Exception('Profile not available'));
-    }
-
-    _isLoading = true;
+    _setLoading(true);
     _errorMessage = null;
-    _lastApiCallTime = DateTime.now();
-    notifyListeners();
 
     try {
+      _lastApiCallTime = DateTime.now();
       final profile = await _profileRepository.getUserProfile(forceRefresh: forceRefresh);
       _currentProfile = profile;
       _lastFetchTime = DateTime.now();
       _isCacheValid = true;
+      _setLoading(false);
       return profile;
     } catch (e) {
-      _errorMessage = 'Failed to load profile: ${e.toString()}';
-      _isCacheValid = false;
-      throw e;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
     }
   }
 
-  // Update bio with optimistic updates
-  Future<void> updateBio(String newBio) async {
-    if (_currentProfile == null) return;
+  // Update user profile
+  Future<void> updateUserProfile(User updatedProfile) async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
 
-    final previousProfile = _currentProfile;
+    _setLoading(true);
+    _errorMessage = null;
 
     try {
-      // Optimistic update
-      _currentProfile = _currentProfile!.copyWith(bio: newBio);
-      notifyListeners();
-
-      await _profileRepository.updateUserProfile(_currentProfile!);
-      _isCacheValid = true;
+      _lastApiCallTime = DateTime.now();
+      await _profileRepository.updateUserProfile(updatedProfile);
+      _currentProfile = updatedProfile;
       _lastFetchTime = DateTime.now();
+      _isCacheValid = true;
+      _setLoading(false);
     } catch (e) {
-      // Rollback on failure
-      _currentProfile = previousProfile;
-      _errorMessage = 'Failed to update bio: ${e.toString()}';
-      notifyListeners();
-      throw e;
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
     }
   }
 
-  // Update profile image with progress tracking
-  Future<void> updateProfileImage(File newProfileImage, {Function(double)? onProgress}) async {
-    if (_currentProfile == null) return;
+  // Update bio
+  Future<void> updateBio(String bio) async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
 
-    final previousProfile = _currentProfile;
-    _uploadProgress = 0;
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      _lastApiCallTime = DateTime.now();
+      await _profileRepository.updateBio(bio);
+      
+      // Update local model
+      if (_currentProfile != null) {
+        _currentProfile = _currentProfile!.copyWith(bio: bio);
+      }
+      
+      _lastFetchTime = DateTime.now();
+      _isCacheValid = true;
+      _setLoading(false);
+    } catch (e) {
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
+    }
+  }
+
+  // Update username
+  Future<void> updateUsername(String username) async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      _lastApiCallTime = DateTime.now();
+      await _profileRepository.updateUsername(username);
+      
+      // Update local model
+      if (_currentProfile != null) {
+        _currentProfile = _currentProfile!.copyWith(username: username);
+      }
+      
+      _lastFetchTime = DateTime.now();
+      _isCacheValid = true;
+      _setLoading(false);
+    } catch (e) {
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
+    }
+  }
+
+  // Update profile image
+  Future<void> updateProfileImage(
+    File imageFile, {
+    Function(double)? onProgress,
+  }) async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
+
     _isUploadingImage = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // Upload the new image to Cloudinary
-      final cloudinaryUrl = await _profileRepository.uploadProfileImage(
-        newProfileImage,
+      _lastApiCallTime = DateTime.now();
+      
+      await _profileRepository.updateProfileImage(
+        imageFile,
         onProgress: (progress) {
           _uploadProgress = progress;
-          if (onProgress != null) {
-            onProgress(progress);
-          }
+          onProgress?.call(progress);
           notifyListeners();
         },
       );
-
-      if (cloudinaryUrl != null) {
-        // Update the profile with the new image URL
-        _currentProfile = _currentProfile!.copyWith(avatar: cloudinaryUrl);
-        _isCacheValid = true;
-        _lastFetchTime = DateTime.now();
-      } else {
-        throw Exception('Failed to upload image to Cloudinary');
-      }
-    } catch (e) {
-      // Rollback on failure
-      _currentProfile = previousProfile;
-      _errorMessage = 'Failed to update profile image: ${e.toString()}';
-      throw e;
-    } finally {
+      
+      // Refresh profile to get updated avatar URL
+      await getUserProfile(forceRefresh: true);
+      
       _isUploadingImage = false;
+      _uploadProgress = 0;
       notifyListeners();
+    } catch (e) {
+      _isUploadingImage = false;
+      _uploadProgress = 0;
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      notifyListeners();
+      rethrow;
     }
   }
 
   // Delete profile image
   Future<bool> deleteProfileImage() async {
-    if (_currentProfile == null || _currentProfile!.avatar == null) {
-      return false;
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
     }
 
-    final previousProfile = _currentProfile;
+    _setLoading(true);
+    _errorMessage = null;
 
     try {
-      _isLoading = true;
-      notifyListeners();
-
-      // Delete the profile image from Cloudinary
+      _lastApiCallTime = DateTime.now();
       final success = await _profileRepository.deleteProfileImage();
-
-      if (success) {
-        // Update the profile with null avatar
-        _currentProfile = _currentProfile!.copyWith(avatar: null);
-        _isCacheValid = true;
-        _lastFetchTime = DateTime.now();
-        return true;
-      } else {
-        throw Exception('Failed to delete profile image');
+      
+      if (success && _currentProfile != null) {
+        _currentProfile = _currentProfile!.copyWith(avatar: '');
       }
-    } catch (e) {
-      // Rollback on failure
-      _currentProfile = previousProfile;
-      _errorMessage = 'Failed to delete profile image: ${e.toString()}';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Update password with proper error handling
-  Future<void> updatePassword(String currentPassword, String newPassword) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      // First verify the current password is correct
-      await _profileRepository.updatePassword(currentPassword, newPassword);
-
-      // Password updated successfully, refresh the auth state
-      // This prevents the black screen issue by ensuring tokens are still valid
-      await _authViewModel.checkAuthStatus();
-
-      // Invalidate cache after password change but don't force a refresh yet
-      _isCacheValid = false;
-
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _isLoading = false;
-      _errorMessage = 'Failed to update password: ${e.toString()}';
-      notifyListeners();
-      throw e;
-    }
-  }
-
-  // Logout with cleanup
-  Future<void> logout() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // Clear profile cache first
-      await _profileRepository.clearCache();
-
-      // Then sign out from auth
-      await _authViewModel.signOut();
-
-      // Clear local state
-      _currentProfile = null;
-      _isCacheValid = false;
-      _lastFetchTime = null;
-    } catch (e) {
-      _errorMessage = 'Failed to logout: ${e.toString()}';
-      throw e;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Delete account with proper cleanup
-  Future<void> deleteAccount() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // Delete the profile first
-      await _profileRepository.deleteUserProfile();
-
-      // Clear profile cache
-      await _profileRepository.clearCache();
-
-      // Then sign out from auth
-      await _authViewModel.signOut();
-
-      // Clear all local state
-      _currentProfile = null;
-      _isCacheValid = false;
-      _lastFetchTime = null;
-    } catch (e) {
-      _errorMessage = 'Failed to delete account: ${e.toString()}';
-      throw e;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Clear error message
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-
-  // Invalidate cache
-  void invalidateCache() {
-    _isCacheValid = false;
-    notifyListeners();
-  }
-
-  // Reset upload progress
-  void resetUploadProgress() {
-    _uploadProgress = 0;
-    _isUploadingImage = false;
-    notifyListeners();
-  }
-
-  // Update username with optimistic updates
-  Future<void> updateUsername(String newUsername) async {
-    if (_currentProfile == null) return;
-
-    final previousProfile = _currentProfile;
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      // Optimistic update
-      _currentProfile = _currentProfile!.copyWith(username: newUsername);
-      notifyListeners();
-
-      // Call the repository to update the username
-      await _profileRepository.updateUsername(newUsername);
-
-      // Update cache
-      _isCacheValid = true;
+      
       _lastFetchTime = DateTime.now();
+      _isCacheValid = true;
+      _setLoading(false);
+      return success;
     } catch (e) {
-      // Rollback on failure
-      _currentProfile = previousProfile;
-      _errorMessage = 'Failed to update username: ${e.toString()}';
-      throw e;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
     }
+  }
+
+  // Update password
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      _lastApiCallTime = DateTime.now();
+      await _profileRepository.updatePassword(currentPassword, newPassword);
+      _setLoading(false);
+    } catch (e) {
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
+    }
+  }
+
+  // Delete account
+  Future<void> deleteAccount() async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      _lastApiCallTime = DateTime.now();
+      await _profileRepository.deleteAccount();
+      _currentProfile = null;
+      _isCacheValid = false;
+      _setLoading(false);
+    } catch (e) {
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
+    }
+  }
+
+  // Logout
+  Future<void> logout() async {
+    _setLoading(true);
+    
+    try {
+      await _authViewModel.signOut();
+      _currentProfile = null;
+      _isCacheValid = false;
+      _setLoading(false);
+    } catch (e) {
+      _setLoading(false);
+      _errorMessage = e.toString();
+      rethrow;
+    }
+  }
+
+  // Retry profile fetch
+  Future<void> retryProfileFetch() async {
+    _errorMessage = null;
+    try {
+      await getUserProfile(forceRefresh: true);
+    } catch (e) {
+      // Error handling is done within getUserProfile
+    }
+  }
+
+  // Helper method to set loading state
+  void _setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
   }
 }

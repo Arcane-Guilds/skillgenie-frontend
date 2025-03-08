@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../viewmodels/auth_viewmodel.dart';
+import '../../../viewmodels/auth/auth_viewmodel.dart';
 
 
 class OtpVerificationScreen extends StatefulWidget {

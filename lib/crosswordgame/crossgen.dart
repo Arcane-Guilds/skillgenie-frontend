@@ -465,6 +465,11 @@ class Field_Word {  //Слово, расположенное на поле
         in_word += '_'; //Еще не введенные символы
       }
     }
+    // Initialize other properties with default values
+    highlighted = -1;
+    pic_showed = false;
+    mistakes = {};
+    inters = [];
   }
   int highlighted = -1;
   String word;  //Непосредственно само слово

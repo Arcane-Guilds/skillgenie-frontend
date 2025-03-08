@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../data/models/auth_response.dart';
-import '../../data/repositories/auth_repository.dart';
+import '../../../data/models/auth_response.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../core/services/service_locator.dart';
 
 class SignUpViewModel extends ChangeNotifier {
-  final AuthRepository _authRepository = AuthRepository();
+  final AuthRepository _authRepository;
   bool _isSignedUp = false;
   bool get isSignedUp => _isSignedUp;
   bool isLoading = false;
@@ -12,6 +13,17 @@ class SignUpViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? _userId;
   String? get userId => _userId;
+
+  // Use dependency injection through constructor
+  SignUpViewModel({required AuthRepository authRepository}) 
+      : _authRepository = authRepository;
+  
+  // Factory constructor that uses the service locator
+  factory SignUpViewModel.fromServiceLocator() {
+    return SignUpViewModel(
+      authRepository: serviceLocator<AuthRepository>(),
+    );
+  }
 
   Future<void> signUp(BuildContext context, {required String username, required String email, required String password, required int age}) async {
   _setLoading(true);

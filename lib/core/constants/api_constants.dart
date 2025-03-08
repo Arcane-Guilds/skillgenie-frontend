@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'https://f474-102-106-28-111.ngrok-free.app';
+  static const String baseUrl = 'https://57d9-196-235-221-27.ngrok-free.app';
 
   static const String signup = '$baseUrl/auth/signup';
   static const String signin = '$baseUrl/auth/signin';
@@ -10,7 +10,8 @@ class ApiConstants {
   // Add quiz-related URLs
   static const String fetchQuizQuestions = '$baseUrl/quiz/questions';
   static const String submitQuiz = '$baseUrl/quiz/submit';
-  static const String generateEvaluationTest =
-      '$baseUrl/quiz/evaluation/generate';
+  static const String generateEvaluationTest = '$baseUrl/quiz/evaluation/generate';
   static const String submitEvaluation = '$baseUrl/quiz/evaluation/submit';
+
+
 }

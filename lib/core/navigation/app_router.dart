@@ -6,21 +6,24 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../presentation/viewmodels/quiz_view_model.dart';
-import '../../presentation/viewmodels/auth_viewmodel.dart';
+import '../../presentation/viewmodels/auth/auth_viewmodel.dart';
 import '../../presentation/views/auth/password/forgotpassword_screen.dart';
 import '../../presentation/views/auth/password/otpverification_screen.dart';
 import '../../presentation/views/auth/password/resetpassword_screen.dart';
-import '../../presentation/views/hangman/evaluation_screen.dart';
-import '../../presentation/views/hangman/quiz_screen.dart';
+import '../../presentation/views/quiz/evaluation_screen.dart';
+import '../../presentation/views/quiz/quiz_screen.dart';
 import '../../presentation/views/home/home_screen.dart';
 import '../../presentation/views/auth/login_screen.dart';
 import '../../presentation/views/onboarding_screen.dart';
 import '../../presentation/views/auth/signup_screen.dart';
 import '../../presentation/views/splash_screen.dart';
-import '../../presentation/views/profile_screen.dart';
-import '../../presentation/views/library_screen.dart';
+import '../../presentation/views/profile/profile_screen.dart';
+import '../../presentation/views/profile/settings_screen.dart';
+import '../../presentation/views/challenges/challenges_library_screen.dart';
 import '../../presentation/views/notifications_screen.dart';
+import '../../presentation/views/chatbot_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';
+import '../services/service_locator.dart';
 
 // ShellScaffold remains the same
 class ShellScaffold extends StatelessWidget {
@@ -47,16 +50,16 @@ Page<void> _buildTransitionPage(Widget child) {
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) =>
         FadeTransition(
-      opacity: animation,
-      child: child,
-    ),
+          opacity: animation,
+          child: child,
+        ),
   );
 }
 
 // Define navigation
 final appRouter = GoRouter(
   initialLocation: '/',
-  refreshListenable: AuthViewModel(),
+  refreshListenable: serviceLocator<AuthViewModel>(),
   routes: [
     GoRoute(
       path: '/',
@@ -93,11 +96,15 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
       path: '/quiz/:userId',
       builder: (context, state) {
         final userId = state.pathParameters['userId']!;
         return ChangeNotifierProvider(
-          create: (context) => QuizViewModel(userId: userId)..fetchQuizQuestions(),
+          create: (context) => serviceLocator.get<QuizViewModel>(param1: userId)..fetchQuizQuestions(),
           child: QuizPage(userId: userId),
         );
       },
@@ -107,7 +114,7 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final args = state.extra as Map<String, dynamic>;
         return ChangeNotifierProvider(
-          create: (context) => QuizViewModel(userId: args['userId']),
+          create: (context) => serviceLocator.get<QuizViewModel>(param1: args['userId']),
           child: EvaluationScreen(
             questions: args['questions'] as List<EvaluationQuestion>,
             userId: args['userId'] as String,
@@ -132,6 +139,10 @@ final appRouter = GoRouter(
         ),
       ],
     ),
+    GoRoute(
+      path: '/chatbot',
+      builder: (context, state) => const ChatbotScreen(),
+    ),
     ShellRoute(
       builder: (context, state, child) {
         int index = _getTabIndex(state.fullPath ?? '/home');
@@ -151,7 +162,7 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/library',
-          builder: (context, state) => const LibraryScreen(),
+          builder: (context, state) => const ChallengesLibraryScreen(),
         ),
         GoRoute(
           path: '/notifications',

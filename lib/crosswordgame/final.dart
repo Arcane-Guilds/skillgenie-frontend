@@ -63,7 +63,7 @@ class FinalRoute extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Text(right == all ? AppLocalizations.of(context)!.crossSolved : AppLocalizations.of(context)!.crossNotSolved, 
+            Text(right == all ? 'Crossword solved' : 'Crossword not solved', 
                                 style: TextStyle(fontSize: 25, color: ColorTheme.GetTextColor(context)),),
             Stack(
               alignment: Alignment.center,
@@ -74,7 +74,7 @@ class FinalRoute extends StatelessWidget {
             ),
             Column(children: [
               Text('${AppLocalizations.of(context)!.hintsUsed} $hints'),
-              Text(right == all ? ' ' : '${AppLocalizations.of(context)!.rightWords} $right/$all') 
+              Text(right == all ? ' ' : '${AppLocalizations.of(context)!.rightWords} $right/$all')
             ],),  
             words_list.isEmpty?const SizedBox.shrink() :ElevatedButton(
               style: ButtonStyle(

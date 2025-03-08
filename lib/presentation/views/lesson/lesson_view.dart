@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/lesson_view_model.dart';
+import '../../viewmodels/lesson_view_model.dart';
+import '../../../core/services/service_locator.dart';
 
 class LessonView extends StatelessWidget {
+  const LessonView({super.key});
+  
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => LessonViewModel(),
+      create: (_) => serviceLocator<LessonViewModel>(),
       child: Scaffold(
-        appBar: AppBar(title: Text("Générateur de vidéo de leçon")),
+        appBar: AppBar(title: const Text("Générateur de vidéo de leçon")),
         body: Consumer<LessonViewModel>(
           builder: (context, viewModel, child) {
             return Padding(
@@ -18,27 +21,27 @@ class LessonView extends StatelessWidget {
                 children: [
                   ElevatedButton(
                     onPressed: viewModel.pickAndExtractText,
-                    child: Text("Sélectionner PDF et extraire texte"),
+                    child: const Text("Sélectionner PDF et extraire texte"),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Expanded(
                     child: SingleChildScrollView(
                       child: Text(viewModel.lessonContent),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   if (viewModel.isProcessing)
-                    Center(child: CircularProgressIndicator())
+                    const Center(child: CircularProgressIndicator())
                   else
                     Column(
                       children: [
                         ElevatedButton(
                           onPressed: viewModel.generateVideoFromImages,
-                          child: Text("Générer Vidéo"),
+                          child: const Text("Générer Vidéo"),
                         ),
                         ElevatedButton(
                           onPressed: viewModel.addAudioToVideo,
-                          child: Text("Ajouter Audio"),
+                          child: const Text("Ajouter Audio"),
                         ),
                       ],
                     ),
@@ -50,4 +53,4 @@ class LessonView extends StatelessWidget {
       ),
     );
   }
-}
+} 

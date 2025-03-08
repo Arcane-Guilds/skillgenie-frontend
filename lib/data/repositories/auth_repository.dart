@@ -6,122 +6,150 @@ import '../models/tokens.dart';
 import '../models/user_model.dart';
 import '../../core/constants/api_constants.dart';
 import 'package:logging/logging.dart';
-class AuthRepository {
-  final ApiClient _apiClient = ApiClient();
+import '../datasources/auth_remote_datasource.dart';
+import '../datasources/auth_local_datasource.dart';
 
+/// Repository for authentication-related operations
+class AuthRepository {
+  final AuthRemoteDataSource _remoteDataSource;
+  final AuthLocalDataSource _localDataSource;
   final Logger _logger = Logger('AuthRepository');
 
+  AuthRepository({
+    required AuthRemoteDataSource remoteDataSource,
+    required AuthLocalDataSource localDataSource,
+  })  : _remoteDataSource = remoteDataSource,
+        _localDataSource = localDataSource;
+
+  /// Sign in with email and password
   Future<AuthResponse> signIn(String email, String password) async {
-    _logger.info('Attempting to sign in with email: $email');
-    final response = await _apiClient.postRequest(ApiConstants.signin, {
-      "email": email,
-      "password": password,
-    });
-    _logger.info('Response: $response');
-    if (response.statusCode == 401 && response.data['message'] == 'Incorrect password') {
-      _logger.warning('Sign in failed: Incorrect password');
-      throw Exception('Incorrect password');
-    }
-
-    final authResponse = AuthResponse.fromJson(response.data);
-    await _saveTokens(authResponse.tokens);
-    User? user = _decodeJwt(authResponse.tokens.accessToken);
-    if (user != null) await saveUser(user);
-    return authResponse;
-  }
-
-
-  Future<AuthResponse> signUp(String username, String email, String password) async {
-    final response = await _apiClient.postRequest(ApiConstants.signup, {
-      "username": username,
-      "email": email,
-      "password": password,
-    });
-
-    final authResponse = AuthResponse.fromJson(response.data);
-    await _saveTokens(authResponse.tokens);
-    User? user = _decodeJwt(authResponse.tokens.accessToken);
-    if (user != null) await saveUser(user);
-    return authResponse;
-  }
-
-  Future<void> signOut() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-  }
-
-  Future<void> saveUser(User user) async {
-    final prefs = await SharedPreferences.getInstance();
-    _logger.info('Saving user: ${jsonEncode(user.toJson())}');
-    await prefs.setString("user", jsonEncode(user.toJson()));
-  }
-
-  Future<User?> getUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? userJson = prefs.getString("user");
-
-    if (userJson == null) return null;
-    return User.fromJson(jsonDecode(userJson));
-  }
-
-  Future<void> _saveTokens(Tokens tokens) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("accessToken", tokens.accessToken);
-    await prefs.setString("refreshToken", tokens.refreshToken);
-  }
-
-  Future<void> saveTokens(Tokens tokens) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("accessToken", tokens.accessToken);
-    await prefs.setString("refreshToken", tokens.refreshToken);
-  }
-
-  Future<Tokens?> getTokens() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? accessToken = prefs.getString("accessToken");
-    final String? refreshToken = prefs.getString("refreshToken");
-
-    if (accessToken == null || refreshToken == null) return null;
-    return Tokens(accessToken: accessToken, refreshToken: refreshToken);
-  }
-
-  User? _decodeJwt(String token) {
     try {
-      final parts = token.split(".");
-      if (parts.length != 3) throw Exception("Invalid JWT format");
-
-      final normalizedPayload = base64Url.normalize(parts[1]);
-      final payload = utf8.decode(base64Url.decode(normalizedPayload));
-      final jsonMap = jsonDecode(payload);
-
-      return User.fromJson(jsonMap);
+      _logger.info('Signing in with email: $email');
+      final authResponse = await _remoteDataSource.signIn(email, password);
+      
+      // Save tokens to local storage
+      await _localDataSource.saveTokens(authResponse.tokens);
+      
+      // Decode JWT and save user to local storage
+      final user = _remoteDataSource.decodeJwt(authResponse.tokens.accessToken);
+      if (user != null) {
+        await _localDataSource.saveUser(user);
+      }
+      
+      return authResponse;
     } catch (e) {
-      print("Error decoding JWT: $e");
+      _logger.severe('Error signing in: $e');
+      rethrow;
+    }
+  }
+
+  /// Sign up with username, email, and password
+  Future<AuthResponse> signUp(String username, String email, String password) async {
+    try {
+      _logger.info('Signing up with email: $email');
+      final authResponse = await _remoteDataSource.signUp(username, email, password);
+      
+      // Save tokens to local storage
+      await _localDataSource.saveTokens(authResponse.tokens);
+      
+      // Decode JWT and save user to local storage
+      final user = _remoteDataSource.decodeJwt(authResponse.tokens.accessToken);
+      if (user != null) {
+        await _localDataSource.saveUser(user);
+      }
+      
+      return authResponse;
+    } catch (e) {
+      _logger.severe('Error signing up: $e');
+      rethrow;
+    }
+  }
+
+  /// Sign out by clearing local storage
+  Future<void> signOut() async {
+    try {
+      _logger.info('Signing out');
+      await _localDataSource.clearAll();
+    } catch (e) {
+      _logger.severe('Error signing out: $e');
+      rethrow;
+    }
+  }
+
+  /// Save user to local storage
+  Future<void> saveUser(User user) async {
+    try {
+      _logger.info('Saving user: ${user.username}');
+      await _localDataSource.saveUser(user);
+    } catch (e) {
+      _logger.severe('Error saving user: $e');
+      rethrow;
+    }
+  }
+
+  /// Get user from local storage
+  Future<User?> getUser() async {
+    try {
+      _logger.info('Getting user from local storage');
+      return await _localDataSource.getUser();
+    } catch (e) {
+      _logger.severe('Error getting user: $e');
       return null;
     }
   }
+
+  /// Save tokens to local storage
+  Future<void> saveTokens(Tokens tokens) async {
+    try {
+      _logger.info('Saving tokens');
+      await _localDataSource.saveTokens(tokens);
+    } catch (e) {
+      _logger.severe('Error saving tokens: $e');
+      rethrow;
+    }
+  }
+
+  /// Get tokens from local storage
+  Future<Tokens?> getTokens() async {
+    try {
+      _logger.info('Getting tokens from local storage');
+      return await _localDataSource.getTokens();
+    } catch (e) {
+      _logger.severe('Error getting tokens: $e');
+      return null;
+    }
+  }
+
+  /// Send a password reset email
   Future<void> forgotPassword(String email) async {
-    _logger.info('Sending forgot password request for email: $email');
-    final response = await _apiClient.postRequest(ApiConstants.forgot_password, {"email": email});
-    _logger.info('Forgot password response: $response');
+    try {
+      _logger.info('Sending forgot password request for email: $email');
+      await _remoteDataSource.forgotPassword(email);
+    } catch (e) {
+      _logger.severe('Error sending forgot password request: $e');
+      rethrow;
+    }
   }
 
+  /// Verify OTP for password reset
   Future<void> verifyOtp(String email, String otp) async {
-    _logger.info('Verifying OTP for email: $email');
-    final response = await _apiClient.postRequest(ApiConstants.verify_otp, {
-      "email": email,
-      "otp": otp,
-    });
-    _logger.info('OTP verification response: $response');
+    try {
+      _logger.info('Verifying OTP for email: $email');
+      await _remoteDataSource.verifyOtp(email, otp);
+    } catch (e) {
+      _logger.severe('Error verifying OTP: $e');
+      rethrow;
+    }
   }
 
-
+  /// Reset password with email and new password
   Future<void> resetPassword(String email, String newPassword) async {
-    _logger.info('Resetting password for email: $email');
-    final response = await _apiClient.putRequest(ApiConstants.reset_password, {
-      "email": email,
-      "newPassword": newPassword,
-    });
-    _logger.info('Reset password response: $response');
+    try {
+      _logger.info('Resetting password for email: $email');
+      await _remoteDataSource.resetPassword(email, newPassword);
+    } catch (e) {
+      _logger.severe('Error resetting password: $e');
+      rethrow;
+    }
   }
 }

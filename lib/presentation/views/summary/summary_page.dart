@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skillGenie/globals.dart';
+
+import '../../../core/constants/game_constants.dart';
+
 
 class SummaryPage extends StatelessWidget {
   final bool won;

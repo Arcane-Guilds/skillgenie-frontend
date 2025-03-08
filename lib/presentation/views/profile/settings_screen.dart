@@ -6,10 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/constants/cloudinary_constants.dart';
-import '../../core/errors/error_handler.dart';
-import '../../data/models/user_model.dart';
-import '../viewmodels/profile_viewmodel.dart';
+import '../../../core/constants/cloudinary_constants.dart';
+import '../../../core/errors/error_handler.dart';
+import '../../../data/models/user_model.dart';
+import '../../viewmodels/profile_viewmodel.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

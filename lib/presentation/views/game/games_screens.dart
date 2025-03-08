@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:skillGenie/presentation/views/game/game_page.dart';
 import 'package:skillGenie/presentation/views/hangman/homegame_screen.dart';
 import 'package:skillGenie/crosswordgame/search.dart';
+import 'package:skillGenie/crosswordgame/maincross.dart';
 
 class GamesScreen extends StatelessWidget {
   const GamesScreen({super.key});
@@ -10,17 +11,14 @@ class GamesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Games',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: Colors.deepPurple,
-        centerTitle: true,
+        title: const Text('Games'),
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blueAccent, Colors.purpleAccent],
+            colors: [Colors.white,Colors.lightBlue],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -33,7 +31,7 @@ class GamesScreen extends StatelessWidget {
                 context,
                 "Hangman",
                 Colors.orange,
-                HomeGameScreen(),
+                 HomeGameScreen(),
               ),
               const SizedBox(height: 20),
               _buildGameButton(
@@ -45,9 +43,9 @@ class GamesScreen extends StatelessWidget {
               const SizedBox(height: 20),
               _buildGameButton(
                 context,
-                "WikiCross",
+                "Wiki Crossword",
                 Colors.red,
-                SearchRoute(),
+                const MainCrosswordScreen(),
               ),
             ],
           ),

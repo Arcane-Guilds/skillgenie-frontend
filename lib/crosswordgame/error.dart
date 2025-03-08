@@ -13,7 +13,7 @@ class ErrorRoute extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Text(AppLocalizations.of(context)!.error, style: TextStyle(fontSize: 25, color: ColorTheme.GetTextColor(context)),),
+            Text('Error', style: TextStyle(fontSize: 25, color: ColorTheme.GetTextColor(context)),),
             Stack(
               alignment: Alignment.center,
               children: const [
@@ -21,7 +21,7 @@ class ErrorRoute extends StatelessWidget {
               ],
             ),
             Column(children: [
-              Text(error != '' ? error : AppLocalizations.of(context)!.errorUnknown),
+              Text(error != '' ? error : 'Unknown error'),
             ],),  
             Stack(
               alignment: Alignment.center, 

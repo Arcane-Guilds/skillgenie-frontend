@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:skillGenie/presentation/views/settings_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
+import 'package:go_router/go_router.dart';
 
-import '../../core/widgets/app_error_widget.dart';
-import '../../data/models/user_model.dart';
-import '../viewmodels/profile_viewmodel.dart';
-import '../../core/errors/error_handler.dart';
-import '../../core/constants/cloudinary_constants.dart';
-
-
+import '../../../core/widgets/app_error_widget.dart';
+import '../../../data/models/user_model.dart';
+import '../../viewmodels/profile_viewmodel.dart';
+import '../../../core/errors/error_handler.dart';
+import '../../../core/constants/cloudinary_constants.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -48,16 +46,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserProfile() async {
     final profileViewModel = Provider.of<ProfileViewModel>(
         context, listen: false);
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
     try {
       await profileViewModel.getUserProfile(forceRefresh: true);
-      if (mounted) {
-        _bioController.text = profileViewModel.currentProfile?.bio ?? '';
+      
+      // Update controllers with current values
+      if (profileViewModel.currentProfile != null) {
+        _bioController.text = profileViewModel.currentProfile!.bio ?? '';
       }
     } catch (e) {
+      // Error is handled in the build method via profileViewModel.errorMessage
+      if (!mounted) return;
+      _showErrorSnackBar(e.toString(), onRetry: _loadUserProfile);
+    } finally {
       if (mounted) {
-        _showErrorSnackBar('Failed to load profile. Please try again.');
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+  
+  // Method to retry loading profile when there's an error
+  void _retryLoadProfile() {
+    final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+    profileViewModel.retryProfileFetch();
   }
 
   void _showErrorSnackBar(String message, {VoidCallback? onRetry}) {
@@ -240,57 +257,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navigateToSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const SettingsScreen(),
-      ),
-    );
+    context.push('/settings');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProfileViewModel>(
-      builder: (context, profileViewModel, child) {
-        final userProfile = profileViewModel.currentProfile;
-        final isLoading = profileViewModel.isLoading;
-        final errorMessage = profileViewModel.errorMessage;
-
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('My Profile'),
-            foregroundColor: Colors.white,
-            elevation: 0,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: _navigateToSettings,
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              GoRouter.of(context).push('/settings');
+            },
           ),
-          body: RefreshIndicator(
+        ],
+      ),
+      body: Consumer<ProfileViewModel>(
+        builder: (context, profileViewModel, _) {
+          if (profileViewModel.isLoading || _isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (profileViewModel.errorMessage != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Theme.of(context).colorScheme.error,
+                    size: 64,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    profileViewModel.errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _retryLoadProfile,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final user = profileViewModel.currentProfile;
+          if (user == null) {
+            return const Center(child: Text('No profile data available'));
+          }
+
+          return RefreshIndicator(
             onRefresh: () =>
                 profileViewModel.getUserProfile(forceRefresh: true),
-            child: isLoading && userProfile == null
-                ? const Center(child: CircularProgressIndicator())
-                : errorMessage != null && userProfile == null
-                ? AppErrorWidget(
-              error: AppError(
-                type: AppErrorType.unknown,
-                message: errorMessage,
-              ),
-              onRetry: _loadUserProfile,
-            )
-                : SingleChildScrollView(
+            child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
-                  _buildProfileHeader(userProfile),
+                  _buildProfileHeader(user),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
-import '../../core/constants/api_constants.dart';
+import 'package:skillGenie/core/constants/quiz_constants.dart';
 import '../models/quiz_question.dart';
 import '../models/evaluation_question.dart';
 
@@ -16,7 +16,7 @@ class QuizRepository {
   Future<List<QuizQuestion>> fetchQuizQuestions() async {
     try {
       _logger.info('Fetching quiz questions');
-      final response = await _client.get(Uri.parse(ApiConstants.fetchQuizQuestions));
+      final response = await _client.get(Uri.parse(QuizConstants.fetchQuizQuestions));
       
       if (response.statusCode == 200) {
         final List<dynamic> jsonResponse = json.decode(response.body);
@@ -46,7 +46,7 @@ class QuizRepository {
       };
 
       final response = await _client.post(
-        Uri.parse(ApiConstants.submitQuiz),
+        Uri.parse(QuizConstants.submitQuiz),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(payload),
       );
@@ -68,7 +68,7 @@ class QuizRepository {
     try {
       _logger.info('Generating evaluation test for quiz result: $quizResultId');
       final response = await _client.post(
-        Uri.parse(ApiConstants.generateEvaluationTest),
+        Uri.parse(QuizConstants.generateEvaluationTest),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'quizResultId': quizResultId}),
       );
@@ -90,7 +90,7 @@ class QuizRepository {
     try {
       _logger.info('Submitting evaluation for user: $userId, test: $testId');
       final response = await _client.post(
-        Uri.parse(ApiConstants.submitEvaluation),
+        Uri.parse(QuizConstants.submitEvaluation),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'testId': testId,

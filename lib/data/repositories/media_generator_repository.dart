@@ -9,11 +9,11 @@ import 'dart:ui' as ui;
 import 'package:logging/logging.dart';
 
 /// Repository for lesson-related operations
-class LessonRepository {
+class MediaGeneratorRepository {
   final FlutterTts _flutterTts;
   final Logger _logger = Logger('LessonRepository');
 
-  LessonRepository({required FlutterTts flutterTts}) : _flutterTts = flutterTts;
+  MediaGeneratorRepository({required FlutterTts flutterTts}) : _flutterTts = flutterTts;
 
   /// Pick a PDF file and extract text
   Future<String> pickAndExtractText() async {

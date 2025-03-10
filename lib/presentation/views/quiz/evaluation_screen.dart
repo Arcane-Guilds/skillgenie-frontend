@@ -9,7 +9,8 @@ import 'package:highlight/languages/python.dart';
 import 'package:highlight/highlight.dart' show Mode;
 
 import '../../../data/models/evaluation_question.dart';
-import '../../viewmodels/quiz_view_model.dart';
+import '../../viewmodels/quiz_viewmodel.dart';
+import '../../viewmodels/course_viewmodel.dart';
 
 class EvaluationScreen extends StatefulWidget {
   final List<EvaluationQuestion> questions;
@@ -22,10 +23,33 @@ class EvaluationScreen extends StatefulWidget {
 }
 
 class _EvaluationScreenState extends State<EvaluationScreen> {
-  final Map<int, String> _answers = {};
-  final Map<int, CodeController> _codeControllers = {};
+  // Use a unique key for each question (combination of question ID and index)
+  final Map<String, String> _answers = {};
+  final Map<String, CodeController> _codeControllers = {};
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
+
+  // Helper method to generate a unique key for each question
+  String _getQuestionKey(int questionId, int index) {
+    return 'q_${questionId}_$index';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize code controllers for code questions
+    for (int i = 0; i < widget.questions.length; i++) {
+      final question = widget.questions[i];
+      if (question.type == 'code') {
+        final key = _getQuestionKey(question.id, i);
+        _codeControllers[key] = CodeController(
+          text: '',
+          language: _getLanguageMode(question.language),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -89,7 +113,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               _buildCodeSnippet(question.codeSnippet!),
             ],
             const SizedBox(height: 16),
-            _buildAnswerField(question),
+            _buildAnswerField(question, index),
           ],
         ),
       ),
@@ -120,19 +144,12 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
     );
   }
 
-  Widget _buildAnswerField(EvaluationQuestion question) {
+  Widget _buildAnswerField(EvaluationQuestion question, int index) {
+    final String questionKey = _getQuestionKey(question.id, index);
+    
     if (question.type == 'code') {
-      // Get the appropriate language mode based on the language string
-      Mode? languageMode = _getLanguageMode(question.language);
-      
-      // Create a code controller if it doesn't exist
-      _codeControllers.putIfAbsent(
-        question.id,
-        () => CodeController(
-          text: _answers[question.id] ?? '',
-          language: languageMode,
-        ),
-      );
+      // Get the code controller for this question
+      final codeController = _codeControllers[questionKey]!;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,10 +171,10 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             child: CodeTheme(
               data: CodeThemeData(styles: draculaTheme),
               child: CodeField(
-                controller: _codeControllers[question.id]!,
+                controller: codeController,
                 textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 14),
                 onChanged: (value) {
-                  _answers[question.id] = value;
+                  _answers[questionKey] = value;
                 },
               ),
             ),
@@ -178,17 +195,17 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
           ),
           const SizedBox(height: 8),
           if (question.options != null && question.options!.isNotEmpty)
-            ...question.options!.map((option) => _buildOptionRadio(question.id, option)),
+            ...question.options!.map((option) => _buildOptionRadio(questionKey, option)),
           if (question.options == null || question.options!.isEmpty)
             TextFormField(
-              initialValue: _answers[question.id],
+              initialValue: _answers[questionKey],
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: 'Enter your answer here',
               ),
               maxLines: 3,
               onChanged: (value) {
-                _answers[question.id] = value;
+                _answers[questionKey] = value;
               },
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -202,14 +219,14 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
     }
   }
 
-  Widget _buildOptionRadio(int questionId, String option) {
+  Widget _buildOptionRadio(String questionKey, String option) {
     return RadioListTile<String>(
       title: Text(option),
       value: option,
-      groupValue: _answers[questionId],
+      groupValue: _answers[questionKey],
       onChanged: (value) {
         setState(() {
-          _answers[questionId] = value!;
+          _answers[questionKey] = value!;
         });
       },
     );
@@ -268,10 +285,13 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
 
       // Convert answers to list format expected by API
       final List<String> answersList = [];
-      for (var question in widget.questions) {
-        answersList.add(_answers[question.id] ?? '');
+      for (int i = 0; i < widget.questions.length; i++) {
+        final question = widget.questions[i];
+        final key = _getQuestionKey(question.id, i);
+        answersList.add(_answers[key] ?? '');
       }
 
+      // Submit evaluation
       await quizVM.submitEvaluation(
         widget.questions.first.testId,
         widget.userId,
@@ -284,26 +304,88 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             SnackBar(content: Text('Error: ${quizVM.submissionError}')),
           );
         } else {
-          // Navigate to results screen
-          context.go('/home');
-          
-          // Show score in a dialog
+          // Show generating course dialog
           showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Evaluation Results'),
-              content: Text(
-                'Your score: ${(quizVM.evaluationScore! * 100).toStringAsFixed(1)}%',
-                style: const TextStyle(fontSize: 18),
+            barrierDismissible: false,
+            builder: (context) => const AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Generating your personalized learning path...'),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ],
             ),
           );
+          
+          // Generate course based on quiz result
+          final courseVM = Provider.of<CourseViewModel>(context, listen: false);
+          
+          try {
+            // Generate course using the user ID
+            final course = await courseVM.generateCourse(widget.userId);
+            
+            // Close the generating course dialog
+            if (mounted) {
+              Navigator.pop(context);
+            }
+            
+            if (course != null && mounted) {
+              // Navigate to home screen
+              context.go('/home');
+              
+              // Show success dialog with score and course info
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Evaluation Complete'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Your score: ${(quizVM.evaluationScore! * 100).toStringAsFixed(1)}%',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'We\'ve created a personalized learning path for you!',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Course: ${course.title}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Start Learning'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          } catch (e) {
+            // Close the generating course dialog
+            if (mounted) {
+              Navigator.pop(context);
+            }
+            
+            // Show error dialog
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to generate course: $e')),
+              );
+              
+              // Navigate to home even if course generation fails
+              context.go('/home');
+            }
+          }
         }
       }
     } catch (e) {

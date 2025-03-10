@@ -2,19 +2,20 @@ import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:skillGenie/presentation/viewmodels/media_generator_viewmodel.dart';
 
 import '../../data/repositories/profile_repository.dart';
 import '../../data/repositories/quiz_repository.dart';
 import '../../data/repositories/game_repository.dart';
-import '../../data/repositories/lesson_repository.dart';
+import '../../data/repositories/media_generator_repository.dart';
 import '../../data/repositories/chatbot_repository.dart';
+import '../../data/repositories/course_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../data/datasources/profile_local_datasource.dart';
 import '../../data/datasources/chatbot_remote_datasource.dart';
 import '../../data/datasources/chatbot_local_datasource.dart';
-import '../constants/api_constants.dart';
 import '../constants/cloudinary_constants.dart';
 import '../constants/chatbot_constants.dart';
 import '../services/storage_service.dart';
@@ -25,9 +26,9 @@ import '../../presentation/viewmodels/auth/auth_viewmodel.dart';
 import '../../presentation/viewmodels/profile_viewmodel.dart';
 import '../../presentation/viewmodels/game/game_viewmodel.dart';
 import '../../presentation/viewmodels/auth/signup_viewmodel.dart';
-import '../../presentation/viewmodels/quiz_view_model.dart';
-import '../../presentation/viewmodels/lesson_view_model.dart';
+import '../../presentation/viewmodels/quiz_viewmodel.dart';
 import '../../presentation/viewmodels/chatbot_viewmodel.dart';
+import '../../presentation/viewmodels/course_viewmodel.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -104,12 +105,18 @@ Future<void> setupServiceLocator() async {
     ),
   );
   
+  serviceLocator.registerSingleton<CourseRepository>(
+    CourseRepository(
+      client: serviceLocator<http.Client>(),
+    ),
+  );
+  
   serviceLocator.registerSingleton<GameRepository>(
     GameRepository(),
   );
   
-  serviceLocator.registerSingleton<LessonRepository>(
-    LessonRepository(
+  serviceLocator.registerSingleton<MediaGeneratorRepository>(
+    MediaGeneratorRepository(
       flutterTts: serviceLocator<FlutterTts>(),
     ),
   );
@@ -150,9 +157,9 @@ Future<void> setupServiceLocator() async {
   );
   
   // Lesson ViewModel
-  serviceLocator.registerFactory<LessonViewModel>(() => 
-    LessonViewModel(
-      lessonRepository: serviceLocator<LessonRepository>(),
+  serviceLocator.registerFactory<MediaGeneratorViewModel>(() =>
+      MediaGeneratorViewModel(
+        mediaGeneratorRepository: serviceLocator<MediaGeneratorRepository>(),
     )
   );
 
@@ -162,6 +169,13 @@ Future<void> setupServiceLocator() async {
       userId: userId,
       quizRepository: serviceLocator<QuizRepository>(),
     ),
+  );
+
+  // Course ViewModel
+  serviceLocator.registerFactory<CourseViewModel>(() =>
+      CourseViewModel(
+        courseRepository: serviceLocator<CourseRepository>(),
+      ),
   );
 }
 

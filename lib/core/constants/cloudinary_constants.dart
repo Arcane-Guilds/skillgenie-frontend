@@ -1,15 +1,16 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'api_constants.dart';
 
 class CloudinaryConstants {
   // Replace these with your actual Cloudinary credentials
-  static const String cloudName = 'dfevpedux';
-  static const String uploadPreset = 'preset-for-file-upload';
-  static const String apiKey = '589553953838916'; // Optional, for signed uploads
+  static String get cloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? 'dfevpedux';
+  static String get uploadPreset => dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? 'preset-for-file-upload';
+  static String get apiKey => dotenv.env['CLOUDINARY_API_KEY'] ?? '589553953838916'; // Optional, for signed uploads
 
   // API endpoints
-  static const String baseApiUrl = ApiConstants.baseUrl;
-  static const String uploadEndpoint = '$baseApiUrl/cloudinary/upload/profile-image';
-  static const String deleteEndpoint = '$baseApiUrl/cloudinary/delete/profile-image';
+  static String get baseApiUrl => ApiConstants.baseUrl;
+  static String get uploadEndpoint => '$baseApiUrl/cloudinary/upload/profile-image';
+  static String get deleteEndpoint => '$baseApiUrl/cloudinary/delete/profile-image';
 
   // Folder structure
   static const String userProfilesFolder = 'user_profiles';

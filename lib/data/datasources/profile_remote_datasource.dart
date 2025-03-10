@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:logging/logging.dart';
+import '../../core/constants/profile_constants.dart';
 import '../models/user_model.dart';
 import '../models/api_exception.dart';
 import 'api_client.dart';
@@ -19,7 +20,7 @@ class ProfileRemoteDataSource {
       // Add the token to the API client
       _apiClient.addAuthenticationToken(accessToken);
       
-      final response = await _apiClient.getData('/user/profile');
+      final response = await _apiClient.getData(ProfileConstants.profile);
       final statusCode = response.statusCode ?? 500;
       
       _logger.info('Profile fetch response status: $statusCode');
@@ -67,7 +68,7 @@ class ProfileRemoteDataSource {
       // Add the token to the API client
       _apiClient.addAuthenticationToken(accessToken);
       
-      final response = await _apiClient.patchRequest('/user/profile', profileData);
+      final response = await _apiClient.patchRequest(ProfileConstants.profile, profileData);
       final statusCode = response.statusCode ?? 500;
       
       _logger.info('Profile update response status: $statusCode');
@@ -142,7 +143,7 @@ class ProfileRemoteDataSource {
       // Add the token to the API client
       _apiClient.addAuthenticationToken(accessToken);
       
-      final response = await _apiClient.postRequest('/user/change-password', {
+      final response = await _apiClient.postRequest(ProfileConstants.changePassword, {
         'currentPassword': currentPassword,
         'newPassword': newPassword,
       });

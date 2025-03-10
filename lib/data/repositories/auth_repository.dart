@@ -98,6 +98,7 @@ class AuthRepository {
     }
   }
 
+
   /// Save tokens to local storage
   Future<void> saveTokens(Tokens tokens) async {
     try {

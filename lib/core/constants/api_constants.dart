@@ -1,17 +1,5 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiConstants {
-  static const String baseUrl = 'https://57d9-196-235-221-27.ngrok-free.app';
-
-  static const String signup = '$baseUrl/auth/signup';
-  static const String signin = '$baseUrl/auth/signin';
-  static const String forgot_password = '$baseUrl/auth/forgot-password';
-  static const String verify_otp = '$baseUrl/auth/verify-otp';
-  static const String reset_password = '$baseUrl/auth/reset-password';
-
-  // Add quiz-related URLs
-  static const String fetchQuizQuestions = '$baseUrl/quiz/questions';
-  static const String submitQuiz = '$baseUrl/quiz/submit';
-  static const String generateEvaluationTest = '$baseUrl/quiz/evaluation/generate';
-  static const String submitEvaluation = '$baseUrl/quiz/evaluation/submit';
-
-
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'https://2971-196-235-25-64.ngrok-free.app ';
 }

@@ -5,7 +5,7 @@ import 'package:skillGenie/presentation/views/summary/summary_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../presentation/viewmodels/quiz_view_model.dart';
+import '../../presentation/viewmodels/quiz_viewmodel.dart';
 import '../../presentation/viewmodels/auth/auth_viewmodel.dart';
 import '../../presentation/views/auth/password/forgotpassword_screen.dart';
 import '../../presentation/views/auth/password/otpverification_screen.dart';
@@ -21,7 +21,9 @@ import '../../presentation/views/profile/profile_screen.dart';
 import '../../presentation/views/profile/settings_screen.dart';
 import '../../presentation/views/challenges/challenges_library_screen.dart';
 import '../../presentation/views/notifications_screen.dart';
-import '../../presentation/views/chatbot_screen.dart';
+import '../../presentation/views/chatbot//chatbot_screen.dart';
+import '../../presentation/views/course/course_detail_screen.dart';
+import '../../presentation/views/course/course_roadmap_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 
@@ -142,6 +144,26 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/chatbot',
       builder: (context, state) => const ChatbotScreen(),
+    ),
+    GoRoute(
+      path: '/course/:courseId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        return CourseRoadmapScreen(courseId: courseId);
+      },
+    ),
+    GoRoute(
+      path: '/course-detail/:courseId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final levelIndex = int.tryParse(state.uri.queryParameters['level'] ?? '');
+        final chapterIndex = int.tryParse(state.uri.queryParameters['chapter'] ?? '');
+        return CourseDetailScreen(
+          courseId: courseId,
+          initialLevelIndex: levelIndex,
+          initialChapterIndex: chapterIndex,
+        );
+      },
     ),
     ShellRoute(
       builder: (context, state, child) {

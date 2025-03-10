@@ -102,9 +102,6 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Check if the user is authenticated
   Future<void> checkAuthStatus() async {
-    _isLoading = true;
-    notifyListeners();
-    
     try {
       _tokens = await _authRepository.getTokens();
       _user = await _authRepository.getUser();

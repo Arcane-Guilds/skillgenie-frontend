@@ -1,8 +1,9 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 /// API key for Gemini AI
 class ChatbotConstants {
   // API key for Gemini AI
- // static const String apiKey = "AIzaSyCzBS8otv9A76K_hIrOwe3B1ao4KDnd0KI";
-  static const String apiKey = "AIzaSyANQFgw4TiJSEZS0qoAwwKmFuepidBRqPE";
+  static String get apiKey => dotenv.env['GEMINI_API_KEY'] ?? "AIzaSyANQFgw4TiJSEZS0qoAwwKmFuepidBRqPE";
 
   // Model name - using the same as in the original implementation
   static const String textModel = "gemini-2.0-flash";

@@ -2,8 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/chatbot_viewmodel.dart';
-import '../../core/services/service_locator.dart';
+import 'package:skillGenie/core/services/service_locator.dart';
+import 'package:skillGenie/presentation/viewmodels/chatbot_viewmodel.dart';
+
+
+
+
+
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});

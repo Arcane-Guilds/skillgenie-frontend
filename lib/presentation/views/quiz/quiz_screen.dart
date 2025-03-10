@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 import '../../../data/models/quiz_question.dart';
-import '../../viewmodels/quiz_view_model.dart';
+import '../../viewmodels/quiz_viewmodel.dart';
 
 class QuizPage extends StatelessWidget {
   final String userId;

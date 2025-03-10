@@ -6,6 +6,7 @@ import 'core/services/service_locator.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'presentation/viewmodels/profile_viewmodel.dart';
+import 'presentation/viewmodels/course_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -32,6 +33,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (context) => serviceLocator<ProfileViewModel>(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => serviceLocator<CourseViewModel>(),
         ),
       ],
       child: MaterialApp.router(

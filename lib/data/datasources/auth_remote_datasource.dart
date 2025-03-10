@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:logging/logging.dart';
+import '../../core/constants/auth_constants.dart';
 import '../models/auth_response.dart';
 import '../models/user_model.dart';
 import 'api_client.dart';
@@ -15,7 +16,7 @@ class AuthRemoteDataSource {
   /// Sign in with email and password
   Future<AuthResponse> signIn(String email, String password) async {
     _logger.info('Attempting to sign in with email: $email');
-    final response = await _apiClient.postRequest(ApiConstants.signin, {
+    final response = await _apiClient.postRequest(AuthConstants.signin, {
       "email": email,
       "password": password,
     });
@@ -33,7 +34,7 @@ class AuthRemoteDataSource {
   /// Sign up with username, email, and password
   Future<AuthResponse> signUp(String username, String email, String password) async {
     _logger.info('Attempting to sign up with email: $email');
-    final response = await _apiClient.postRequest(ApiConstants.signup, {
+    final response = await _apiClient.postRequest(AuthConstants.signup, {
       "username": username,
       "email": email,
       "password": password,
@@ -46,14 +47,14 @@ class AuthRemoteDataSource {
   /// Send a password reset email
   Future<void> forgotPassword(String email) async {
     _logger.info('Sending forgot password request for email: $email');
-    final response = await _apiClient.postRequest(ApiConstants.forgot_password, {"email": email});
+    final response = await _apiClient.postRequest(AuthConstants.forgot_password, {"email": email});
     _logger.info('Forgot password response status: ${response.statusCode}');
   }
 
   /// Verify OTP for password reset
   Future<void> verifyOtp(String email, String otp) async {
     _logger.info('Verifying OTP for email: $email');
-    final response = await _apiClient.postRequest(ApiConstants.verify_otp, {
+    final response = await _apiClient.postRequest(AuthConstants.verify_otp, {
       "email": email,
       "otp": otp,
     });
@@ -63,7 +64,7 @@ class AuthRemoteDataSource {
   /// Reset password with email and new password
   Future<void> resetPassword(String email, String newPassword) async {
     _logger.info('Resetting password for email: $email');
-    final response = await _apiClient.putRequest(ApiConstants.reset_password, {
+    final response = await _apiClient.putRequest(AuthConstants.reset_password, {
       "email": email,
       "newPassword": newPassword,
     });

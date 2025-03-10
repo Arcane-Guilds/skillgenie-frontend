@@ -14,21 +14,25 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigate();
+    // Use post-frame callback to ensure the widget is fully built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigate();
+    });
   }
 
   Future<void> _navigate() async {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     await authViewModel.checkAuthStatus();
 
-    // Ensure navigation happens after the first frame is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (authViewModel.user != null) {
+    if (authViewModel.user != null) {
+      if (mounted) {
         GoRouter.of(context).go('/home');
-      } else {
+      }
+    } else {
+      if (mounted) {
         GoRouter.of(context).go('/onboarding');
       }
-    });
+    }
   }
 
   @override

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/lesson_viewmodel.dart';
+import '../../viewmodels/media_generator_viewmodel.dart';
 import '../../../core/services/service_locator.dart';
 
-class LessonView extends StatelessWidget {
-  const LessonView({super.key});
+class MediaGeneratorView extends StatelessWidget {
+  const MediaGeneratorView({super.key});
   
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => serviceLocator<LessonViewModel>(),
+      create: (_) => serviceLocator<MediaGeneratorViewModel>(),
       child: Scaffold(
         appBar: AppBar(title: const Text("Générateur de vidéo de leçon")),
-        body: Consumer<LessonViewModel>(
+        body: Consumer<MediaGeneratorViewModel>(
           builder: (context, viewModel, child) {
             return Padding(
               padding: const EdgeInsets.all(16.0),
@@ -26,7 +26,7 @@ class LessonView extends StatelessWidget {
                   const SizedBox(height: 20),
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Text(viewModel.lessonContent),
+                      child: Text(viewModel.mediaGeneratorContent),
                     ),
                   ),
                   const SizedBox(height: 20),

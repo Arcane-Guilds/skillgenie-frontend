@@ -1,30 +1,29 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:skillGenie/data/repositories/media_generator_repository.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
-import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:ui' as ui;
-import '../../data/repositories/lesson_repository.dart';
 
-class LessonViewModel extends ChangeNotifier {
+
+class MediaGeneratorViewModel extends ChangeNotifier {
   final FlutterTts flutterTts = FlutterTts();
-  final LessonRepository _lessonRepository;
-  String lessonContent = "";
+  final MediaGeneratorRepository _mediaGeneratorRepository;
+  String mediaGeneratorContent = "";
   bool isProcessing = false;
 
-  LessonViewModel({required LessonRepository lessonRepository}) 
-      : _lessonRepository = lessonRepository;
+  MediaGeneratorViewModel({required MediaGeneratorRepository mediaGeneratorRepository})
+      : _mediaGeneratorRepository = mediaGeneratorRepository;
 
   /// ✅ Sélectionner un fichier PDF et extraire le texte
   Future<void> pickAndExtractText() async {
     try {
-      String extractedText = await _lessonRepository.pickAndExtractText();
-      lessonContent = extractedText;
+      String extractedText = await _mediaGeneratorRepository.pickAndExtractText();
+      mediaGeneratorContent = extractedText;
       notifyListeners();
     } catch (e) {
-      lessonContent = "Erreur lors de la sélection du fichier : $e";
+      mediaGeneratorContent = "Erreur lors de la sélection du fichier : $e";
       notifyListeners();
     }
   }
@@ -46,17 +45,17 @@ class LessonViewModel extends ChangeNotifier {
         throw Exception("Aucun texte trouvé dans le PDF.");
       }
 
-      lessonContent = extractedText;
+      mediaGeneratorContent = extractedText;
       notifyListeners();
     } catch (e) {
-      lessonContent = "Échec de l'extraction du texte. Erreur : $e";
+      mediaGeneratorContent = "Échec de l'extraction du texte. Erreur : $e";
       notifyListeners();
     }
   }
 
   /// ✅ Convertir le texte en audio TTS et enregistrer en fichier
   Future<String> generateAudioFromText() async {
-    return await _lessonRepository.generateAudioFromText(lessonContent);
+    return await _mediaGeneratorRepository.generateAudioFromText(mediaGeneratorContent);
   }
 
   /// ✅ Générer une image à partir du texte
@@ -90,7 +89,7 @@ class LessonViewModel extends ChangeNotifier {
 
   /// ✅ Générer toutes les images depuis le texte
   Future<List<String>> generateImagesFromText() async {
-    return await _lessonRepository.generateImagesFromText(lessonContent);
+    return await _mediaGeneratorRepository.generateImagesFromText(mediaGeneratorContent);
   }
 
   /// ✅ Générer une vidéo à partir des images
@@ -100,7 +99,7 @@ class LessonViewModel extends ChangeNotifier {
 
     try {
       List<String> imagePaths = await generateImagesFromText();
-      String videoPath = await _lessonRepository.generateVideoFromImages(imagePaths);
+      String videoPath = await _mediaGeneratorRepository.generateVideoFromImages(imagePaths);
       print("✅ Vidéo générée avec succès : $videoPath");
     } catch (e) {
       print("❌ Erreur lors de la génération vidéo : $e");
@@ -115,8 +114,8 @@ class LessonViewModel extends ChangeNotifier {
     try {
       String audioPath = await generateAudioFromText();
       List<String> imagePaths = await generateImagesFromText();
-      String videoPath = await _lessonRepository.generateVideoFromImages(imagePaths);
-      String finalVideoPath = await _lessonRepository.addAudioToVideo(audioPath, videoPath);
+      String videoPath = await _mediaGeneratorRepository.generateVideoFromImages(imagePaths);
+      String finalVideoPath = await _mediaGeneratorRepository.addAudioToVideo(audioPath, videoPath);
       print("✅ Vidéo finale avec audio : $finalVideoPath");
     } catch (e) {
       print("❌ Erreur lors de l'ajout audio à la vidéo : $e");

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:skillGenie/core/widgets/buttom_custom_navbar.dart';
 
 import 'package:skillGenie/presentation/views/home/home_content.dart';
-import 'package:skillGenie/presentation/views/lesson/lesson_view.dart';
+import 'package:skillGenie/presentation/views/chatbot/media_generator_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 import '../../../data/models/user_model.dart';
-import '../chatbot_screen.dart';
+import '../chatbot//chatbot_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -85,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>  LessonView()),
+                MaterialPageRoute(builder: (context) =>  const MediaGeneratorView()),
               );
             },
             backgroundColor: Colors.blue, // Couleur différente pour le distinguer

@@ -298,6 +298,9 @@ class CourseChapter {
   final List<CourseExercise> exercises;
   final ChapterChallenge? challenge;
   final ChapterRewards? rewards;
+  final ConceptExplanation? conceptExplanation;
+  final TutorialContent? tutorialContent;
+  final AdditionalResources? additionalResources;
 
   CourseChapter({
     required this.title,
@@ -307,6 +310,9 @@ class CourseChapter {
     required this.exercises,
     this.challenge,
     this.rewards,
+    this.conceptExplanation,
+    this.tutorialContent,
+    this.additionalResources,
   });
 
   factory CourseChapter.fromJson(Map<String, dynamic> json) {
@@ -321,6 +327,15 @@ class CourseChapter {
           [],
       challenge: json['challenge'] != null ? ChapterChallenge.fromJson(json['challenge']) : null,
       rewards: json['rewards'] != null ? ChapterRewards.fromJson(json['rewards']) : null,
+      conceptExplanation: json['conceptExplanation'] != null 
+          ? ConceptExplanation.fromJson(json['conceptExplanation']) 
+          : null,
+      tutorialContent: json['tutorialContent'] != null 
+          ? TutorialContent.fromJson(json['tutorialContent']) 
+          : null,
+      additionalResources: json['additionalResources'] != null 
+          ? AdditionalResources.fromJson(json['additionalResources']) 
+          : null,
     );
   }
 
@@ -341,7 +356,182 @@ class CourseChapter {
       data['rewards'] = rewards!.toJson();
     }
     
+    if (conceptExplanation != null) {
+      data['conceptExplanation'] = conceptExplanation!.toJson();
+    }
+    
+    if (tutorialContent != null) {
+      data['tutorialContent'] = tutorialContent!.toJson();
+    }
+    
+    if (additionalResources != null) {
+      data['additionalResources'] = additionalResources!.toJson();
+    }
+    
     return data;
+  }
+}
+
+class ConceptExplanation {
+  final String basicDefinition;
+  final String detailedExplanation;
+  final List<String> codeExamples;
+  final List<String> commonMistakes;
+  final List<String> bestPractices;
+
+  ConceptExplanation({
+    required this.basicDefinition,
+    required this.detailedExplanation,
+    required this.codeExamples,
+    required this.commonMistakes,
+    required this.bestPractices,
+  });
+
+  factory ConceptExplanation.fromJson(Map<String, dynamic> json) {
+    return ConceptExplanation(
+      basicDefinition: json['basicDefinition'] ?? '',
+      detailedExplanation: json['detailedExplanation'] ?? '',
+      codeExamples: List<String>.from(json['codeExamples'] ?? []),
+      commonMistakes: List<String>.from(json['commonMistakes'] ?? []),
+      bestPractices: List<String>.from(json['bestPractices'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'basicDefinition': basicDefinition,
+      'detailedExplanation': detailedExplanation,
+      'codeExamples': codeExamples,
+      'commonMistakes': commonMistakes,
+      'bestPractices': bestPractices,
+    };
+  }
+}
+
+class TutorialContent {
+  final List<TutorialStep> steps;
+
+  TutorialContent({
+    required this.steps,
+  });
+
+  factory TutorialContent.fromJson(Map<String, dynamic> json) {
+    return TutorialContent(
+      steps: (json['steps'] as List<dynamic>?)
+              ?.map((step) => TutorialStep.fromJson(step))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'steps': steps.map((step) => step.toJson()).toList(),
+    };
+  }
+}
+
+class TutorialStep {
+  final String title;
+  final String explanation;
+  final String codeSnippet;
+  final String expectedOutput;
+
+  TutorialStep({
+    required this.title,
+    required this.explanation,
+    required this.codeSnippet,
+    required this.expectedOutput,
+  });
+
+  factory TutorialStep.fromJson(Map<String, dynamic> json) {
+    return TutorialStep(
+      title: json['title'] ?? '',
+      explanation: json['explanation'] ?? '',
+      codeSnippet: json['codeSnippet'] ?? '',
+      expectedOutput: json['expectedOutput'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'explanation': explanation,
+      'codeSnippet': codeSnippet,
+      'expectedOutput': expectedOutput,
+    };
+  }
+}
+
+class AdditionalResources {
+  final List<String> readings;
+  final List<String> videos;
+  final List<String> exercises;
+
+  AdditionalResources({
+    required this.readings,
+    required this.videos,
+    required this.exercises,
+  });
+
+  factory AdditionalResources.fromJson(Map<String, dynamic> json) {
+    return AdditionalResources(
+      readings: List<String>.from(json['readings'] ?? []),
+      videos: List<String>.from(json['videos'] ?? []),
+      exercises: List<String>.from(json['exercises'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'readings': readings,
+      'videos': videos,
+      'exercises': exercises,
+    };
+  }
+}
+
+class CourseExercise {
+  final String type;
+  final String content;
+  final String solution;
+  final List<String> hints;
+  final String successMessage;
+  final String failureHint;
+  final String explanation;
+
+  CourseExercise({
+    required this.type,
+    required this.content,
+    required this.solution,
+    required this.hints,
+    this.successMessage = '',
+    this.failureHint = '',
+    this.explanation = '',
+  });
+
+  factory CourseExercise.fromJson(Map<String, dynamic> json) {
+    return CourseExercise(
+      type: json['type'] ?? '',
+      content: json['content'] ?? '',
+      solution: json['solution'] ?? '',
+      hints: List<String>.from(json['hints'] ?? []),
+      successMessage: json['successMessage'] ?? '',
+      failureHint: json['failureHint'] ?? '',
+      explanation: json['explanation'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'content': content,
+      'solution': solution,
+      'hints': hints,
+      'successMessage': successMessage,
+      'failureHint': failureHint,
+      'explanation': explanation,
+    };
   }
 }
 
@@ -401,46 +591,6 @@ class ChapterRewards {
       'badge': badge,
       'badgeDescription': badgeDescription,
       'unlocks': unlocks,
-    };
-  }
-}
-
-class CourseExercise {
-  final String type;
-  final String content;
-  final String solution;
-  final List<String> hints;
-  final String successMessage;
-  final String failureHint;
-
-  CourseExercise({
-    required this.type,
-    required this.content,
-    required this.solution,
-    required this.hints,
-    this.successMessage = '',
-    this.failureHint = '',
-  });
-
-  factory CourseExercise.fromJson(Map<String, dynamic> json) {
-    return CourseExercise(
-      type: json['type'] ?? '',
-      content: json['content'] ?? '',
-      solution: json['solution'] ?? '',
-      hints: List<String>.from(json['hints'] ?? []),
-      successMessage: json['successMessage'] ?? '',
-      failureHint: json['failureHint'] ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'content': content,
-      'solution': solution,
-      'hints': hints,
-      'successMessage': successMessage,
-      'failureHint': failureHint,
     };
   }
 }

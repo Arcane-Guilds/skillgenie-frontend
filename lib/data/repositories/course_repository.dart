@@ -136,4 +136,117 @@ class CourseRepository {
       throw Exception('Error updating current level: $e');
     }
   }
+
+  /// Submit a code solution for verification
+  Future<Map<String, dynamic>> submitCodeSolution(String courseId, String progressKey, String code) async {
+    try {
+      _logger.i('Submitting code solution for $courseId, $progressKey');
+      
+      final response = await _client.post(
+        Uri.parse('${ApiConstants.baseUrl}/course/$courseId/verify-code'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'progressKey': progressKey,
+          'code': code,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return {
+          'success': result['success'] ?? false,
+          'message': result['message'] ?? 'Code verification completed',
+          'course': result['course'] != null ? Course.fromJson(result['course']) : null,
+        };
+      } else {
+        _logger.e('Failed to verify code: ${response.body}');
+        return {
+          'success': false,
+          'message': 'Failed to verify code: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      _logger.e('Error verifying code: $e');
+      return {
+        'success': false,
+        'message': 'Error verifying code: $e',
+      };
+    }
+  }
+
+  /// Submit a quiz answer for verification
+  Future<Map<String, dynamic>> submitQuizAnswer(String courseId, String progressKey, String answer) async {
+    try {
+      _logger.i('Submitting quiz answer for $courseId, $progressKey');
+      
+      final response = await _client.post(
+        Uri.parse('${ApiConstants.baseUrl}/course/$courseId/verify-quiz'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'progressKey': progressKey,
+          'answer': answer,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return {
+          'success': result['success'] ?? false,
+          'message': result['message'] ?? 'Quiz verification completed',
+          'course': result['course'] != null ? Course.fromJson(result['course']) : null,
+        };
+      } else {
+        _logger.e('Failed to verify quiz answer: ${response.body}');
+        return {
+          'success': false,
+          'message': 'Failed to verify quiz answer: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      _logger.e('Error verifying quiz answer: $e');
+      return {
+        'success': false,
+        'message': 'Error verifying quiz answer: $e',
+      };
+    }
+  }
+
+  /// Submit a challenge solution
+  Future<Map<String, dynamic>> submitChallengeSolution(String courseId, String levelKey, String chapterKey, String code) async {
+    try {
+      _logger.i('Submitting challenge solution for $courseId, L$levelKey-C$chapterKey');
+      
+      final response = await _client.post(
+        Uri.parse('${ApiConstants.baseUrl}/course/$courseId/challenge'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'levelKey': levelKey,
+          'chapterKey': chapterKey,
+          'code': code,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return {
+          'success': result['success'] ?? false,
+          'message': result['message'] ?? 'Challenge verification completed',
+          'testResults': result['testResults'] ?? [],
+          'course': result['course'] != null ? Course.fromJson(result['course']) : null,
+        };
+      } else {
+        _logger.e('Failed to verify challenge solution: ${response.body}');
+        return {
+          'success': false,
+          'message': 'Failed to verify challenge solution: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      _logger.e('Error verifying challenge solution: $e');
+      return {
+        'success': false,
+        'message': 'Error verifying challenge solution: $e',
+      };
+    }
+  }
 }

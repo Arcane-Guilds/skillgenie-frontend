@@ -12,6 +12,13 @@ class CourseViewModel extends ChangeNotifier {
   bool _isGeneratingCourse = false;
   bool _isUpdatingProgress = false;
 
+  // State variables for verification status
+  bool _isVerifyingCode = false;
+  bool _isVerifyingQuiz = false;
+  bool _isVerifyingChallenge = false;
+  String? _verificationMessage;
+  List<TestResult>? _testResults;
+
   CourseViewModel({required CourseRepository courseRepository})
       : _courseRepository = courseRepository;
 
@@ -22,6 +29,11 @@ class CourseViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isGeneratingCourse => _isGeneratingCourse;
   bool get isUpdatingProgress => _isUpdatingProgress;
+  bool get isVerifyingCode => _isVerifyingCode;
+  bool get isVerifyingQuiz => _isVerifyingQuiz;
+  bool get isVerifyingChallenge => _isVerifyingChallenge;
+  String? get verificationMessage => _verificationMessage;
+  List<TestResult>? get testResults => _testResults;
 
   // Fetch all courses for a user
   Future<void> fetchUserCourses(String userId) async {
@@ -134,5 +146,116 @@ class CourseViewModel extends ChangeNotifier {
   void clearCurrentCourse() {
     _currentCourse = null;
     notifyListeners();
+  }
+
+  // Methods for submitting solutions
+  Future<bool> submitCodeSolution(String courseId, String progressKey, String code) async {
+    try {
+      _isVerifyingCode = true;
+      _verificationMessage = null;
+      notifyListeners();
+
+      final response = await _courseRepository.submitCodeSolution(courseId, progressKey, code);
+      _verificationMessage = response['message'];
+      
+      if (response['success']) {
+        // Update course progress if needed
+        await updateCourseProgress(courseId, progressKey, 1);
+      }
+
+      return response['success'];
+    } catch (e) {
+      _verificationMessage = 'Error verifying code: ${e.toString()}';
+      return false;
+    } finally {
+      _isVerifyingCode = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> submitQuizAnswer(String courseId, String progressKey, String answer) async {
+    try {
+      _isVerifyingQuiz = true;
+      _verificationMessage = null;
+      notifyListeners();
+
+      final response = await _courseRepository.submitQuizAnswer(courseId, progressKey, answer);
+      _verificationMessage = response['message'];
+      
+      if (response['success']) {
+        // Update course progress if needed
+        await updateCourseProgress(courseId, progressKey, 1);
+      }
+
+      return response['success'];
+    } catch (e) {
+      _verificationMessage = 'Error verifying quiz answer: ${e.toString()}';
+      return false;
+    } finally {
+      _isVerifyingQuiz = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> submitChallengeSolution(String courseId, String levelKey, String chapterKey, String code) async {
+    try {
+      _isVerifyingChallenge = true;
+      _verificationMessage = null;
+      _testResults = null;
+      notifyListeners();
+
+      final response = await _courseRepository.submitChallengeSolution(courseId, levelKey, chapterKey, code);
+      _verificationMessage = response['message'];
+      
+      // Convert test results to TestResult objects
+      if (response['testResults'] != null) {
+        _testResults = (response['testResults'] as List)
+            .map((result) => TestResult.fromJson(result))
+            .toList();
+      }
+      
+      if (response['success']) {
+        // Update course progress if needed
+        await updateCourseProgress(courseId, levelKey, 1);
+      }
+
+      return response['success'];
+    } catch (e) {
+      _verificationMessage = 'Error verifying challenge solution: ${e.toString()}';
+      return false;
+    } finally {
+      _isVerifyingChallenge = false;
+      notifyListeners();
+    }
+  }
+
+  // Helper method to update course progress
+  Future<void> _updateCourseProgress(Course? updatedCourse) async {
+    if (updatedCourse != null) {
+      // Update the local course data
+      _currentCourse = updatedCourse;
+      notifyListeners();
+    }
+  }
+}
+
+// Model class for test results
+class TestResult {
+  final String testCase;
+  final bool passed;
+  final String message;
+
+  TestResult({
+    required this.testCase,
+    required this.passed,
+    required this.message,
+  });
+
+  factory TestResult.fromJson(Map<String, dynamic> json) {
+    return TestResult(
+      testCase: json['testCase'] as String? ?? 'Unknown test',
+      passed: json['passed'] as bool? ?? false,
+      message: json['message'] as String? ?? (json['passed'] == true ? 'Test passed' : 'Test failed'),
+    );
   }
 }

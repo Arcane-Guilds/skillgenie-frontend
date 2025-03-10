@@ -6,19 +6,6 @@ import 'package:characters/characters.dart';
 List<dynamic> CleanText (String source, String title, [bool pass_brackets = true])  //Удаление HTML-тегов, сносок, нечитаемых символов и т.д.
 {
   int limit = 300;
-  /* Необходимо убрать:
-  + Все, что находится в круглых, квадратных и треугольных скобках,
-  ? Выноски (начинаются на &#91;, заканчиваются на &#93;)
-  + Все остальные не отображающиеся символы - &#...?;
-  + Убрать &amp;, &nbsp; - заменить на их эквиваленты
-  + \u0301 - символ ударения
-  + Заменить большое тире на маленькие
-  + Необходимо убрать из определения описываемое слово (? возможно, если таких слов в определении нет - убрать это слово)
-  + Убрать двойные пробелы
-  + Убрать пробелы в начале и в конце
-  - Убрать пробелы вокруг тире (типа a - b на a-b) (только для названия)
-  - Убрать кавычки вокруг названия
-  */
   Map<String, String> braces = {
     '<' : '>',
     '(' : ')',
@@ -41,24 +28,23 @@ List<dynamic> CleanText (String source, String title, [bool pass_brackets = true
   Map<String, String> symbols = {
     '—' : '-',
   };
-  //1. Замена всех символов на эквиваленты
   int actual_i = 0;
   String result = '';
   var iter = source.characters.iterator;
-  while(iter.moveNext())  //Первый проход - удаление тегов, скобок, посторонних символов
+  while(iter.moveNext())
   {
-    if (iter.current == '&')  //Проверка, не является ли это специальным символом
+    if (iter.current == '&')
     {
-      iter.moveNext(6);  //TODO - убрать магическое число (максимальная длина в таблице unicode (всмысле моей, не стандарта))
+      iter.moveNext(6);
       bool found = false;
       for (var str in unicode.keys)
       {
-        if (iter.current.startsWith(str.substring(1))) //Если найден один из указанных символов
+        if (iter.current.startsWith(str.substring(1)))
         {
-          result += unicode[str] == null?'':unicode[str]!; //Замена символа
+          result += unicode[str] == null?'':unicode[str]!;
           //Откат итератора
-          iter.moveBack(1); //Откат до амперсанда
-          iter.moveNext(str.length-1);  //Проход вперед до конца найденной строки
+          iter.moveBack(1);
+          iter.moveNext(str.length-1);
           found = true;
           break;
         }

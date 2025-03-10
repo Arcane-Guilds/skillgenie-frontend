@@ -13,7 +13,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'maincross.dart';
 
-class SearchRoute extends StatefulWidget //Страница поиска
+class SearchRoute extends StatefulWidget
 {
   const SearchRoute({ Key? key}) : super(key: key);
 

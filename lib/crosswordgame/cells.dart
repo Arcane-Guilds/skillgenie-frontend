@@ -46,7 +46,7 @@ class Word extends StatelessWidget {
     );
   }
 
-  void ChangeLetter(String let, int index)  //Изменить букву под номером index на let
+  void ChangeLetter(String let, int index)
   {
     dynamic child = children[index];
     if (child.runtimeType == CellCross)
@@ -63,7 +63,7 @@ class Word extends StatelessWidget {
     parent.in_word.replaceRange(index, index+1, let);
   }
   
-  void ChangeFocus(bool value, int index) //Подсветить ячейку под номером index
+  void ChangeFocus(bool value, int index)
   {
     dynamic child = children[index];
     if (child.runtimeType == CellCross)
@@ -81,21 +81,21 @@ class Word extends StatelessWidget {
   }
 }
 
-class CellCross extends StatelessWidget { //Ячейка кроссворда
+class CellCross extends StatelessWidget {
   CellCross({ Key? key, required this.last, this.letter='A', this.pseudo_focused=false, required this.let_ind, required this.word_ind, required this.light_highlight,
     required this.mistake, this.clone_ind = -1, this.clone_let_ind = -1}) : super(key: key);
-  final bool last; //Является ли данная ячейка последней?
-  final bool mistake; //Есть ли в этой ячейке ошибка
-  final int let_ind;  //Индекс буквы
-  final int word_ind; //Индекс слова
+  final bool last;
+  final bool mistake;
+  final int let_ind;
+  final int word_ind;
 
-  final bool light_highlight; //Подсветка всего слова
-  bool pseudo_focused;  //Подсветка буквы (когда фокус на перекрывающем элементе)
+  final bool light_highlight;
+  bool pseudo_focused;
   
-  final String letter;  //Буква на этом месте
+  final String letter;
 
-  final int clone_ind;  //Индекс слова перекрывающей/перекрытой ячейки [-1]
-  final int clone_let_ind;  //Индекс непосредственно ячейки [-1]
+  final int clone_ind;
+  final int clone_let_ind;
 
   var txt_controller = TextEditingController();
 
@@ -136,7 +136,7 @@ class CellCross extends StatelessWidget { //Ячейка кроссворда
               parent.ChangeFocus(f, word_ind, let_ind);
               if (clone_ind != -1)
               {
-                parent.ChangeFocus(f, clone_ind, clone_let_ind); //Изменение буквы в пересечении
+                parent.ChangeFocus(f, clone_ind, clone_let_ind);
               }
             }
           },
@@ -169,7 +169,7 @@ class CellCross extends StatelessWidget { //Ячейка кроссворда
                       parent.ChangeLetter(value, word_ind, let_ind);
                       if (clone_ind != -1)
                       {
-                        parent.ChangeLetter(value, clone_ind, clone_let_ind); //Изменение буквы в пересечении
+                        parent.ChangeLetter(value, clone_ind, clone_let_ind);
                       }
                     }
                   },
@@ -186,11 +186,11 @@ class CellCross extends StatelessWidget { //Ячейка кроссворда
   }
 }
 
-// ReadOnlyCell - ячейка с неизменяемым содержимым, для случаев посторонних символов
-class ReadOnlyCell extends StatelessWidget { //Ячейка кроссворда
+// ReadOnlyCell
+class ReadOnlyCell extends StatelessWidget {
   ReadOnlyCell({ Key? key, required this.last, this.letter='A'}) : super(key: key);
-  final bool last; //Является ли данная ячейка последней?
-  final String letter;  //Буква на этом месте
+  final bool last;
+  final String letter;
   final _biggerFont = const TextStyle(fontSize: 40);
   var myFocusNode = FocusNode();
 
@@ -226,7 +226,7 @@ class ReadOnlyCell extends StatelessWidget { //Ячейка кроссворда
   }
 }
 
-class CellFormatter extends TextInputFormatter {  //Форматирование текста в ячейках
+class CellFormatter extends TextInputFormatter {
   CellFormatter ({ required this.node, required this.is_last});
   FocusNode node;
   final bool is_last;
@@ -236,11 +236,11 @@ class CellFormatter extends TextInputFormatter {  //Форматирование
       TextEditingValue oldValue,
       TextEditingValue newValue
       ) {
-        if (newValue.text.contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]"))) //Посторонние символы
+        if (newValue.text.contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))
         {
-          return const TextEditingValue();  //Сброс ячейки
+          return const TextEditingValue();
         }
-        if (newValue.text.length <= 1)  //Если новая буква одна
+        if (newValue.text.length <= 1)
         {
           if (newValue.composing != TextRange.empty || kIsWeb || Platform.isWindows)
           {
@@ -255,7 +255,7 @@ class CellFormatter extends TextInputFormatter {  //Форматирование
           }
           return TextEditingValue(text:newValue.text.toUpperCase());
         }
-        if (newValue.text.substring(1) == oldValue.text)  //Если новая буква вначале
+        if (newValue.text.substring(1) == oldValue.text)
         {
           if (!is_last)
             {
@@ -265,9 +265,9 @@ class CellFormatter extends TextInputFormatter {  //Форматирование
             {
               node.unfocus();
             }
-          return TextEditingValue(text:newValue.text.substring(0,1).toUpperCase()); //Возвращаем первую букву
+          return TextEditingValue(text:newValue.text.substring(0,1).toUpperCase());
         }
-        else  //Если новая буква в конце
+        else
         {
           if (!is_last)
             {

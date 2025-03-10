@@ -1,5 +1,3 @@
-//Страница, на которой отображается кроссворд
-
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:flutter/material.dart';
@@ -29,7 +27,7 @@ class CrosswordRouteState extends State<CrosswordRoute>
   late int pool_size;
   late int recursive_links;
   late int max_length;
-  late int buffer_inc;  //Увеличение буфера с каждым шагом
+  late int buffer_inc;
   late int help_count;
   @override
   void initState()

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+import 'package:provider/provider.dart';
+
 import '../../../core/constants/api_constants.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'challenges_screen.dart';
 
 class PartyCodeScreen extends StatefulWidget {
@@ -16,6 +22,7 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
   final TextEditingController _partyCodeController = TextEditingController();
   final TextEditingController _joinCodeController = TextEditingController();
   IO.Socket? socket;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -25,16 +32,17 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
 
   void _connectToSocket() {
     socket = IO.io(
-        '${ApiConstants.baseUrl}/socket.io',
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .build());
+      '${ApiConstants.baseUrl}',
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .build(),
+    );
 
     socket!.connect();
 
     socket!.onConnect((_) {
-      print('Connected to WebSocket');
+      print('✅ Connected to WebSocket');
     });
 
     socket!.on('partyGenerated', (data) {
@@ -48,46 +56,105 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     });
 
     socket!.on('playerJoined', (data) {
-      print("Player joined: ${data['users']}");
-      _showSnackbar("Player joined: ${data['users']}");
+      print("👥 Player joined: ${data['users']}");
     });
-
-    socket!.on('gameStarted', (data) {
-      print("Game started with party code: ${data['partyId']}");
-      _navigateToChallenge(data['partyId']);
-    });
-
-    socket!.onDisconnect((_) => print('Disconnected from WebSocket'));
-    socket!.onError((err) => print('Socket error: $err'));
   }
 
-  void _showSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  // 🟢 Generate Party Code
+  Future<void> _generateParty() async {
+    setState(() => isLoading = true);
+
+    try {
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}'
+          '/party-code/generate'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _partyCodeController.text = data['code'];
+        });
+      } else {
+        _showSnackbar('❌ Failed to generate party code');
+      }
+    } catch (e) {
+      _showSnackbar('❌ Error: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
-  void _generatePartyCode() {
-    socket!.emit('generateParty');
-  }
-
-  void _joinParty() {
-    if (_joinCodeController.text.isEmpty) {
-      _showSnackbar('Please enter a party code');
+  // 🟢 Join Party
+  Future<void> _joinParty() async {
+    final String code = _joinCodeController.text.trim();
+    if (code.isEmpty) {
+      _showSnackbar('⚠️ Please enter a valid party code');
       return;
     }
-    socket!.emit('joinParty', {'partyId': _joinCodeController.text});
-  }
 
-  void _startGame() {
-    if (_partyCodeController.text.isEmpty) {
-      _showSnackbar('Please generate a party code first');
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final String? userId = authViewModel.user?.id;
+
+    if (userId == null) {
+      _showSnackbar('⚠️ User not authenticated');
       return;
     }
-    socket!.emit('startGame', {'partyId': _partyCodeController.text});
+
+    setState(() => isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/party-code/join'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'code': code, 'userId': userId}),
+      );
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        if (data['success']) {
+          _showSnackbar('✅ Joined party successfully');
+
+          // 🔥 Check if the party now has 2 or more users
+          _checkAndNavigate(code);
+        } else {
+          _showSnackbar('❌ Failed to join party');
+        }
+      } else {
+        _showSnackbar('❌ Failed to join party');
+      }
+    } catch (e) {
+      _showSnackbar('❌ Error: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
-  void _navigateToChallenge(String partyCode) {
+  // ✅ Fetch users in party & navigate if at least 2 users
+  Future<void> _checkAndNavigate(String code) async {
+    try {
+      final response = await http
+          .get(Uri.parse('${ApiConstants.baseUrl}/party-code/users/$code'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        List<dynamic> users = data['users'];
+
+        print("👥 Current Party Users: $users");
+
+        if (users.length != 0) {
+          _goToChallengeScreen(code);
+        }
+      } else {
+        _showSnackbar('❌ Failed to fetch party users');
+      }
+    } catch (e) {
+      _showSnackbar('❌ Error: $e');
+    }
+  }
+
+  // ✅ Navigate to ChallengeScreen
+  void _goToChallengeScreen(String partyCode) {
+    print("🚀 Navigating to ChallengeScreen with partyCode: $partyCode");
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -96,131 +163,104 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    socket?.disconnect();
-    socket?.dispose();
-    _partyCodeController.dispose();
-    _joinCodeController.dispose();
-    super.dispose();
+  void _copyCode() {
+    Clipboard.setData(ClipboardData(text: _partyCodeController.text));
+    _showSnackbar('📋 Code copied to clipboard');
+  }
+
+  void _pasteCode() async {
+    ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data != null) {
+      setState(() {
+        _joinCodeController.text = data.text ?? '';
+      });
+    }
+  }
+
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Party Code'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Create Party Section
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Create a Party',
-                      style: TextStyle(
+      backgroundColor: const Color(0xFF111827),
+      body: Center(
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Card(
+            color: const Color(0xFF1F2937),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Invite by Party Code',
+                    style: TextStyle(
+                        color: Colors.white,
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _partyCodeController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: "Generated Party Code",
+                      labelStyle: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                          onPressed: _copyCode, child: const Text('Copy')),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: isLoading ? null : _generateParty,
+                        child: isLoading
+                            ? const CircularProgressIndicator()
+                            : const Text('Generate'),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _joinCodeController,
+                    decoration: const InputDecoration(
+                      labelText: "Enter Party Code",
+                      labelStyle: TextStyle(color: Colors.white),
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _partyCodeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Party Code',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.group),
-                      ),
-                      readOnly: true,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _generatePartyCode,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Generate Code'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: _partyCodeController.text));
-                            _showSnackbar('Party code copied to clipboard');
-                          },
-                          icon: const Icon(Icons.copy),
-                          tooltip: 'Copy to clipboard',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      onPressed: _startGame,
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text('Start Game'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                          onPressed: _pasteCode, child: const Text('Paste')),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                          onPressed: _joinParty, child: const Text('Join')),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () =>
+                        _goToChallengeScreen(_partyCodeController.text),
+                    child: const Text('Go to Challenge'),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            // Join Party Section
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Join a Party',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _joinCodeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Enter Party Code',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.group_add),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _joinParty,
-                      icon: const Icon(Icons.login),
-                      label: const Text('Join Party'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-} 
+}

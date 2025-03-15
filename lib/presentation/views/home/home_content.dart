@@ -20,8 +20,12 @@ class HomeContent extends StatefulWidget {
 }
 
 class _HomeContentState extends State<HomeContent> with SingleTickerProviderStateMixin {
+<<<<<<< HEAD
   // Remove the late TabController since it's not being used but disposed
   // late TabController _tabController;
+=======
+  late TabController _tabController;
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
   bool _isLoading = true;
 
     Future<String?> getUserId() async {
@@ -165,10 +169,14 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     // Use post-frame callback to ensure the widget is built before fetching data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchUserCourses();
     });
+=======
+    _fetchUserCourses();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
   }
 
   Future<void> _fetchUserCourses() async {
@@ -186,8 +194,12 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
 
   @override
   void dispose() {
+<<<<<<< HEAD
     // Remove the _tabController.dispose() since the controller isn't used
     // _tabController.dispose();
+=======
+    //_tabController.dispose();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     super.dispose();
   }
 
@@ -513,12 +525,17 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
     final Color courseColor = _getCourseColor(course.title);
     
     return GestureDetector(
+<<<<<<< HEAD
       key: ValueKey('course_${course.id}'),
       onTap: () {
         // Use a safer navigation method with future to avoid Hero animation issues
         Future.microtask(() {
           context.push('/course/${course.id}');
         });
+=======
+      onTap: () {
+        context.push('/course/${course.id}');
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),

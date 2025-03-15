@@ -99,8 +99,13 @@ class MediaGeneratorViewModel extends ChangeNotifier {
 
     try {
       List<String> imagePaths = await generateImagesFromText();
+<<<<<<< HEAD
       //String videoPath = await _mediaGeneratorRepository.generateVideoFromImages(imagePaths);
      // print("✅ Vidéo générée avec succès : $videoPath");
+=======
+      String videoPath = await _mediaGeneratorRepository.generateVideoFromImages(imagePaths);
+      print("✅ Vidéo générée avec succès : $videoPath");
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     } catch (e) {
       print("❌ Erreur lors de la génération vidéo : $e");
     }
@@ -114,9 +119,15 @@ class MediaGeneratorViewModel extends ChangeNotifier {
     try {
       String audioPath = await generateAudioFromText();
       List<String> imagePaths = await generateImagesFromText();
+<<<<<<< HEAD
      // String videoPath = await _mediaGeneratorRepository.generateVideoFromImages(imagePaths);
      // String finalVideoPath = await _mediaGeneratorRepository.addAudioToVideo(audioPath, videoPath);
       //print("✅ Vidéo finale avec audio : $finalVideoPath");
+=======
+      String videoPath = await _mediaGeneratorRepository.generateVideoFromImages(imagePaths);
+      String finalVideoPath = await _mediaGeneratorRepository.addAudioToVideo(audioPath, videoPath);
+      print("✅ Vidéo finale avec audio : $finalVideoPath");
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     } catch (e) {
       print("❌ Erreur lors de l'ajout audio à la vidéo : $e");
     }

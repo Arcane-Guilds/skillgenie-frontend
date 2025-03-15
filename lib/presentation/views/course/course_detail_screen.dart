@@ -149,6 +149,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+<<<<<<< HEAD
         actions: [
           // Add reminder button
           IconButton(
@@ -162,6 +163,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             },
           ),
         ],
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
       ),
       body: Consumer<CourseViewModel>(
         builder: (context, courseViewModel, child) {

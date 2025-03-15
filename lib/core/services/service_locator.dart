@@ -29,8 +29,11 @@ import '../../presentation/viewmodels/auth/signup_viewmodel.dart';
 import '../../presentation/viewmodels/quiz_viewmodel.dart';
 import '../../presentation/viewmodels/chatbot_viewmodel.dart';
 import '../../presentation/viewmodels/course_viewmodel.dart';
+<<<<<<< HEAD
 import '../../presentation/viewmodels/reminder_viewmodel.dart';
 import '../services/notification_service.dart';
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
 final serviceLocator = GetIt.instance;
 
@@ -42,11 +45,14 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerSingleton<http.Client>(http.Client());
   serviceLocator.registerSingleton<FlutterTts>(FlutterTts());
 
+<<<<<<< HEAD
   // Initialize and register notification service
   final notificationService = NotificationService();
   await notificationService.initialize();
   serviceLocator.registerSingleton<NotificationService>(notificationService);
 
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
   // Data sources
   serviceLocator.registerSingleton<ApiClient>(ApiClient());
   
@@ -184,6 +190,7 @@ Future<void> setupServiceLocator() async {
         courseRepository: serviceLocator<CourseRepository>(),
       ),
   );
+<<<<<<< HEAD
 
   serviceLocator.registerFactory<ReminderViewModel>(
     () => ReminderViewModel(
@@ -191,6 +198,8 @@ Future<void> setupServiceLocator() async {
       prefs: serviceLocator<SharedPreferences>(),
     ),
   );
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 }
 
 /// Cleanup resources when the app is shut down

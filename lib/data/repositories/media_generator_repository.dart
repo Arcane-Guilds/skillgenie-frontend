@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+<<<<<<< HEAD
 //import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+=======
+import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 import 'package:path_provider/path_provider.dart';
 import 'dart:ui' as ui;
 import 'package:logging/logging.dart';
@@ -135,7 +139,11 @@ class MediaGeneratorRepository {
   }
 
   /// Generate a video from images
+<<<<<<< HEAD
   /* Future<String> generateVideoFromImages(List<String> imagePaths) async {
+=======
+  Future<String> generateVideoFromImages(List<String> imagePaths) async {
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     try {
       _logger.info('Generating video from images');
       final directory = await getApplicationDocumentsDirectory();
@@ -145,11 +153,19 @@ class MediaGeneratorRepository {
 
       final String videoPath = "${directory.path}/output_video.mp4";
 
+<<<<<<< HEAD
        await FFmpegKit.execute(
           "-f concat -safe 0 -i $imageListFile -vf fps=1 -y $videoPath");
 
       return videoPath;
     }catch (e) {
+=======
+      await FFmpegKit.execute(
+          "-f concat -safe 0 -i $imageListFile -vf fps=1 -y $videoPath");
+
+      return videoPath;
+    } catch (e) {
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
       _logger.severe('Error generating video from images: $e');
       throw Exception("Error generating video: $e");
     }
@@ -170,5 +186,9 @@ class MediaGeneratorRepository {
       _logger.severe('Error adding audio to video: $e');
       throw Exception("Error adding audio to video: $e");
     }
+<<<<<<< HEAD
   } */
+=======
+  }
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 } 

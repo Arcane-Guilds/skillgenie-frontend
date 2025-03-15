@@ -58,12 +58,16 @@ Page<void> _buildTransitionPage(Widget child) {
   );
 }
 
+<<<<<<< HEAD
 // Add this helper function at the top level
 String getUniqueHeroTag(String baseTag, String uniqueIdentifier) {
   return '${baseTag}_$uniqueIdentifier';
 }
 
 // Add this function to disable Hero animations during bottom tab navigation:
+=======
+// Define navigation
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 final appRouter = GoRouter(
   initialLocation: '/',
   refreshListenable: serviceLocator<AuthViewModel>(),
@@ -173,6 +177,7 @@ final appRouter = GoRouter(
     ShellRoute(
       builder: (context, state, child) {
         int index = _getTabIndex(state.fullPath ?? '/home');
+<<<<<<< HEAD
         
         // Wrap child with a HeroControllerScope that suppresses Hero animations
         // between bottom nav tab transitions
@@ -185,6 +190,11 @@ final appRouter = GoRouter(
             currentIndex: index,
             child: child,
           ),
+=======
+        return ShellScaffold(
+          currentIndex: index,
+          child: child,
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
         );
       },
       routes: [
@@ -213,6 +223,7 @@ final appRouter = GoRouter(
   ],
 );
 
+<<<<<<< HEAD
 // Add this helper function to determine if it's a bottom navigation transition
 bool _isBottomNavTransition(GoRouterState state) {
   final path = state.fullPath ?? '';
@@ -223,6 +234,8 @@ bool _isBottomNavTransition(GoRouterState state) {
          path == '/profile';
 }
 
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 // Function to determine the current tab index
 int _getTabIndex(String location) {
   switch (location) {

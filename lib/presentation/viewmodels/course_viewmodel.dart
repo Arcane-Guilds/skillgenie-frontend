@@ -40,13 +40,18 @@ class CourseViewModel extends ChangeNotifier {
     try {
       _isLoading = true;
       _errorMessage = null;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       _userCourses = await _courseRepository.getUserCourses(userId);
     } catch (e) {
       _errorMessage = 'Failed to fetch courses: ${e.toString()}';
     } finally {
       _isLoading = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
     }
   }
@@ -58,6 +63,9 @@ class CourseViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       print('Error notifying listeners: $e');
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
@@ -66,14 +74,22 @@ class CourseViewModel extends ChangeNotifier {
     try {
       _isLoading = true;
       _errorMessage = null;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       _currentCourse = await _courseRepository.getCourseById(courseId);
     } catch (e) {
       _errorMessage = 'Failed to fetch course: ${e.toString()}';
     } finally {
       _isLoading = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
@@ -82,7 +98,11 @@ class CourseViewModel extends ChangeNotifier {
     try {
       _isGeneratingCourse = true;
       _errorMessage = null;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       final course = await _courseRepository.generateCourse(userId);
       _currentCourse = course;
@@ -98,7 +118,11 @@ class CourseViewModel extends ChangeNotifier {
       return null;
     } finally {
       _isGeneratingCourse = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
@@ -106,7 +130,11 @@ class CourseViewModel extends ChangeNotifier {
   Future<void> updateCourseProgress(String courseId, String progressKey, int value) async {
     try {
       _isUpdatingProgress = true;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       // Update progress in the repository
       final updatedCourse = await _courseRepository.updateCourseProgress(courseId, progressKey, value);
@@ -123,7 +151,11 @@ class CourseViewModel extends ChangeNotifier {
       _errorMessage = 'Failed to update progress: ${e.toString()}';
     } finally {
       _isUpdatingProgress = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
@@ -131,7 +163,11 @@ class CourseViewModel extends ChangeNotifier {
   Future<void> updateCurrentLevel(String courseId, int level) async {
     try {
       _isUpdatingProgress = true;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       // Update current level in the repository
       final updatedCourse = await _courseRepository.updateCurrentLevel(courseId, level);
@@ -148,14 +184,22 @@ class CourseViewModel extends ChangeNotifier {
       _errorMessage = 'Failed to update level: ${e.toString()}';
     } finally {
       _isUpdatingProgress = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
   // Clear current course
   void clearCurrentCourse() {
     _currentCourse = null;
+<<<<<<< HEAD
     _safeNotifyListeners();
+=======
+    notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
   }
 
   // Methods for submitting solutions
@@ -163,7 +207,11 @@ class CourseViewModel extends ChangeNotifier {
     try {
       _isVerifyingCode = true;
       _verificationMessage = null;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       final response = await _courseRepository.submitCodeSolution(courseId, progressKey, code);
       _verificationMessage = response['message'];
@@ -179,7 +227,11 @@ class CourseViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isVerifyingCode = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
@@ -187,7 +239,11 @@ class CourseViewModel extends ChangeNotifier {
     try {
       _isVerifyingQuiz = true;
       _verificationMessage = null;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       final response = await _courseRepository.submitQuizAnswer(courseId, progressKey, answer);
       _verificationMessage = response['message'];
@@ -203,7 +259,11 @@ class CourseViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isVerifyingQuiz = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
@@ -212,7 +272,11 @@ class CourseViewModel extends ChangeNotifier {
       _isVerifyingChallenge = true;
       _verificationMessage = null;
       _testResults = null;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
       final response = await _courseRepository.submitChallengeSolution(courseId, levelKey, chapterKey, code);
       _verificationMessage = response['message'];
@@ -235,7 +299,11 @@ class CourseViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isVerifyingChallenge = false;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 
@@ -244,7 +312,11 @@ class CourseViewModel extends ChangeNotifier {
     if (updatedCourse != null) {
       // Update the local course data
       _currentCourse = updatedCourse;
+<<<<<<< HEAD
       _safeNotifyListeners();
+=======
+      notifyListeners();
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     }
   }
 }

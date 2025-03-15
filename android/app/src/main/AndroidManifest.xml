@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<<<<<<< HEAD
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 <uses-permission android:name="android.permission.VIBRATE" />
 <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -6,6 +7,8 @@
 <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 <!-- For Android 13+ -->
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     <application
         android:label="skillGenie"
         android:name="${applicationName}"
@@ -38,6 +41,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+<<<<<<< HEAD
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>
@@ -47,6 +51,8 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

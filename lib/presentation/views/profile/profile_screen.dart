@@ -349,7 +349,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             clipBehavior: Clip.none,
             children: [
               Hero(
+<<<<<<< HEAD
                 
+=======
+>>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
                 tag: 'profile_image',
                 child: GestureDetector(
                   onTap: _pickImage,

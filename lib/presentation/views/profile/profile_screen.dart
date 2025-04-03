@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/app_error_widget.dart';
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../../core/errors/error_handler.dart';
@@ -269,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              GoRouter.of(context).push('/settings');
+              _navigateToSettings();
             },
           ),
         ],
@@ -349,10 +348,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             clipBehavior: Clip.none,
             children: [
               Hero(
-<<<<<<< HEAD
-                
-=======
->>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
                 tag: 'profile_image',
                 child: GestureDetector(
                   onTap: _pickImage,

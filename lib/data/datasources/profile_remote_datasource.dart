@@ -139,11 +139,10 @@ class ProfileRemoteDataSource {
   Future<void> updatePassword(String accessToken, String currentPassword, String newPassword) async {
     try {
       _logger.info('Updating password');
-      
       // Add the token to the API client
       _apiClient.addAuthenticationToken(accessToken);
       
-      final response = await _apiClient.postRequest(ProfileConstants.changePassword, {
+      final response = await _apiClient.putRequest(ProfileConstants.changePassword, {
         'currentPassword': currentPassword,
         'newPassword': newPassword,
       });

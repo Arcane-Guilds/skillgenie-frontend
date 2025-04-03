@@ -5,11 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-<<<<<<< HEAD
-import 'package:skillGenie/presentation/viewmodels/reminder_viewmodel.dart';
-=======
->>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
+import 'package:skillGenie/presentation/viewmodels/reminder_viewmodel.dart';
 import '../../../core/constants/cloudinary_constants.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../data/models/user_model.dart';
@@ -91,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-<<<<<<< HEAD
+
   // ================== Daily Reminder Section ==================
   void _showReminderTimePicker(BuildContext context) async {
     final reminderVM = Provider.of<ReminderViewModel>(context, listen: false);
@@ -192,8 +189,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-=======
->>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
 
   void _showChangePasswordDialog() {
     // Controllers for the password fields
@@ -1294,7 +1289,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-<<<<<<< HEAD
             // Add a new reminder card in the main settings screen after the "Change Password" card
             Card(
               elevation: 2,
@@ -1369,8 +1363,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-=======
->>>>>>> b38c0289152c255c87e6579a0bd195aa9b446ded
+
             const SizedBox(height: 24),
 
             // Account Actions Section

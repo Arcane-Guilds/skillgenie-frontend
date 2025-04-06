@@ -206,28 +206,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             
                             // Comments list
                             _buildCommentsList(viewModel),
-                            
-                            // Load more comments button
-                            if (viewModel.hasMoreComments)
-                              Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: ElevatedButton(
-                                    onPressed: viewModel.commentsStatus == CommunityStatus.loading
-                                        ? null
-                                        : () => viewModel.loadComments(post.id, loadMore: true),
-                                    child: viewModel.commentsStatus == CommunityStatus.loading
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Text('Load More'),
-                                  ),
-                                ),
-                              ),
                           ],
                         ),
                       ),
@@ -745,7 +723,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               // Like button
                               InkWell(
                                 onTap: () {
-                                  context.read<CommunityViewModel>().toggleCommentLike(reply.id);
+                                  context.read<CommunityViewModel>().toggleReplyLike(reply.id);
                                 },
                                 borderRadius: BorderRadius.circular(20),
                                 child: Padding(

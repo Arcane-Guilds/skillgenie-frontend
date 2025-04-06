@@ -5,12 +5,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/app_error_widget.dart';
+
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/constants/cloudinary_constants.dart';
-import '../../../core/navigation/app_router.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

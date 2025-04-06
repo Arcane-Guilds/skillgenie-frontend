@@ -90,19 +90,28 @@ class CommunityRepository {
     int page = 1,
     int limit = 20,
   }) async {
-    final response = await client.get(
-      Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.commentsWithReplies}/$postId/comments-with-replies?${CommunityConstants.pageParam}=$page&${CommunityConstants.limitParam}=$limit'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    try {
+      final response = await client.get(
+        Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId/comments'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data;
-    } else {
-      throw Exception('Failed to load comments: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'comments': data,
+          'total': data.length,
+          'hasMore': false // No more pagination with the new API
+        };
+      } else {
+        throw Exception('Failed to load comments: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in getCommentsForPost: $e');
+      throw Exception('Failed to load comments: $e');
     }
   }
 
@@ -416,6 +425,64 @@ class CommunityRepository {
     } catch (e) {
       print('Exception in deleteComment: $e');
       throw Exception('Failed to delete comment: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> likeReply(String token, String replyId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('${ApiConstants.baseUrl}/community/replies/$replyId/like'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Like reply response: ${response.statusCode} - ${response.body}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        try {
+          final data = json.decode(response.body) as Map<String, dynamic>;
+          return {'isLiked': true, ...data};
+        } catch (e) {
+          // If can't parse response, still return success
+          return {'isLiked': true};
+        }
+      } else {
+        throw Exception('Failed to like reply: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in likeReply: $e');
+      throw Exception('Failed to like reply: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> unlikeReply(String token, String replyId) async {
+    try {
+      final response = await client.delete(
+        Uri.parse('${ApiConstants.baseUrl}/community/replies/$replyId/like'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Unlike reply response: ${response.statusCode} - ${response.body}');
+      
+      if (response.statusCode == 200) {
+        try {
+          final data = json.decode(response.body) as Map<String, dynamic>;
+          return {'isLiked': false, ...data};
+        } catch (e) {
+          // If can't parse response, still return success
+          return {'isLiked': false};
+        }
+      } else {
+        throw Exception('Failed to unlike reply: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in unlikeReply: $e');
+      throw Exception('Failed to unlike reply: $e');
     }
   }
 } 

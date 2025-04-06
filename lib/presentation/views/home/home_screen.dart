@@ -68,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           FloatingActionButton(
+            heroTag: 'chatbot_fab',
             onPressed: () {
               Navigator.push(
                 context,
@@ -81,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           FloatingActionButton(
+            heroTag: 'media_generator_fab',
             onPressed: () {
               Navigator.push(
                 context,

@@ -10,6 +10,7 @@ import '../../data/repositories/game_repository.dart';
 import '../../data/repositories/media_generator_repository.dart';
 import '../../data/repositories/chatbot_repository.dart';
 import '../../data/repositories/course_repository.dart';
+import '../../data/repositories/lab_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
@@ -29,6 +30,7 @@ import '../../presentation/viewmodels/auth/signup_viewmodel.dart';
 import '../../presentation/viewmodels/quiz_viewmodel.dart';
 import '../../presentation/viewmodels/chatbot_viewmodel.dart';
 import '../../presentation/viewmodels/course_viewmodel.dart';
+import '../../presentation/viewmodels/lab_viewmodel.dart';
 import '../../presentation/viewmodels/reminder_viewmodel.dart';
 import '../services/notification_service.dart';
 
@@ -130,6 +132,12 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+  serviceLocator.registerSingleton<LabRepository>(
+    LabRepository(
+      client: serviceLocator<http.Client>(),
+    ),
+  );
+
   // ViewModels
   serviceLocator.registerFactory<AuthViewModel>(() {
     final viewModel = AuthViewModel(
@@ -187,6 +195,12 @@ Future<void> setupServiceLocator() async {
       ),
   );
 
+  // Lab ViewModel
+  serviceLocator.registerFactory<LabViewModel>(() =>
+      LabViewModel(
+        labRepository: serviceLocator<LabRepository>(),
+      ),
+  );
 
   serviceLocator.registerFactory<ReminderViewModel>(
     () => ReminderViewModel(
@@ -194,7 +208,6 @@ Future<void> setupServiceLocator() async {
       prefs: serviceLocator<SharedPreferences>(),
     ),
   );
-
 
 }
 

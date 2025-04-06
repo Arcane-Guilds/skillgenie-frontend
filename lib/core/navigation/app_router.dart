@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../presentation/viewmodels/quiz_viewmodel.dart';
 import '../../presentation/viewmodels/auth/auth_viewmodel.dart';
+import '../../presentation/viewmodels/lab_viewmodel.dart';
 import '../../presentation/views/auth/password/forgotpassword_screen.dart';
 import '../../presentation/views/auth/password/otpverification_screen.dart';
 import '../../presentation/views/auth/password/resetpassword_screen.dart';
@@ -24,6 +25,7 @@ import '../../presentation/views/notifications_screen.dart';
 import '../../presentation/views/chatbot/chatbot_screen.dart';
 import '../../presentation/views/course/course_detail_screen.dart';
 import '../../presentation/views/course/course_roadmap_screen.dart';
+import '../../presentation/views/course/lab_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 
@@ -161,6 +163,13 @@ courseId: courseId,
 initialLevelIndex: levelIndex,
 initialChapterIndex: chapterIndex,
 );
+},
+),
+GoRoute(
+path: '/lab/:chapterId',
+builder: (context, state) {
+final chapterId = state.pathParameters['chapterId']!;
+return LabScreen(chapterId: chapterId);
 },
 ),
 ShellRoute(

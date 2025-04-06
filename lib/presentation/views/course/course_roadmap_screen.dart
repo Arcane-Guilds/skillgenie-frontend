@@ -249,6 +249,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
               if (course == null) return const SizedBox.shrink();
               
               return FloatingActionButton.extended(
+                heroTag: 'course_continue_fab',
                 onPressed: () {
                   // Navigate to the current level and chapter
                   if (course.currentLevel < course.content.levels.length) {
@@ -1065,20 +1066,19 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
                     ),
                     const SizedBox(height: 12),
                     // Lesson stats row
-                    Row(
+                    Wrap(
+                      spacing: 16,
                       children: [
                         _buildLessonStat(
                             Icons.access_time,
                             lesson['duration'],
                             isLocked
                         ),
-                        const SizedBox(width: 16),
                         _buildLessonStat(
                             Icons.extension,
                             '${lesson['challenges']} exercises',
                             isLocked
                         ),
-                        const SizedBox(width: 16),
                         _buildLessonStat(
                             Icons.lightbulb_outline,
                             '${lesson['concepts']} concepts',

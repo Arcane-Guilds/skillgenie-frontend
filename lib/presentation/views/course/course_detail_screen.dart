@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/course_model.dart';
 import '../../viewmodels/course_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../viewmodels/lab_viewmodel.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -434,6 +435,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           // Bonus Content Section
           if (level.bonusContent != null)
             _buildBonusContentSection(level.bonusContent!),
+          
+          // Lab Button
+          _buildLabButton(course, _selectedLevelIndex, _selectedChapterIndex),
           
           const SizedBox(height: 80), // Space for bottom navigation
         ],
@@ -1379,14 +1383,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               children: [
                 _buildExerciseTypeIcon(exercise.type),
                 const SizedBox(width: 8),
-                Text(
-                  'Exercise ${exerciseIndex + 1} (${exercise.type.toUpperCase()})',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Exercise ${exerciseIndex + 1} (${exercise.type.toUpperCase()})',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
                 if (isCompleted)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1396,6 +1402,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       border: Border.all(color: Colors.green),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.check_circle, color: Colors.green, size: 16),
                         const SizedBox(width: 4),
@@ -1740,5 +1747,73 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     setState(() {
       _exerciseIndex = index;
     });
+  }
+
+  Widget _buildLabButton(Course course, int levelIndex, int chapterIndex) {
+    final level = course.content.levels[levelIndex];
+    final chapter = level.chapters[chapterIndex];
+    final chapterId = '${level.levelNumber}-${chapter.title.toLowerCase().replaceAll(' ', '_')}';
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(),
+          const SizedBox(height: 8),
+          Text(
+            'Hands-on Practice',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 2,
+            child: InkWell(
+              onTap: () {
+                // Simply navigate to the lab screen without trying to access LabViewModel here
+                context.push('/lab/$chapterId');
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.code,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Lab: ${chapter.title}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Apply what you\'ve learned in a hands-on coding exercise',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_ios, size: 16),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -9,6 +9,7 @@ import 'core/theme/app_theme.dart';
 import 'presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'presentation/viewmodels/profile_viewmodel.dart';
 import 'presentation/viewmodels/course_viewmodel.dart';
+import 'presentation/viewmodels/lab_viewmodel.dart';
 
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -50,11 +51,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => serviceLocator<CourseViewModel>(),
         ),
-
+        ChangeNotifierProvider(
+          create: (context) => serviceLocator<LabViewModel>(),
+        ),
         ChangeNotifierProvider(
           create: (context) => serviceLocator<ReminderViewModel>(),
         ),
-
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

@@ -1210,6 +1210,7 @@ class _SkillRoadmapScreenState extends State<SkillRoadmapScreen> with SingleTick
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'start_lesson_fab',
         onPressed: () {
           // Start the current lesson
           final currentLesson = _lessons.firstWhere((lesson) => lesson['isCurrent'], orElse: () => _lessons.first);

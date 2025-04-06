@@ -10,6 +10,7 @@ import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/constants/cloudinary_constants.dart';
+import '../../../core/navigation/app_router.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -349,8 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             clipBehavior: Clip.none,
             children: [
               Hero(
-                
-                tag: 'profile_image',
+                tag: 'profile_image_${profile?.id}',
                 child: GestureDetector(
                   onTap: _pickImage,
                   child: Container(

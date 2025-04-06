@@ -2,11 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 import '../../core/services/service_locator.dart';
 import '../../data/repositories/community_repository.dart';
 import '../../data/models/community/post.dart';
 import '../../data/models/community/comment.dart';
+import '../../data/models/community/user_preview.dart';
 import 'auth/auth_viewmodel.dart';
 
 enum CommunityStatus {
@@ -17,8 +19,8 @@ enum CommunityStatus {
 }
 
 class CommunityViewModel extends ChangeNotifier {
-  final CommunityRepository _communityRepository = serviceLocator<CommunityRepository>();
-  final AuthViewModel _authViewModel = serviceLocator<AuthViewModel>();
+  final CommunityRepository _communityRepository;
+  final AuthViewModel _authViewModel;
   
   // Timer for auto-retrying post loading
   Timer? _retryTimer;
@@ -51,13 +53,24 @@ class CommunityViewModel extends ChangeNotifier {
   String? _errorMessage;
   
   // Constructor to automatically load posts when created
-  CommunityViewModel() {
-    // Load cached like statuses
+  CommunityViewModel({
+    required CommunityRepository communityRepository,
+    required AuthViewModel authViewModel,
+  }) : 
+    _communityRepository = communityRepository,
+    _authViewModel = authViewModel {
+    print('CommunityViewModel initialized');
+    
+    // Load cached like statuses first
     _loadLikedCache();
+    
+    // Then load cached replies
+    _loadRepliesCache();
     
     // Load posts automatically when ViewModel is created
     // Small delay to ensure auth is initialized
     Future.delayed(const Duration(milliseconds: 500), () {
+      print('Delayed initialization triggered, loading posts');
       loadPosts();
     });
     
@@ -67,17 +80,29 @@ class CommunityViewModel extends ChangeNotifier {
   
   @override
   void dispose() {
+    print('CommunityViewModel disposed');
     _retryTimer?.cancel();
     _authViewModel.removeListener(_onAuthChanged);
     super.dispose();
   }
   
   void _onAuthChanged() {
-    // Reload posts when auth status changes (user logs in)
+    print('Auth status changed: isAuthenticated=${_authViewModel.isAuthenticated}');
+    
+    // Reload data when auth status changes (user logs in)
     if (_authViewModel.isAuthenticated) {
-      // Also reload liked posts cache
+      print('User authenticated, reloading data');
+      
+      // Load cached like statuses
       _loadLikedCache();
+      
+      // Load cached replies
+      _loadRepliesCache();
+      
+      // Finally load posts data
       loadPosts();
+    } else {
+      print('User logged out or not authenticated');
     }
   }
 
@@ -102,6 +127,55 @@ class CommunityViewModel extends ChangeNotifier {
     }
   }
   
+  // Load comment replies from SharedPreferences
+  Future<void> _loadRepliesCache() async {
+    try {
+      print('Starting to load replies cache...');
+      final prefs = await SharedPreferences.getInstance();
+      final userId = _authViewModel.user?.id ?? '';
+      
+      // Only load cache if user is logged in
+      if (userId.isNotEmpty) {
+        print('User ID is available: $userId');
+        final repliesJson = prefs.getString('${_commentRepliesKey}_$userId');
+        print('Loaded raw replies data: ${repliesJson != null ? 'Data exists (${repliesJson.length} bytes)' : 'No data found'}');
+        
+        if (repliesJson != null) {
+          try {
+            final Map<String, dynamic> repliesMap = json.decode(repliesJson);
+            
+            _commentRepliesCache = {};
+            repliesMap.forEach((commentId, repliesList) {
+              _commentRepliesCache[commentId] = (repliesList as List)
+                  .map((reply) => Map<String, dynamic>.from(reply))
+                  .toList();
+              print('Loaded ${(repliesList as List).length} replies for comment $commentId');
+            });
+            
+            int totalReplies = 0;
+            _commentRepliesCache.forEach((_, replies) {
+              totalReplies += replies.length;
+            });
+            
+            print('Successfully loaded replies for ${_commentRepliesCache.length} comments, total $totalReplies replies from cache');
+          } catch (parseError) {
+            print('Error parsing replies JSON: $parseError');
+            // Attempt to recover by initializing an empty cache
+            _commentRepliesCache = {};
+          }
+        } else {
+          print('No replies cache found for user $userId');
+          _commentRepliesCache = {};
+        }
+      } else {
+        print('No user ID available, skipping replies cache loading');
+      }
+    } catch (e) {
+      print('Error loading replies cache: $e');
+      _commentRepliesCache = {};
+    }
+  }
+  
   // Save liked posts and comments to SharedPreferences
   Future<void> _saveLikedCache() async {
     try {
@@ -117,6 +191,93 @@ class CommunityViewModel extends ChangeNotifier {
       }
     } catch (e) {
       print('Error saving liked cache: $e');
+    }
+  }
+  
+  // Save comment replies to SharedPreferences
+  Future<void> _saveRepliesCache() async {
+    try {
+      print('Starting to save replies cache...');
+      final prefs = await SharedPreferences.getInstance();
+      final userId = _authViewModel.user?.id ?? '';
+      
+      // Only save cache if user is logged in
+      if (userId.isNotEmpty && _commentRepliesCache.isNotEmpty) {
+        print('User ID is available ($userId) and cache has ${_commentRepliesCache.length} entries');
+        
+        // Print some debug info about the cache content
+        _commentRepliesCache.forEach((commentId, replies) {
+          print('Comment $commentId has ${replies.length} replies in cache');
+        });
+        
+        final String repliesJson = json.encode(_commentRepliesCache);
+        print('Encoded JSON size: ${repliesJson.length} bytes');
+        
+        await prefs.setString('${_commentRepliesKey}_$userId', repliesJson);
+        
+        int totalReplies = 0;
+        _commentRepliesCache.forEach((_, replies) {
+          totalReplies += replies.length;
+        });
+        
+        print('Successfully saved replies for ${_commentRepliesCache.length} comments, total $totalReplies replies to cache');
+        
+        // Verify the save worked
+        final savedJson = prefs.getString('${_commentRepliesKey}_$userId');
+        print('Verification - saved data exists: ${savedJson != null}');
+      } else {
+        if (userId.isEmpty) {
+          print('Cannot save replies cache: No user ID available');
+        } else {
+          print('Not saving empty replies cache');
+        }
+      }
+    } catch (e) {
+      print('Error saving replies cache: $e');
+    }
+  }
+  
+  // Update comment replies cache for a specific comment
+  void _updateRepliesCache(String commentId, List<Comment> replies) {
+    try {
+      print('Updating replies cache for comment $commentId with ${replies.length} replies');
+      
+      if (replies.isEmpty) {
+        if (_commentRepliesCache.containsKey(commentId)) {
+          print('Removing empty replies for comment $commentId from cache');
+          _commentRepliesCache.remove(commentId);
+        }
+      } else {
+        // Convert each reply to JSON, carefully handling potential errors
+        List<Map<String, dynamic>> repliesJson = [];
+        
+        for (var reply in replies) {
+          try {
+            // Make sure each reply has the correct parent reference
+            Map<String, dynamic> replyJson = reply.toJson();
+            
+            // Ensure parentComment is set correctly
+            if (replyJson['parentComment'] == null || replyJson['parentComment'].toString().isEmpty) {
+              replyJson['parentComment'] = commentId;
+            }
+            
+            repliesJson.add(replyJson);
+          } catch (e) {
+            print('Error converting reply to JSON: $e');
+            // Skip this reply if it can't be converted to JSON
+          }
+        }
+        
+        if (repliesJson.isNotEmpty) {
+          print('Saving ${repliesJson.length} replies for comment $commentId to cache');
+          _commentRepliesCache[commentId] = repliesJson;
+        }
+      }
+      
+      // Save the updated cache
+      _saveRepliesCache();
+    } catch (e) {
+      print('Error in _updateRepliesCache: $e');
     }
   }
   
@@ -303,13 +464,18 @@ class CommunityViewModel extends ChangeNotifier {
   Future<void> loadComments(String postId, {bool loadMore = false}) async {
     if (_commentsStatus == CommunityStatus.loading) return;
 
+    print('Loading comments for post $postId, loadMore=$loadMore');
+    
     // Store existing comments and their replies before reloading
     Map<String, List<Comment>> existingRepliesMap = {};
     if (!loadMore && _comments.isNotEmpty) {
+      print('Preserving existing comment replies before reload');
       // Before clearing comments, save all the replies for each parent comment
       for (var comment in _comments) {
         if (comment.replies != null && comment.replies!.isNotEmpty) {
           existingRepliesMap[comment.id] = comment.replies!;
+          // Also save to persistent cache
+          _updateRepliesCache(comment.id, comment.replies!);
           print('Saving ${comment.replies!.length} replies for comment ${comment.id}');
         }
       }
@@ -344,15 +510,24 @@ class CommunityViewModel extends ChangeNotifier {
       final List<dynamic> commentsData = result['comments'];
       print('Received ${commentsData.length} comments from API');
       
+      // Early debug: check what's in our persistent cache
+      print('Current _commentRepliesCache has ${_commentRepliesCache.length} comment entries');
+      _commentRepliesCache.forEach((commentId, replies) {
+        print('Cache entry for comment $commentId has ${replies.length} replies');
+      });
+      
       final List<Comment> newComments = commentsData.map((commentData) {
         Comment comment = Comment.fromJson(commentData);
+        final String commentId = comment.id;
+        print('Processing comment $commentId from API');
+        
         int repliesCount = comment.replies?.length ?? 0;
         if (repliesCount > 0) {
-          print('Comment ${comment.id} has $repliesCount replies from API');
+          print('Comment $commentId has $repliesCount replies from API');
         }
         
         // Apply cached like status
-        if (_likedCommentIds.contains(comment.id)) {
+        if (_likedCommentIds.contains(commentId)) {
           comment = Comment(
             id: comment.id,
             content: comment.content,
@@ -384,50 +559,53 @@ class CommunityViewModel extends ChangeNotifier {
           );
         }
         
-        // Restore any saved replies from the previous load if not present in the new data
-        if (existingRepliesMap.containsKey(comment.id)) {
-          List<Comment> existingReplies = existingRepliesMap[comment.id]!;
-          print('Found ${existingReplies.length} saved replies for comment ${comment.id}');
+        // Try to restore replies from memory first (current session)
+        if (existingRepliesMap.containsKey(commentId)) {
+          List<Comment> existingReplies = existingRepliesMap[commentId]!;
+          print('Found ${existingReplies.length} saved replies for comment $commentId in memory');
           
-          // If the API returned replies too, merge them with existing ones to avoid duplicates
-          if (comment.replies != null && comment.replies!.isNotEmpty) {
-            // Create a set of existing reply IDs
-            Set<String> newReplyIds = comment.replies!.map((r) => r.id).toSet();
+          comment = _mergeReplies(comment, existingReplies);
+        } 
+        // Then try to restore from persistent cache (between app sessions)
+        else if (_commentRepliesCache.containsKey(commentId)) {
+          try {
+            print('Comment $commentId found in persistent cache');
+            List<Map<String, dynamic>> cachedRepliesJson = _commentRepliesCache[commentId]!;
+            print('Found ${cachedRepliesJson.length} cached replies for comment $commentId in persistent storage');
             
-            // Add any replies that aren't already in the new data
-            for (var existingReply in existingReplies) {
-              if (!newReplyIds.contains(existingReply.id)) {
-                print('Adding saved reply ${existingReply.id} to comment ${comment.id}');
-                comment = Comment(
-                  id: comment.id,
-                  content: comment.content,
-                  author: comment.author,
-                  postId: comment.postId,
-                  parentCommentId: comment.parentCommentId,
-                  likeCount: comment.likeCount,
-                  isLiked: comment.isLiked,
-                  createdAt: comment.createdAt,
-                  updatedAt: comment.updatedAt,
-                  replies: [...(comment.replies ?? []), existingReply],
-                );
+            // Convert cache to Comment objects
+            List<Comment> cachedReplies = [];
+            for (var replyJson in cachedRepliesJson) {
+              try {
+                Comment reply = Comment.fromJson(replyJson);
+                // Make sure the parentCommentId is correctly set
+                if (reply.parentCommentId == null || reply.parentCommentId!.isEmpty) {
+                  reply = Comment(
+                    id: reply.id,
+                    content: reply.content,
+                    author: reply.author,
+                    postId: reply.postId,
+                    parentCommentId: commentId, // Set parent ID explicitly
+                    likeCount: reply.likeCount,
+                    isLiked: reply.isLiked,
+                    createdAt: reply.createdAt,
+                    updatedAt: reply.updatedAt,
+                    replies: reply.replies,
+                  );
+                }
+                cachedReplies.add(reply);
+                print('Successfully restored reply ${reply.id} from cache');
+              } catch (e) {
+                print('Error parsing cached reply: $e');
               }
             }
-          } else {
-            // If the API didn't return any replies, use the existing ones
-            print('API returned no replies for comment ${comment.id}, restoring ${existingReplies.length} saved replies');
-            comment = Comment(
-              id: comment.id,
-              content: comment.content,
-              author: comment.author,
-              postId: comment.postId,
-              parentCommentId: comment.parentCommentId,
-              likeCount: comment.likeCount,
-              isLiked: comment.isLiked,
-              createdAt: comment.createdAt,
-              updatedAt: comment.updatedAt,
-              replies: existingReplies,
-            );
+                
+            comment = _mergeReplies(comment, cachedReplies);
+          } catch (e) {
+            print('Error restoring replies from cache: $e');
           }
+        } else {
+          print('No cached replies found for comment $commentId');
         }
         
         return comment;
@@ -452,10 +630,16 @@ class CommunityViewModel extends ChangeNotifier {
       for (var comment in _comments) {
         if (comment.replies != null) {
           totalReplies += comment.replies!.length;
+          
+          // Make sure all displayed replies are properly cached
+          if (comment.replies!.isNotEmpty) {
+            _updateRepliesCache(comment.id, comment.replies!);
+          }
         }
       }
       print('Loaded ${_comments.length} comments with $totalReplies replies total');
     } catch (e) {
+      print('Error loading comments: $e');
       _errorMessage = e.toString();
       _commentsStatus = CommunityStatus.error;
     }
@@ -848,32 +1032,46 @@ class CommunityViewModel extends ChangeNotifier {
       await _communityRepository.deleteComment(token, commentId);
       
       // Find the comment to get its post ID
-      // ignore: cast_from_null_always_fails
-      final comment = _comments.firstWhere((c) => c.id == commentId, orElse: () => null as Comment);
-      final String postId = comment.postId;
+      final comment = _comments.firstWhere(
+        (c) => c.id == commentId, 
+        orElse: () => Comment(
+          id: '',
+          content: '',
+          author: UserPreview(id: '', username: ''),
+          postId: '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
       
-      // Remove the comment from our list
-      _comments.removeWhere((c) => c.id == commentId);
-      
-      // Update the post comment count if we have it in our list
-      final postIndex = _posts.indexWhere((p) => p.id == postId);
-      if (postIndex >= 0) {
-        final updatedPost = _posts[postIndex].copyWith(
-          commentCount: _posts[postIndex].commentCount - 1
-        );
-        _posts[postIndex] = updatedPost;
+      // Only proceed if we found a valid comment
+      if (comment.id.isNotEmpty) {
+        final String postId = comment.postId;
+        
+        // Remove the comment from our list
+        _comments.removeWhere((c) => c.id == commentId);
+        
+        // Update the post comment count if we have it in our list
+        final postIndex = _posts.indexWhere((p) => p.id == postId);
+        if (postIndex >= 0) {
+          final updatedPost = _posts[postIndex].copyWith(
+            commentCount: _posts[postIndex].commentCount - 1
+          );
+          _posts[postIndex] = updatedPost;
+        }
+        
+        // Update the selected post if it's the same post
+        if (_selectedPost?.id == postId) {
+          _selectedPost = _selectedPost!.copyWith(
+            commentCount: _selectedPost!.commentCount - 1
+          );
+        }
+            
+        _commentsTotalCount--;
+        notifyListeners();
       }
-      
-      // Update the selected post if it's the same post
-      if (_selectedPost?.id == postId) {
-        _selectedPost = _selectedPost!.copyWith(
-          commentCount: _selectedPost!.commentCount - 1
-        );
-      }
-          
-      _commentsTotalCount--;
-      notifyListeners();
     } catch (e) {
+      print('Error deleting comment: $e');
       _errorMessage = e.toString();
       notifyListeners();
     }
@@ -883,5 +1081,58 @@ class CommunityViewModel extends ChangeNotifier {
   void resetError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  // Helper method to merge replies from different sources
+  Comment _mergeReplies(Comment comment, List<Comment> additionalReplies) {
+    if (additionalReplies.isEmpty) return comment;
+    
+    // If the comment already has replies from the API
+    if (comment.replies != null && comment.replies!.isNotEmpty) {
+      print('Merging ${additionalReplies.length} additional replies with ${comment.replies!.length} existing replies for comment ${comment.id}');
+      
+      // Create a set of existing reply IDs to avoid duplicates
+      Set<String> existingReplyIds = comment.replies!.map((r) => r.id).toSet();
+      
+      // Create a new combined list
+      List<Comment> combinedReplies = List.from(comment.replies!);
+      
+      // Add any replies that aren't already in the comment
+      for (var additionalReply in additionalReplies) {
+        if (!existingReplyIds.contains(additionalReply.id)) {
+          print('Adding saved reply ${additionalReply.id} to comment ${comment.id}');
+          combinedReplies.add(additionalReply);
+        }
+      }
+      
+      // Create a new comment with the combined replies
+      return Comment(
+        id: comment.id,
+        content: comment.content,
+        author: comment.author,
+        postId: comment.postId,
+        parentCommentId: comment.parentCommentId,
+        likeCount: comment.likeCount,
+        isLiked: comment.isLiked,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        replies: combinedReplies,
+      );
+    } else {
+      // If the comment has no replies, just use the additional ones
+      print('API returned no replies for comment ${comment.id}, restoring ${additionalReplies.length} saved replies');
+      return Comment(
+        id: comment.id,
+        content: comment.content,
+        author: comment.author,
+        postId: comment.postId,
+        parentCommentId: comment.parentCommentId,
+        likeCount: comment.likeCount,
+        isLiked: comment.isLiked,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        replies: additionalReplies,
+      );
+    }
   }
 } 

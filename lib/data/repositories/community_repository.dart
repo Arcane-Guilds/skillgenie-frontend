@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../models/community/post.dart';
@@ -105,29 +106,86 @@ class CommunityRepository {
     }
   }
 
-  Future<Post> createPost(String token, String content, List<String> images) async {
-    print('Creating post with content: $content, images: $images');
-    
-    final response = await client.post(
-      Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.posts}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({
-        'title': content.split('\n')[0].substring(0, min(50, content.split('\n')[0].length)),  // Use first line of content as title (limited to 50 chars)
-        'content': content,
-        'images': images,
-      }),
-    );
+  Future<Post> createPost(String token, String content, List<String> imagePaths) async {
+    print('Creating post with content: $content, imagePaths: $imagePaths');
 
-    if (response.statusCode == 201) {
-      final data = json.decode(response.body);
-      return Post.fromJson(data);
-    } else {
-      final errorData = json.decode(response.body);
-      print('Error creating post: $errorData');
-      throw Exception('Failed to create post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+    try {
+      // If we have images, use multipart request
+      if (imagePaths.isNotEmpty) {
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.posts}'),
+        );
+
+        // Add authorization header
+        request.headers.addAll({
+          'Authorization': 'Bearer $token',
+        });
+
+        // Extract title from first paragraph of content (up to 50 chars)
+        final lines = content.split('\n');
+        String title = lines.isNotEmpty 
+            ? lines[0].substring(0, min(50, lines[0].length))
+            : '';
+
+        // Add text fields
+        request.fields['title'] = title;
+        request.fields['content'] = content;
+
+        // Add image files
+        for (var i = 0; i < imagePaths.length; i++) {
+          final imagePath = imagePaths[i];
+          final file = File(imagePath);
+          if (await file.exists()) {
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'images', 
+                imagePath,
+                filename: 'image_${i + 1}.jpg',
+              ),
+            );
+          }
+        }
+
+        // Send the request
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 201) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error creating post: $errorData');
+          throw Exception('Failed to create post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        }
+      } else {
+        // No images, use regular JSON request
+        final response = await client.post(
+          Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.posts}'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({
+            'title': content.split('\n')[0].substring(0, min(50, content.split('\n')[0].length)),
+            'content': content,
+            'images': [],
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error creating post: $errorData');
+          throw Exception('Failed to create post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        }
+      }
+    } catch (e) {
+      print('Exception in createPost: $e');
+      throw Exception('Failed to create post: $e');
     }
   }
 
@@ -322,30 +380,42 @@ class CommunityRepository {
   }
 
   Future<void> deletePost(String token, String postId) async {
-    final response = await client.delete(
-      Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.postById}/$postId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    try {
+      final response = await client.delete(
+        Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.postById}/$postId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete post: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('Error deleting post: Status code ${response.statusCode}, Response: ${response.body}');
+        throw Exception('Failed to delete post: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Exception in deletePost: $e');
+      throw Exception('Failed to delete post: $e');
     }
   }
 
   Future<void> deleteComment(String token, String commentId) async {
-    final response = await client.delete(
-      Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.comments}/$commentId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    try {
+      final response = await client.delete(
+        Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.comments}/$commentId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete comment: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('Error deleting comment: Status code ${response.statusCode}, Response: ${response.body}');
+        throw Exception('Failed to delete comment: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Exception in deleteComment: $e');
+      throw Exception('Failed to delete comment: $e');
     }
   }
 } 

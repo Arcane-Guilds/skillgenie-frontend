@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'dart:math' as math;
+
+import '../../core/navigation/app_router.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -222,7 +225,7 @@ class OnboardingPage extends StatelessWidget {
                 child: Center(
                   child: isImage
                       ? Hero(
-                    tag: 'onboarding-hero',
+                    tag: 'onboarding-hero-${DateTime.now().millisecondsSinceEpoch}',
                     child: SlideTransition(
                       position: Tween<Offset>(
                         begin: const Offset(0, 0.05),

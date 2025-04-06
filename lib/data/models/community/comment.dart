@@ -26,88 +26,150 @@ class Comment {
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
-    // Debug the JSON payload
-    print('Parsing Comment JSON: $json');
-    
     try {
-      // Safely extract author data
-      Map<String, dynamic> authorJson = {};
-      
-      // Handle different author data types
-      if (json['author'] is Map<String, dynamic>) {
-        authorJson = json['author'] as Map<String, dynamic>;
-      } else if (json['author'] is String) {
-        // Sometimes the backend might send an ID as string
-        print('Author is a string ID: ${json['author']}');
-        authorJson = {'_id': json['author'], 'username': 'Unknown User'};
-      } else if (json['author'] == null) {
-        print('Author is null, using default');
-        authorJson = {'_id': '', 'username': 'Unknown User'};
-      } else {
-        // Try to convert to map if possible
-        try {
-          print('Attempting to convert author to Map: ${json['author']}');
-          authorJson = Map<String, dynamic>.from(json['author'] as Map);
-        } catch (e) {
-          print('Error converting author to Map: $e');
-          authorJson = {'_id': '', 'username': 'Unknown User'};
-        }
+      // Basic validation to prevent processing empty or invalid JSON
+      if (json == null || json.isEmpty) {
+        print('Warning: Received null or empty JSON for Comment');
+        throw ArgumentError('Invalid JSON: null or empty');
       }
 
-      // Parse the dates safely
-      DateTime createdAt = DateTime.now();
-      DateTime updatedAt = DateTime.now();
+      print('Parsing Comment JSON: ${json.toString().substring(0, json.toString().length > 100 ? 100 : json.toString().length)}...');
       
-      try {
-        if (json['createdAt'] != null && json['createdAt'].toString().isNotEmpty) {
-          createdAt = DateTime.parse(json['createdAt'].toString());
-        }
-        
-        if (json['updatedAt'] != null && json['updatedAt'].toString().isNotEmpty) {
-          updatedAt = DateTime.parse(json['updatedAt'].toString());
-        }
-      } catch (e) {
-        print('Error parsing dates: $e');
+      // Extract required fields
+      String id = '';
+      if (json.containsKey('_id')) {
+        id = json['_id']?.toString() ?? '';
+      } else if (json.containsKey('id')) {
+        id = json['id']?.toString() ?? '';
       }
       
-      // Parse numeric fields safely
-      int likeCount = 0;
+      // Extract content safely
+      String content = json['content']?.toString() ?? '';
       
-      if (json['likeCount'] is int) {
-        likeCount = json['likeCount'];
-      } else if (json['likeCount'] is String) {
-        likeCount = int.tryParse(json['likeCount']) ?? 0;
-      }
-      
-      // Parse boolean fields safely
-      bool isLiked = false;
-      if (json['isLiked'] is bool) {
-        isLiked = json['isLiked'];
-      } else if (json['isLiked'] is String) {
-        isLiked = json['isLiked'].toLowerCase() == 'true';
-      } else if (json['isLiked'] is num) {
-        isLiked = json['isLiked'] != 0;
-      }
-      
-      // Parse replies safely
-      List<Comment>? replies;
-      if (json['replies'] is List) {
+      // Extract author safely
+      UserPreview author;
+      if (json.containsKey('author') && json['author'] != null) {
         try {
-          replies = List<Comment>.from(
-            (json['replies'] as List).map((x) => Comment.fromJson(x))
-          );
+          if (json['author'] is Map) {
+            author = UserPreview.fromJson(json['author']);
+          } else if (json['author'] is String) {
+            // Handle case where author is just an ID
+            author = UserPreview(id: json['author'], username: 'Unknown User');
+          } else {
+            throw FormatException('Author is not a Map or String');
+          }
         } catch (e) {
-          print('Error parsing replies: $e');
+          print('Error parsing author: $e');
+          author = UserPreview(id: '', username: 'Unknown User');
+        }
+      } else {
+        author = UserPreview(id: '', username: 'Unknown User');
+      }
+      
+      // Extract postId safely
+      String postId = '';
+      if (json.containsKey('postId')) {
+        postId = json['postId']?.toString() ?? '';
+      } else if (json.containsKey('post') && json['post'] is String) {
+        postId = json['post']?.toString() ?? '';
+      } else if (json.containsKey('post') && json['post'] is Map) {
+        postId = json['post']['_id']?.toString() ?? '';
+      }
+      
+      // Extract parentCommentId safely
+      String? parentCommentId;
+      if (json.containsKey('parentComment') && json['parentComment'] != null) {
+        if (json['parentComment'] is String) {
+          parentCommentId = json['parentComment'];
+        } else if (json['parentComment'] is Map && json['parentComment'].containsKey('_id')) {
+          parentCommentId = json['parentComment']['_id']?.toString();
+        }
+      } else if (json.containsKey('parentCommentId') && json['parentCommentId'] != null) {
+        parentCommentId = json['parentCommentId']?.toString();
+      }
+      
+      // Extract likeCount safely
+      int likeCount = 0;
+      if (json.containsKey('likeCount') && json['likeCount'] != null) {
+        try {
+          if (json['likeCount'] is int) {
+            likeCount = json['likeCount'];
+          } else {
+            likeCount = int.tryParse(json['likeCount'].toString()) ?? 0;
+          }
+        } catch (e) {
+          print('Error parsing likeCount: $e');
+        }
+      }
+      
+      // Extract isLiked safely
+      bool isLiked = false;
+      if (json.containsKey('isLiked') && json['isLiked'] != null) {
+        try {
+          if (json['isLiked'] is bool) {
+            isLiked = json['isLiked'];
+          } else {
+            isLiked = json['isLiked'].toString().toLowerCase() == 'true';
+          }
+        } catch (e) {
+          print('Error parsing isLiked: $e');
+        }
+      }
+      
+      // Extract dates safely
+      DateTime createdAt = DateTime.now();
+      if (json.containsKey('createdAt') && json['createdAt'] != null) {
+        try {
+          if (json['createdAt'] is String) {
+            createdAt = DateTime.parse(json['createdAt']);
+          } else if (json['createdAt'] is DateTime) {
+            createdAt = json['createdAt'];
+          }
+        } catch (e) {
+          print('Error parsing createdAt: $e');
+        }
+      }
+      
+      DateTime updatedAt = DateTime.now();
+      if (json.containsKey('updatedAt') && json['updatedAt'] != null) {
+        try {
+          if (json['updatedAt'] is String) {
+            updatedAt = DateTime.parse(json['updatedAt']);
+          } else if (json['updatedAt'] is DateTime) {
+            updatedAt = json['updatedAt'];
+          }
+        } catch (e) {
+          print('Error parsing updatedAt: $e');
+        }
+      }
+      
+      // Extract replies safely
+      List<Comment>? replies;
+      if (json.containsKey('replies') && json['replies'] != null && json['replies'] is List) {
+        try {
+          replies = [];
+          for (var replyJson in json['replies']) {
+            try {
+              if (replyJson != null) {
+                replies.add(Comment.fromJson(replyJson));
+              }
+            } catch (replyError) {
+              print('Error parsing individual reply: $replyError');
+              // Skip the problematic reply
+            }
+          }
+        } catch (e) {
+          print('Error parsing replies list: $e');
           replies = [];
         }
       }
       
       return Comment(
-        id: json['_id']?.toString() ?? '',
-        content: json['content']?.toString() ?? '',
-        author: UserPreview.fromJson(authorJson),
-        postId: json['post']?.toString() ?? '',
-        parentCommentId: json['parentComment']?.toString(),
+        id: id,
+        content: content,
+        author: author,
+        postId: postId,
+        parentCommentId: parentCommentId,
         likeCount: likeCount,
         isLiked: isLiked,
         createdAt: createdAt,
@@ -116,7 +178,7 @@ class Comment {
       );
     } catch (e) {
       print('Error parsing Comment from JSON: $e');
-      // Return a default comment in case of error
+      // Create a minimal valid comment object
       return Comment(
         id: '',
         content: 'Error loading comment',

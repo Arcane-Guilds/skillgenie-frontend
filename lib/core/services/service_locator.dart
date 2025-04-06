@@ -201,7 +201,10 @@ Future<void> setupServiceLocator() async {
   );
 
   serviceLocator.registerFactory<CommunityViewModel>(
-    () => CommunityViewModel(),
+    () => CommunityViewModel(
+      communityRepository: serviceLocator<CommunityRepository>(),
+      authViewModel: serviceLocator<AuthViewModel>(),
+    ),
   );
 }
 

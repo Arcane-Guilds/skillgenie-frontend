@@ -26,89 +26,109 @@ class Post {
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
-    // Debug the JSON payload
-    print('Parsing Post JSON: $json');
-    
     try {
-      // Safely extract author data
-      Map<String, dynamic> authorJson = {};
+      print('Parsing Post JSON: ${json.toString().substring(0, json.toString().length > 100 ? 100 : json.toString().length)}...');
       
-      // Handle different author data types
-      if (json['author'] is Map<String, dynamic>) {
-        authorJson = json['author'] as Map<String, dynamic>;
-      } else if (json['author'] is String) {
-        // Sometimes the backend might send an ID as string
-        print('Author is a string ID: ${json['author']}');
-        authorJson = {'_id': json['author'], 'username': 'Unknown User'};
-      } else if (json['author'] == null) {
-        print('Author is null, using default');
-        authorJson = {'_id': '', 'username': 'Unknown User'};
-      } else {
-        // Try to convert to map if possible
+      // Extract ID safely
+      String id = '';
+      if (json.containsKey('_id')) {
+        id = json['_id']?.toString() ?? '';
+      } else if (json.containsKey('id')) {
+        id = json['id']?.toString() ?? '';
+      }
+      
+      // Extract title and content safely
+      String title = json['title']?.toString() ?? '';
+      String content = json['content']?.toString() ?? '';
+      
+      // Extract author safely
+      UserPreview author;
+      if (json.containsKey('author') && json['author'] != null) {
         try {
-          print('Attempting to convert author to Map: ${json['author']}');
-          authorJson = Map<String, dynamic>.from(json['author'] as Map);
+          author = UserPreview.fromJson(json['author']);
         } catch (e) {
-          print('Error converting author to Map: $e');
-          authorJson = {'_id': '', 'username': 'Unknown User'};
+          print('Error parsing post author: $e');
+          author = UserPreview(id: '', username: 'Unknown User');
         }
-      }
-
-      // Parse the dates safely
-      DateTime createdAt = DateTime.now();
-      DateTime updatedAt = DateTime.now();
-      
-      try {
-        if (json['createdAt'] != null && json['createdAt'].toString().isNotEmpty) {
-          createdAt = DateTime.parse(json['createdAt'].toString());
-        }
-        
-        if (json['updatedAt'] != null && json['updatedAt'].toString().isNotEmpty) {
-          updatedAt = DateTime.parse(json['updatedAt'].toString());
-        }
-      } catch (e) {
-        print('Error parsing dates: $e');
+      } else {
+        author = UserPreview(id: '', username: 'Unknown User');
       }
       
-      // Parse images safely
+      // Extract images safely
       List<String> images = [];
-      if (json['images'] is List) {
-        images = List<String>.from(
-          (json['images'] as List).map((img) => img.toString())
-        );
+      if (json.containsKey('images') && json['images'] != null && json['images'] is List) {
+        try {
+          images = List<String>.from(json['images'].map((x) => x.toString()));
+        } catch (e) {
+          print('Error parsing post images: $e');
+        }
       }
       
-      // Parse numeric fields safely
+      // Extract numeric counts safely
       int likeCount = 0;
+      if (json.containsKey('likeCount') && json['likeCount'] != null) {
+        try {
+          if (json['likeCount'] is int) {
+            likeCount = json['likeCount'];
+          } else {
+            likeCount = int.parse(json['likeCount'].toString());
+          }
+        } catch (e) {
+          print('Error parsing post likeCount: $e');
+        }
+      }
+      
       int commentCount = 0;
-      
-      if (json['likeCount'] is int) {
-        likeCount = json['likeCount'];
-      } else if (json['likeCount'] is String) {
-        likeCount = int.tryParse(json['likeCount']) ?? 0;
+      if (json.containsKey('commentCount') && json['commentCount'] != null) {
+        try {
+          if (json['commentCount'] is int) {
+            commentCount = json['commentCount'];
+          } else {
+            commentCount = int.parse(json['commentCount'].toString());
+          }
+        } catch (e) {
+          print('Error parsing post commentCount: $e');
+        }
       }
       
-      if (json['commentCount'] is int) {
-        commentCount = json['commentCount'];
-      } else if (json['commentCount'] is String) {
-        commentCount = int.tryParse(json['commentCount']) ?? 0;
-      }
-      
-      // Parse boolean fields safely
+      // Extract isLiked safely
       bool isLiked = false;
-      if (json['isLiked'] is bool) {
-        isLiked = json['isLiked'];
-      } else if (json['isLiked'] is String) {
-        isLiked = json['isLiked'].toLowerCase() == 'true';
-      } else if (json['isLiked'] is num) {
-        isLiked = json['isLiked'] != 0;
+      if (json.containsKey('isLiked') && json['isLiked'] != null) {
+        try {
+          if (json['isLiked'] is bool) {
+            isLiked = json['isLiked'];
+          } else {
+            isLiked = json['isLiked'].toString().toLowerCase() == 'true';
+          }
+        } catch (e) {
+          print('Error parsing post isLiked: $e');
+        }
+      }
+      
+      // Extract dates safely
+      DateTime createdAt = DateTime.now();
+      if (json.containsKey('createdAt') && json['createdAt'] != null) {
+        try {
+          createdAt = DateTime.parse(json['createdAt'].toString());
+        } catch (e) {
+          print('Error parsing post createdAt: $e');
+        }
+      }
+      
+      DateTime updatedAt = DateTime.now();
+      if (json.containsKey('updatedAt') && json['updatedAt'] != null) {
+        try {
+          updatedAt = DateTime.parse(json['updatedAt'].toString());
+        } catch (e) {
+          print('Error parsing post updatedAt: $e');
+        }
       }
       
       return Post(
-        id: json['_id']?.toString() ?? '',
-        title: json['title']?.toString() ?? '',
-        content: json['content']?.toString() ?? '',
-        author: UserPreview.fromJson(authorJson),
+        id: id,
+        title: title,
+        content: content,
+        author: author,
         images: images,
         likeCount: likeCount,
         commentCount: commentCount,
@@ -118,12 +138,15 @@ class Post {
       );
     } catch (e) {
       print('Error parsing Post from JSON: $e');
-      // Return a default post in case of error
       return Post(
         id: '',
-        title: 'Error',
-        content: 'Error loading post content',
+        title: 'Error loading post',
+        content: 'There was an error loading this post.',
         author: UserPreview(id: '', username: 'Unknown User'),
+        images: [],
+        likeCount: 0,
+        commentCount: 0,
+        isLiked: false,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );

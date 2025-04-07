@@ -10,6 +10,7 @@ import '../../data/repositories/game_repository.dart';
 import '../../data/repositories/media_generator_repository.dart';
 import '../../data/repositories/chatbot_repository.dart';
 import '../../data/repositories/course_repository.dart';
+import '../../data/repositories/community_repository.dart';
 import '../../data/repositories/lab_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/auth_local_datasource.dart';
@@ -32,8 +33,8 @@ import '../../presentation/viewmodels/chatbot_viewmodel.dart';
 import '../../presentation/viewmodels/course_viewmodel.dart';
 import '../../presentation/viewmodels/lab_viewmodel.dart';
 import '../../presentation/viewmodels/reminder_viewmodel.dart';
+import '../../presentation/viewmodels/community_viewmodel.dart';
 import '../services/notification_service.dart';
-
 
 final serviceLocator = GetIt.instance;
 
@@ -44,7 +45,6 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerSingleton<SharedPreferences>(prefs);
   serviceLocator.registerSingleton<http.Client>(http.Client());
   serviceLocator.registerSingleton<FlutterTts>(FlutterTts());
-
 
   // Initialize and register notification service
   final notificationService = NotificationService();
@@ -132,6 +132,13 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+
+  serviceLocator.registerSingleton<CommunityRepository>(
+    CommunityRepository(
+      client: serviceLocator<http.Client>(),
+    ),
+  );
+
   serviceLocator.registerSingleton<LabRepository>(
     LabRepository(
       client: serviceLocator<http.Client>(),
@@ -209,6 +216,12 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+  serviceLocator.registerFactory<CommunityViewModel>(
+    () => CommunityViewModel(
+      communityRepository: serviceLocator<CommunityRepository>(),
+      authViewModel: serviceLocator<AuthViewModel>(),
+    ),
+  );
 }
 
 /// Cleanup resources when the app is shut down

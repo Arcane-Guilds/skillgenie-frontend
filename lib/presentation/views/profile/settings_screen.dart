@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-
 import 'package:skillGenie/presentation/viewmodels/reminder_viewmodel.dart';
 import '../../../core/constants/cloudinary_constants.dart';
 import '../../../core/errors/error_handler.dart';
@@ -88,7 +87,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
   // ================== Daily Reminder Section ==================
   void _showReminderTimePicker(BuildContext context) async {
     final reminderVM = Provider.of<ReminderViewModel>(context, listen: false);
@@ -1362,7 +1360,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-
 
             const SizedBox(height: 24),
 

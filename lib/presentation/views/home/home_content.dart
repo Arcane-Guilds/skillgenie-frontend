@@ -20,8 +20,8 @@ class HomeContent extends StatefulWidget {
 }
 
 class _HomeContentState extends State<HomeContent> with SingleTickerProviderStateMixin {
-
-  late TabController _tabController;
+  // Remove the late TabController since it's not being used but disposed
+  // late TabController _tabController;
   bool _isLoading = true;
 
     Future<String?> getUserId() async {
@@ -186,10 +186,8 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
 
   @override
   void dispose() {
-    // Dispose of the TabController if it was created
-    if (_tabController != null) {
-      _tabController.dispose();
-    }
+    // Remove the _tabController.dispose() since the controller isn't used
+    // _tabController.dispose();
     super.dispose();
   }
 
@@ -1210,7 +1208,6 @@ class _SkillRoadmapScreenState extends State<SkillRoadmapScreen> with SingleTick
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'start_lesson_fab',
         onPressed: () {
           // Start the current lesson
           final currentLesson = _lessons.firstWhere((lesson) => lesson['isCurrent'], orElse: () => _lessons.first);

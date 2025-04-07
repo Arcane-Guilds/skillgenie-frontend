@@ -4,7 +4,6 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
-import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:ui' as ui;
 import 'package:logging/logging.dart';
@@ -147,8 +146,8 @@ class MediaGeneratorRepository {
 
       final String videoPath = "${directory.path}/output_video.mp4";
 
-       await FFmpegKit.execute(
-          "-f concat -safe 0 -i $imageListFile -vf fps=1 -y $videoPath");
+       //await FFmpegKit.execute(
+         // "-f concat -safe 0 -i $imageListFile -vf fps=1 -y $videoPath");
       return videoPath;
     }catch (e) {
       _logger.severe('Error generating video from images: $e');
@@ -163,8 +162,8 @@ class MediaGeneratorRepository {
       final directory = await getApplicationDocumentsDirectory();
       String finalVideoPath = "${directory.path}/final_video.mp4";
 
-      await FFmpegKit.execute(
-          '-i $videoPath -i $audioPath -c:v copy -c:a aac -strict experimental -shortest -y $finalVideoPath');
+     // await FFmpegKit.execute(
+          //'-i $videoPath -i $audioPath -c:v copy -c:a aac -strict experimental -shortest -y $finalVideoPath');
 
       return finalVideoPath;
     } catch (e) {

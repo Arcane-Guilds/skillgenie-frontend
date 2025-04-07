@@ -51,7 +51,7 @@ class LabViewModel extends ChangeNotifier {
   Future<void> fetchLabByChapter(String chapterId, {BuildContext? context}) async {
     try {
       _setLoading(true);
-      _clearError();
+      clearError();
       
       // Check auth before making API call
       if (!(await _checkAuthentication(context))) {
@@ -81,7 +81,7 @@ class LabViewModel extends ChangeNotifier {
   Future<void> generateLabsForCourse(String courseId, {BuildContext? context}) async {
     try {
       _setLoading(true);
-      _clearError();
+      clearError();
       
       // Check auth before making API call
       if (!(await _checkAuthentication(context))) {
@@ -107,7 +107,7 @@ class LabViewModel extends ChangeNotifier {
 
     try {
       _setLoading(true);
-      _clearError();
+      clearError();
       
       // Check auth before making API call
       if (!(await _checkAuthentication(context))) {
@@ -176,7 +176,7 @@ class LabViewModel extends ChangeNotifier {
 
     try {
       _setLoading(true);
-      _clearError();
+      clearError();
       
       // Check auth before making API call
       if (!(await _checkAuthentication(context))) {
@@ -203,7 +203,7 @@ class LabViewModel extends ChangeNotifier {
 
     try {
       _setLoading(true);
-      _clearError();
+      clearError();
       
       // Check auth before making API call
       if (!(await _checkAuthentication(context))) {
@@ -253,7 +253,8 @@ class LabViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _clearError() {
+  void clearError() {
     _errorMessage = null;
+    notifyListeners();
   }
 } 

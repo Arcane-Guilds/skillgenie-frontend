@@ -67,14 +67,17 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
         
         // Show results dialog if we have submission data
         if (labViewModel.currentSubmission != null && mounted) {
-          showDialog(
+          await showDialog(
             context: context,
             builder: (context) => _buildResultsDialog(labViewModel.currentSubmission!),
           );
+          // Reset submission state after dialog is closed
+          labViewModel.resetSubmission();
+          labViewModel.clearError();
         } 
         // Show error dialog if we have an error message but no submission
         else if (labViewModel.errorMessage != null && mounted) {
-          showDialog(
+          await showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Submission Error'),
@@ -87,11 +90,13 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
               ],
             ),
           );
+          // Clear error state after showing error dialog
+          labViewModel.clearError();
         }
       } catch (e) {
         // This should rarely happen now as errors are handled in the ViewModel
         if (mounted) {
-          showDialog(
+          await showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Unexpected Error'),
@@ -104,6 +109,8 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
               ],
             ),
           );
+          // Clear error state after showing error dialog
+          labViewModel.clearError();
         }
       }
     } else {

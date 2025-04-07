@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/github.dart';
+// ignore: unused_import
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../data/models/lab_model.dart';
 import '../../viewmodels/lab_viewmodel.dart';

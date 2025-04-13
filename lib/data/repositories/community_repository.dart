@@ -537,27 +537,76 @@ class CommunityRepository {
     }
   }
 
-  Future<Post> updatePost(String token, String postId, String content, String title) async {
+  Future<Post> updatePost(String token, String postId, String content, String title, {List<String>? existingImages, List<File>? newImages}) async {
     try {
-      final response = await client.put(
-        Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode({
-          'content': content,
-          'title': title,
-        }),
-      );
+      // Create multipart request if we have new images
+      if (newImages != null && newImages.isNotEmpty) {
+        var request = http.MultipartRequest(
+          'PUT',
+          Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId'),
+        );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return Post.fromJson(data);
+        // Add authorization header
+        request.headers.addAll({
+          'Authorization': 'Bearer $token',
+        });
+
+        // Add text fields
+        request.fields['content'] = content;
+        request.fields['title'] = title;
+        
+        // Add existing images if any
+        if (existingImages != null) {
+          request.fields['existingImages'] = json.encode(existingImages);
+        }
+
+        // Add new image files
+        for (var i = 0; i < newImages.length; i++) {
+          final file = newImages[i];
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'images',
+              file.path,
+              filename: 'image_${i + 1}.jpg',
+            ),
+          );
+        }
+
+        // Send the request
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error updating post: $errorData');
+          throw Exception('Failed to update post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        }
       } else {
-        final errorData = json.decode(response.body);
-        print('Error updating post: $errorData');
-        throw Exception('Failed to update post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        // No new images, use regular JSON request
+        final response = await client.put(
+          Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({
+            'content': content,
+            'title': title,
+            'existingImages': existingImages,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error updating post: $errorData');
+          throw Exception('Failed to update post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        }
       }
     } catch (e) {
       print('Error in updatePost: $e');

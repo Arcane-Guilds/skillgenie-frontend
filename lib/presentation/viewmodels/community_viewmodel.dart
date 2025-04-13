@@ -8,6 +8,7 @@ import '../../data/models/community/post.dart';
 import '../../data/models/community/comment.dart';
 import '../../data/models/community/user_preview.dart';
 import 'auth/auth_viewmodel.dart';
+import 'dart:io';
 
 enum CommunityStatus {
   initial,
@@ -1126,7 +1127,7 @@ class CommunityViewModel extends ChangeNotifier {
 }
 
   // Update a post
-  Future<void> updatePost(String postId, String content, String title) async {
+  Future<void> updatePost(String postId, String content, String title, {List<String>? existingImages, List<File>? newImages}) async {
     try {
       final token = _authViewModel.tokens?.accessToken;
       if (token == null) {
@@ -1149,6 +1150,8 @@ class CommunityViewModel extends ChangeNotifier {
         postId,
         content,
         title,
+        existingImages: existingImages,
+        newImages: newImages,
       );
 
       // Update the post in our list

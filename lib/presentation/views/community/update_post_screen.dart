@@ -20,6 +20,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
   late TextEditingController _contentController;
   late TextEditingController _titleController;
   final List<String> _selectedImages = [];
+  final List<File> _newImages = [];
   bool _isLoading = false;
 
   @override
@@ -49,6 +50,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
 
       if (image != null && mounted) {
         setState(() {
+          _newImages.add(File(image.path));
           _selectedImages.add(image.path);
         });
       }
@@ -66,6 +68,11 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
 
   void _removeImage(int index) {
     setState(() {
+      // If the image is a new one (not from the original post)
+      if (index >= widget.post.images.length) {
+        final newImageIndex = index - widget.post.images.length;
+        _newImages.removeAt(newImageIndex);
+      }
       _selectedImages.removeAt(index);
     });
   }
@@ -85,10 +92,18 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
 
     try {
       final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+      
+      // Get the list of existing images (original images that are still selected)
+      final List<String> existingImages = _selectedImages
+          .where((image) => widget.post.images.contains(image))
+          .toList();
+
       await communityViewModel.updatePost(
         widget.post.id,
         _contentController.text.trim(),
         _titleController.text.trim(),
+        existingImages: existingImages,
+        newImages: _newImages,
       );
 
       if (mounted) {

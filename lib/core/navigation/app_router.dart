@@ -1,7 +1,6 @@
 import 'package:skillGenie/data/models/evaluation_question.dart';
 import 'package:skillGenie/presentation/views/game/games_screens.dart';
 import 'package:skillGenie/presentation/views/game/game_page.dart';
-import 'package:skillGenie/presentation/views/lesson_view.dart';
 import 'package:skillGenie/presentation/views/summary/summary_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
@@ -290,10 +289,6 @@ GoRoute(
 path: '/chatbot',
 builder: (context, state) => const ChatbotScreen(),
 ),
-// GoRoute(
-// path: '/lessonview',
-// builder: (context, state) =>  LessonView(),
-// ),
 GoRoute(
 path: '/course/:courseId',
 builder: (context, state) {

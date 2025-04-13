@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:skillGenie/presentation/views/home/home_content.dart';
-import 'package:skillGenie/presentation/views/chatbot/media_generator_view.dart';
+import 'package:skillGenie/presentation/views/chatbot/lesson_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>  const MediaGeneratorView()),
+                MaterialPageRoute(builder: (context) =>   LessonView()),
               );
             },
             backgroundColor: Colors.blue, // Couleur différente pour le distinguer

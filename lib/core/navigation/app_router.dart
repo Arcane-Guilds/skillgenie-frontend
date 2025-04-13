@@ -20,6 +20,7 @@ import '../../presentation/views/auth/signup_screen.dart';
 import '../../presentation/views/splash_screen.dart';
 import '../../presentation/views/profile/profile_screen.dart';
 import '../../presentation/views/profile/settings_screen.dart';
+import '../../presentation/views/profile/friends_screen.dart';
 import '../../presentation/views/challenges/challenges_library_screen.dart';
 import '../../presentation/views/notifications_screen.dart';
 import '../../presentation/views/chatbot/chatbot_screen.dart';
@@ -355,6 +356,10 @@ builder: (context, state) => const NotificationsScreen(),
 GoRoute(
 path: '/profile',
 builder: (context, state) => const ProfileScreen(),
+),
+GoRoute(
+path: '/friends',
+builder: (context, state) => const FriendsScreen(),
 ),
 ],
 ),

@@ -14,6 +14,7 @@ import 'presentation/viewmodels/profile_viewmodel.dart';
 import 'presentation/viewmodels/course_viewmodel.dart';
 import 'presentation/viewmodels/lab_viewmodel.dart';
 import 'presentation/viewmodels/community_viewmodel.dart';
+import 'presentation/viewmodels/friend_viewmodel.dart';
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -96,6 +97,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (context) => serviceLocator<CommunityViewModel>(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => serviceLocator<FriendViewModel>(),
         ),
       ],
       child: MaterialApp.router(

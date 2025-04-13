@@ -5,11 +5,11 @@ class ChallengesHomePage extends StatelessWidget {
   final Map<String, dynamic> challenge;
 
   // Constructor to accept challenge details
-  const ChallengesHomePage({Key? key, required this.challenge}) : super(key: key);
+  const ChallengesHomePage({super.key, required this.challenge});
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController _nicknameController = TextEditingController();
+    final TextEditingController nicknameController = TextEditingController();
     
     return Scaffold(
       body: Center(
@@ -25,7 +25,7 @@ class ChallengesHomePage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
               child: TextField(
-                controller: _nicknameController,
+                controller: nicknameController,
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
@@ -50,13 +50,13 @@ class ChallengesHomePage extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         // Handle create party button press
-                        if (_nicknameController.text.isNotEmpty) {
+                        if (nicknameController.text.isNotEmpty) {
                           // Navigate to create party screen
                           Navigator.pushNamed(
                             context,
                             '/create-party',
                             arguments: {
-                              'nickname': _nicknameController.text,
+                              'nickname': nicknameController.text,
                               'challenge': challenge,
                             },
                           );
@@ -81,13 +81,13 @@ class ChallengesHomePage extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         // Handle join party button press
-                        if (_nicknameController.text.isNotEmpty) {
+                        if (nicknameController.text.isNotEmpty) {
                           // Navigate to join party screen
                           Navigator.pushNamed(
                             context,
                             '/join-party',
                             arguments: {
-                              'nickname': _nicknameController.text,
+                              'nickname': nicknameController.text,
                               'challenge': challenge,
                             },
                           );

@@ -151,10 +151,9 @@ class CustomHeroController extends HeroController {
     super.dispose();
   }
 
-  @override
   Widget createPlatformSpecificHeroFlightShuttleBuilder(Widget child) {
     // Always use basic fade transition which is less problematic
-    return FadeTransition(opacity: AlwaysStoppedAnimation(1.0), child: child);
+    return FadeTransition(opacity: const AlwaysStoppedAnimation(1.0), child: child);
   }
 }
 

@@ -89,8 +89,7 @@ Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target
 
 Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, bool russian, int max_len) async  //Получить название и содержание статьи
 {
-  String query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + 
-    '/w/api.php?format=json&origin=*&action=query&prop=extracts&exchars=500&exintro&explaintext&redirects=1&pageids=' + pageid.toString();
+  String query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?format=json&origin=*&action=query&prop=extracts&exchars=500&exintro&explaintext&redirects=1&pageids=$pageid';
   var uri = Uri.parse(query);
   var response = await client.get(uri);
   if ((response).statusCode != 200)
@@ -113,8 +112,7 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
   List<int> links = [];
   if (recursive)  //Поиск ссылок
   {
-    String link_query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + //Запрос ссылок
-    '/w/api.php?action=query&format=json&origin=*&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=true&inprop=url&pageids=' + pageid.toString();
+    String link_query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?action=query&format=json&origin=*&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=true&inprop=url&pageids=$pageid';
     var links_map = {};
     do
     {
@@ -142,9 +140,7 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
       if (links_map.containsKey('continue'))  //Если есть продолжение
       {
         var continue_map = links_map['continue'] as Map <String, dynamic>;
-        link_query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + //Запрос ссылок
-        '/w/api.php?action=query&format=json&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=tru&inprop=url&pageids=' + pageid.toString() +
-        '&continue=' + continue_map['continue']! + '&gplcontinue=' + continue_map['gplcontinue']!;
+        link_query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?action=query&format=json&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=tru&inprop=url&pageids=$pageid&continue=' + continue_map['continue']! + '&gplcontinue=' + continue_map['gplcontinue']!;
       }
     }
     while (links_map.containsKey('continue'));
@@ -181,8 +177,7 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
   // print(short_desc);
   // print(full_desc);
   
-  String pic_query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + //Запрос изображения
-    '/w/api.php?action=query&format=json&origin=*&prop=pageimages&pilimit=1&piprop=thumbnail&pithumbsize=600&pageids=' + pageid.toString();
+  String pic_query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?action=query&format=json&origin=*&prop=pageimages&pilimit=1&piprop=thumbnail&pithumbsize=600&pageids=$pageid';
   uri = Uri.parse(pic_query);
   response = await client.get(uri);
   json_result = jsonDecode(response.body);

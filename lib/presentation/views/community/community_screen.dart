@@ -8,6 +8,7 @@ import '../../viewmodels/community_viewmodel.dart';
 import '../../widgets/loading_indicator.dart';
 import 'create_post_screen.dart';
 import '../../../core/theme/app_theme.dart';
+import 'post_detail_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -191,7 +192,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: AppTheme.cardDecoration,
       child: InkWell(
-        onTap: () => context.go('/post/${post.id}'),
+        onTap: () {
+          Navigator.push(
+            context, 
+            MaterialPageRoute(
+              builder: (context) => PostDetailScreen(postId: post.id),
+            ),
+          );
+        },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -333,7 +341,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   
                   // Comment button
                   InkWell(
-                    onTap: () => context.go('/post/${post.id}'),
+                    onTap: () {
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(
+                          builder: (context) => PostDetailScreen(postId: post.id),
+                        ),
+                      );
+                    },
                     borderRadius: BorderRadius.circular(20),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

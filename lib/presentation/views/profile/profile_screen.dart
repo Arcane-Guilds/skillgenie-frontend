@@ -7,8 +7,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
-import '../../../core/errors/error_handler.dart';
 import '../../../core/constants/cloudinary_constants.dart';
+import '../../viewmodels/community_viewmodel.dart';
+import '../community/post_detail_screen.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,7 +20,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
   bool _isEditingBio = false;
   bool _isLoading = false;
   File? _imageFile;
@@ -32,66 +33,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _initControllers();
-
+    
+    // Schedule the data loading after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadUserProfile();
+      _loadInitialData();
     });
+  }
+
+  @override
+  void dispose() {
+    _bioController.dispose();
+    super.dispose();
   }
 
   void _initControllers() {
     _bioController = TextEditingController();
   }
 
-  Future<void> _loadUserProfile() async {
-    final profileViewModel = Provider.of<ProfileViewModel>(
-        context, listen: false);
-    
-    setState(() {
-      _isLoading = true;
-    });
-    
-    try {
-      await profileViewModel.getUserProfile(forceRefresh: true);
-      
-      // Update controllers with current values
-      if (profileViewModel.currentProfile != null) {
-        _bioController.text = profileViewModel.currentProfile!.bio ?? '';
-      }
-    } catch (e) {
-      // Error is handled in the build method via profileViewModel.errorMessage
-      if (!mounted) return;
-      _showErrorSnackBar(e.toString(), onRetry: _loadUserProfile);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+  Future<void> _loadUserPosts(String userId) async {
+  if (!mounted) return;
+  
+  final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+  try {
+    await communityViewModel.loadUserPosts(userId);
+  } catch (e) {
+    print('Error loading user posts: $e');
+    if (mounted) {
+      // Show error message in UI instead of just logging
+      _showErrorSnackBar('Failed to load posts: ${e.toString()}');
     }
   }
-  
-  // Method to retry loading profile when there's an error
-  void _retryLoadProfile() {
-    final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-    profileViewModel.retryProfileFetch();
+}
+
+  Future<void> _loadInitialData() async {
+  if (!mounted) return;
+
+  final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+  final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+
+  try {
+    setState(() => _isLoading = true);
+
+    // Check authentication
+    if (!authViewModel.isAuthenticated) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      if (!authViewModel.isAuthenticated) {
+        context.go('/login');
+        return;
+      }
+    }
+
+    // Load profile
+    final profile = await profileViewModel.getUserProfile(forceRefresh: true);
+    if (!mounted) return;
+
+    if (profile == null) {
+      _showErrorSnackBar('Could not load profile data');
+      return;
+    }
+
+    // Load posts immediately after profile
+    await _loadUserPosts(profile.id); // Ensure this is awaited
+
+  } catch (e) {
+    if (mounted) _showErrorSnackBar(e.toString());
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
 
-  void _showErrorSnackBar(String message, {VoidCallback? onRetry}) {
-    final error = AppError(
-        type: AppErrorType.unknown,
-        message: message
-    );
-
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ErrorHandler.getUserFriendlyErrorMessage(error)),
+        content: Text(message),
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
-        action: onRetry != null ? SnackBarAction(
-          label: 'Retry',
-          textColor: Colors.white,
-          onPressed: onRetry,
-        ) : null,
       ),
     );
   }
@@ -249,14 +269,175 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _bioController.dispose();
-    super.dispose();
-  }
-
   void _navigateToSettings() {
     context.push('/settings');
+  }
+
+  Widget _buildUserPosts() {
+  return Consumer<CommunityViewModel>(
+    builder: (context, communityViewModel, _) {
+      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+      
+      if (communityViewModel.userPostsStatus == CommunityStatus.loading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      
+      if (communityViewModel.userPostsStatus == CommunityStatus.error) {
+        return Column(
+          children: [
+            Text(communityViewModel.errorMessage ?? 'Error loading posts'),
+            ElevatedButton(
+              onPressed: () => _loadUserPosts(profileViewModel.currentProfile!.id),
+              child: const Text('Retry'),
+            ),
+          ],
+        );
+      }
+      
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: communityViewModel.userPosts.length,
+        itemBuilder: (context, index) {
+            final post = communityViewModel.userPosts[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: InkWell(
+                onTap: () => _navigateToPostDetail(post.id),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: post.author.avatar != null
+                                ? NetworkImage(post.author.avatar!)
+                                : null,
+                            child: post.author.avatar == null
+                                ? const Icon(Icons.person)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  post.author.username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  _formatDate(post.createdAt),
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        post.content,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (post.images != null && post.images.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 200,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: post.images!.length,
+                            itemBuilder: (context, imageIndex) {
+                              // Transform the image URL using Cloudinary
+                              final transformedUrl = CloudinaryConstants.getPostImageUrl(post.images![imageIndex]);
+                              
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: CachedNetworkImage(
+                                    imageUrl: transformedUrl,
+                                    width: 200,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: Colors.grey[300],
+                                      child: const Icon(
+                                        Icons.error_outline,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.favorite,
+                            color: post.isLiked ? Colors.red : Colors.grey,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(post.likeCount.toString()),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.comment, size: 20),
+                          const SizedBox(width: 4),
+                          Text(post.commentCount.toString()),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 7) {
+      return '${date.day}/${date.month}/${date.year}';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  void _navigateToPostDetail(String postId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostDetailScreen(postId: postId),
+      ),
+    );
   }
 
   @override
@@ -267,58 +448,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              _navigateToSettings();
-            },
+            onPressed: _navigateToSettings,
           ),
         ],
       ),
-      body: Consumer<ProfileViewModel>(
-        builder: (context, profileViewModel, _) {
-          if (profileViewModel.isLoading || _isLoading) {
+      body: Consumer2<AuthViewModel, ProfileViewModel>(
+        builder: (context, authViewModel, profileViewModel, _) {
+          // Show loading while checking auth or loading profile
+          if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
-          if (profileViewModel.errorMessage != null) {
+
+          final user = profileViewModel.currentProfile;
+          if (user == null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: Theme.of(context).colorScheme.error,
-                    size: 64,
-                  ),
+                  const Text('No profile data available'),
                   const SizedBox(height: 16),
-                  Text(
-                    profileViewModel.errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: _retryLoadProfile,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+                  ElevatedButton(
+                    onPressed: _loadInitialData,
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
             );
           }
 
-          final user = profileViewModel.currentProfile;
-          if (user == null) {
-            return const Center(child: Text('No profile data available'));
-          }
 
           return RefreshIndicator(
-            onRefresh: () =>
-                profileViewModel.getUserProfile(forceRefresh: true),
+            onRefresh: () async {
+              // Load both profile and posts on refresh
+              await _loadInitialData();
+            },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
                   _buildProfileHeader(user),
+                  const SizedBox(height: 24),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'My Posts',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildUserPosts(),
                 ],
               ),
             ),

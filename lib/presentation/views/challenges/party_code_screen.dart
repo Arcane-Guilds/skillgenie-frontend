@@ -12,7 +12,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'challenges_screen.dart';
 
 class PartyCodeScreen extends StatefulWidget {
-  const PartyCodeScreen({Key? key}) : super(key: key);
+  const PartyCodeScreen({super.key});
 
   @override
   _PartyCodeScreenState createState() => _PartyCodeScreenState();
@@ -32,7 +32,7 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
 
   void _connectToSocket() {
     socket = IO.io(
-      '${ApiConstants.baseUrl}',
+      ApiConstants.baseUrl,
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
@@ -140,7 +140,7 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
 
         print("👥 Current Party Users: $users");
 
-        if (users.length != 0) {
+        if (users.isNotEmpty) {
           _goToChallengeScreen(code);
         }
       } else {

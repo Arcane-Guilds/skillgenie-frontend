@@ -485,4 +485,55 @@ class CommunityRepository {
       throw Exception('Failed to unlike reply: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getUserPosts(String token, String userId) async {
+    try {
+      final url = '${ApiConstants.baseUrl}/community/posts/user/$userId';
+      print('Requesting user posts from: $url');
+      
+      final response = await client.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Response status code: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        try {
+          final String responseBody = response.body;
+          if (responseBody.isEmpty) {
+            print('Empty response body');
+            return {'posts': [], 'total': 0};
+          }
+          
+          final data = json.decode(responseBody) as Map<String, dynamic>;
+          print('Response data preview: ${data.toString().substring(0, min(100, data.toString().length))}...');
+          
+          if (!data.containsKey('posts')) {
+            print('Response does not contain posts field');
+            return {'posts': [], 'total': 0};
+          }
+          
+          if (data['posts'] is! List) {
+            print('Posts field is not a List: ${data['posts'].runtimeType}');
+            return {'posts': [], 'total': 0};
+          }
+          
+          return data;
+        } catch (parseError) {
+          print('Error parsing response: $parseError');
+          return {'posts': [], 'total': 0};
+        }
+      } else {
+        print('Server error: ${response.body}');
+        return {'posts': [], 'total': 0};
+      }
+    } catch (e) {
+      print('Error in getUserPosts: $e');
+      return {'posts': [], 'total': 0};
+    }
+  }
 } 

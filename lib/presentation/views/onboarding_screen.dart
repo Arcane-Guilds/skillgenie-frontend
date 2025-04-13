@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -23,24 +23,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       'description': 'Your magical companion in the journey of learning',
       'animation': 'assets/images/genie.png',
       'isImage': true,
-      'backgroundColor': Color(0xFFE6F4FF), // Light variation of primary color
-      'textColor': Color(0xFF1CB0F6), // Primary color
+      'backgroundColor': const Color(0xFFE6F4FF), // Light variation of primary color
+      'textColor': const Color(0xFF1CB0F6), // Primary color
     },
     {
       'title': 'Learn New Skills',
       'description': 'Explore a variety of courses tailored just for you',
       'animation': 'assets/images/motivation.json',
       'isImage': false,
-      'backgroundColor': Color(0xFFF0F9EA), // Light variation of secondary color
-      'textColor': Color(0xFF58CC02), // Secondary color
+      'backgroundColor': const Color(0xFFF0F9EA), // Light variation of secondary color
+      'textColor': const Color(0xFF58CC02), // Secondary color
     },
     {
       'title': 'Track Your Progress',
       'description': 'Watch your skills grow with interactive lessons',
       'animation': 'assets/images/check.json',
       'isImage': false,
-      'backgroundColor': Color(0xFFFFF4E6), // Light variation of accent color
-      'textColor': Color(0xFFFF9600), // Accent color
+      'backgroundColor': const Color(0xFFFFF4E6), // Light variation of accent color
+      'textColor': const Color(0xFFFF9600), // Accent color
     },
   ];
 
@@ -80,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: TextButton(
-                  onPressed: () => context.go('/signup'),
+                  onPressed: () => context.go('/login'),
                   child: Text(
                     'Skip',
                     style: TextStyle(
@@ -198,14 +198,14 @@ class OnboardingPage extends StatelessWidget {
   final Color textColor;
 
   const OnboardingPage({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.animation,
     required this.isImage,
     required this.animationController,
     required this.textColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -316,7 +316,7 @@ class OnboardingPage extends StatelessWidget {
               ),
 
               // Reserve space for bottom navigation
-              SizedBox(height: 120),
+              const SizedBox(height: 120),
             ],
           );
         },

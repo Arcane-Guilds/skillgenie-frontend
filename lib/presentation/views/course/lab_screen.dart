@@ -15,9 +15,9 @@ class LabScreen extends StatefulWidget {
   final String chapterId;
 
   const LabScreen({
-    Key? key,
+    super.key,
     required this.chapterId,
-  }) : super(key: key);
+  });
 
   @override
   State<LabScreen> createState() => _LabScreenState();
@@ -429,7 +429,7 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                 ],
               ),
             );
-          }).toList(),
+          }),
           
           // Hints Section
           Consumer<LabViewModel>(
@@ -483,7 +483,7 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               );
             },

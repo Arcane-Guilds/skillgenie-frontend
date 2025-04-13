@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
-import '../../core/services/service_locator.dart';
 import '../../data/repositories/community_repository.dart';
 import '../../data/models/community/post.dart';
 import '../../data/models/community/comment.dart';
@@ -52,6 +50,11 @@ class CommunityViewModel extends ChangeNotifier {
   int _currentCommentsPage = 1;
   String? _errorMessage;
   
+  // Add new state variables
+  List<Post> _userPosts = [];
+  CommunityStatus _userPostsStatus = CommunityStatus.initial;
+  int _userPostsTotal = 0;
+
   // Constructor to automatically load posts when created
   CommunityViewModel({
     required CommunityRepository communityRepository,
@@ -149,7 +152,7 @@ class CommunityViewModel extends ChangeNotifier {
               _commentRepliesCache[commentId] = (repliesList as List)
                   .map((reply) => Map<String, dynamic>.from(reply))
                   .toList();
-              print('Loaded ${(repliesList as List).length} replies for comment $commentId');
+              print('Loaded ${(repliesList).length} replies for comment $commentId');
             });
             
             int totalReplies = 0;
@@ -195,91 +198,8 @@ class CommunityViewModel extends ChangeNotifier {
   }
   
   // Save comment replies to SharedPreferences
-  Future<void> _saveRepliesCache() async {
-    try {
-      print('Starting to save replies cache...');
-      final prefs = await SharedPreferences.getInstance();
-      final userId = _authViewModel.user?.id ?? '';
-      
-      // Only save cache if user is logged in
-      if (userId.isNotEmpty && _commentRepliesCache.isNotEmpty) {
-        print('User ID is available ($userId) and cache has ${_commentRepliesCache.length} entries');
-        
-        // Print some debug info about the cache content
-        _commentRepliesCache.forEach((commentId, replies) {
-          print('Comment $commentId has ${replies.length} replies in cache');
-        });
-        
-        final String repliesJson = json.encode(_commentRepliesCache);
-        print('Encoded JSON size: ${repliesJson.length} bytes');
-        
-        await prefs.setString('${_commentRepliesKey}_$userId', repliesJson);
-        
-        int totalReplies = 0;
-        _commentRepliesCache.forEach((_, replies) {
-          totalReplies += replies.length;
-        });
-        
-        print('Successfully saved replies for ${_commentRepliesCache.length} comments, total $totalReplies replies to cache');
-        
-        // Verify the save worked
-        final savedJson = prefs.getString('${_commentRepliesKey}_$userId');
-        print('Verification - saved data exists: ${savedJson != null}');
-      } else {
-        if (userId.isEmpty) {
-          print('Cannot save replies cache: No user ID available');
-        } else {
-          print('Not saving empty replies cache');
-        }
-      }
-    } catch (e) {
-      print('Error saving replies cache: $e');
-    }
-  }
   
   // Update comment replies cache for a specific comment
-  void _updateRepliesCache(String commentId, List<Comment> replies) {
-    try {
-      print('Updating replies cache for comment $commentId with ${replies.length} replies');
-      
-      if (replies.isEmpty) {
-        if (_commentRepliesCache.containsKey(commentId)) {
-          print('Removing empty replies for comment $commentId from cache');
-          _commentRepliesCache.remove(commentId);
-        }
-      } else {
-        // Convert each reply to JSON, carefully handling potential errors
-        List<Map<String, dynamic>> repliesJson = [];
-        
-        for (var reply in replies) {
-          try {
-            // Make sure each reply has the correct parent reference
-            Map<String, dynamic> replyJson = reply.toJson();
-            
-            // Ensure parentComment is set correctly
-            if (replyJson['parentComment'] == null || replyJson['parentComment'].toString().isEmpty) {
-              replyJson['parentComment'] = commentId;
-            }
-            
-            repliesJson.add(replyJson);
-          } catch (e) {
-            print('Error converting reply to JSON: $e');
-            // Skip this reply if it can't be converted to JSON
-          }
-        }
-        
-        if (repliesJson.isNotEmpty) {
-          print('Saving ${repliesJson.length} replies for comment $commentId to cache');
-          _commentRepliesCache[commentId] = repliesJson;
-        }
-      }
-      
-      // Save the updated cache
-      _saveRepliesCache();
-    } catch (e) {
-      print('Error in _updateRepliesCache: $e');
-    }
-  }
   
   // Update cached like status for a post
   void _updatePostLikeCache(String postId, bool isLiked) {
@@ -315,6 +235,11 @@ class CommunityViewModel extends ChangeNotifier {
   bool get hasMoreComments => _hasMoreComments;
   int get currentCommentsPage => _currentCommentsPage;
   String? get errorMessage => _errorMessage;
+
+  // Add getters
+  List<Post> get userPosts => _userPosts;
+  CommunityStatus get userPostsStatus => _userPostsStatus;
+  int get userPostsTotal => _userPostsTotal;
 
   // Load all posts
   Future<void> loadPosts() async {
@@ -1009,57 +934,6 @@ class CommunityViewModel extends ChangeNotifier {
   }
 
   // Helper method to merge replies from different sources
-  Comment _mergeReplies(Comment comment, List<Comment> additionalReplies) {
-    if (additionalReplies.isEmpty) return comment;
-    
-    // If the comment already has replies from the API
-    if (comment.replies != null && comment.replies!.isNotEmpty) {
-      print('Merging ${additionalReplies.length} additional replies with ${comment.replies!.length} existing replies for comment ${comment.id}');
-      
-      // Create a set of existing reply IDs to avoid duplicates
-      Set<String> existingReplyIds = comment.replies!.map((r) => r.id).toSet();
-      
-      // Create a new combined list
-      List<Comment> combinedReplies = List.from(comment.replies!);
-      
-      // Add any replies that aren't already in the comment
-      for (var additionalReply in additionalReplies) {
-        if (!existingReplyIds.contains(additionalReply.id)) {
-          print('Adding saved reply ${additionalReply.id} to comment ${comment.id}');
-          combinedReplies.add(additionalReply);
-        }
-      }
-      
-      // Create a new comment with the combined replies
-      return Comment(
-        id: comment.id,
-        content: comment.content,
-        author: comment.author,
-        postId: comment.postId,
-        parentCommentId: comment.parentCommentId,
-        likeCount: comment.likeCount,
-        isLiked: comment.isLiked,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
-        replies: combinedReplies,
-      );
-    } else {
-      // If the comment has no replies, just use the additional ones
-      print('API returned no replies for comment ${comment.id}, restoring ${additionalReplies.length} saved replies');
-      return Comment(
-        id: comment.id,
-        content: comment.content,
-        author: comment.author,
-        postId: comment.postId,
-        parentCommentId: comment.parentCommentId,
-        likeCount: comment.likeCount,
-        isLiked: comment.isLiked,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
-        replies: additionalReplies,
-      );
-    }
-  }
 
   // Toggle like on a comment reply
   Future<void> toggleReplyLike(String replyId) async {
@@ -1152,4 +1026,37 @@ class CommunityViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+ Future<void> loadUserPosts(String userId) async {
+  _userPostsStatus = CommunityStatus.loading;
+  _errorMessage = null;
+  notifyListeners(); // Notify UI to show loading state
+
+  try {
+    final token = _authViewModel.tokens?.accessToken;
+    if (token == null) {
+      _errorMessage = 'Not authenticated';
+      _userPostsStatus = CommunityStatus.error;
+      notifyListeners();
+      return;
+    }
+
+    final result = await _communityRepository.getUserPosts(token, userId);
+    
+    if (result.containsKey('posts') && result['posts'] is List) {
+      final List<dynamic> postsData = result['posts'];
+      _userPosts = postsData.map((postData) => Post.fromJson(postData)).toList();
+      _userPostsStatus = CommunityStatus.loaded;
+    } else {
+      _userPosts = [];
+      _userPostsStatus = CommunityStatus.error;
+      _errorMessage = 'Invalid response format';
+    }
+  } catch (e) {
+    _errorMessage = e.toString();
+    _userPostsStatus = CommunityStatus.error;
+  }
+  
+  notifyListeners(); // Notify UI to update
+}
 } 

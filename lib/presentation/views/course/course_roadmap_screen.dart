@@ -10,7 +10,7 @@ import 'course_detail_screen.dart';
 class CourseRoadmapScreen extends StatefulWidget {
   final String courseId;
 
-  const CourseRoadmapScreen({Key? key, required this.courseId}) : super(key: key);
+  const CourseRoadmapScreen({super.key, required this.courseId});
 
   @override
   State<CourseRoadmapScreen> createState() => _CourseRoadmapScreenState();
@@ -153,35 +153,20 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
     int completedExercises = 0;
 
     // Check if course.content or course.content.levels is null
-    if (course.content == null || course.content.levels == null) {
+    if (course.content.levels == null) {
       return 0.0;
     }
 
     for (int levelIndex = 0; levelIndex < course.content.levels.length; levelIndex++) {
       final level = course.content.levels[levelIndex];
-      
-      // Check if level.chapters is null
-      if (level.chapters == null) {
-        continue;
-      }
 
       for (int chapterIndex = 0; chapterIndex < level.chapters.length; chapterIndex++) {
         final chapter = level.chapters[chapterIndex];
-        
-        // Check if chapter.exercises is null
-        if (chapter.exercises == null) {
-          continue;
-        }
 
         for (int exerciseIndex = 0; exerciseIndex < chapter.exercises.length; exerciseIndex++) {
           totalExercises++;
 
           final progressKey = 'L${levelIndex + 1}C${chapterIndex + 1}E${exerciseIndex + 1}';
-          
-          // Check if course.progress is null
-          if (course.progress == null) {
-            continue;
-          }
           
           final progress = course.progress[progressKey];
 
@@ -265,7 +250,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
                       }
                       
                       context.push(
-                        '/course-detail/${course.id}?level=${course.currentLevel}&chapter=${chapterIndex}'
+                        '/course-detail/${course.id}?level=${course.currentLevel}&chapter=$chapterIndex'
                       );
                     }
                   }
@@ -1160,7 +1145,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
         final levelIndex = lesson['levelIndex'];
         if (levelIndex < course.content.levels.length && !lesson['isLocked']) {
           context.push(
-            '/course-detail/${course.id}?level=${levelIndex}&chapter=0'
+            '/course-detail/${course.id}?level=$levelIndex&chapter=0'
           );
         }
       } else {

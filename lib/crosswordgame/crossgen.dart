@@ -305,9 +305,9 @@ class Gen_Crossword { //Сгенерированный кроссворд
     {
       word_inputs.add(CreateWord(Field, -1));
       positioned_words.add(Positioned(
-        child: word_inputs.last,
         top: Field.y.toDouble() * 80,
         left: Field.x.toDouble() * 80,
+        child: word_inputs.last,
       ));
     }
     return InteractiveViewer(
@@ -334,9 +334,9 @@ class Gen_Crossword { //Сгенерированный кроссворд
     {
       word_inputs.add(CreateWord(source[i], word_ind));
       positioned_words.add(Positioned(
-        child: word_inputs.last,
         top: source[i].y.toDouble() * 80,
         left: source[i].x.toDouble() * 80,
+        child: word_inputs.last,
       ));
     }
     return InteractiveViewer(
@@ -427,8 +427,8 @@ class Gen_Crossword { //Сгенерированный кроссворд
     var result = Word (
       index: field.num,
       hor: field.hor,
-      children: Cells,
-      parent: field,     
+      parent: field,
+      children: Cells,     
     );
     return result;
   }

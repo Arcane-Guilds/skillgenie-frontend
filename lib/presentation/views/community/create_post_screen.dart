@@ -31,8 +31,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     // Check if we've already reached the maximum of 5 images
     if (_selectedImages.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('You can only add up to 5 images per post'),
+        const SnackBar(
+          content: Text('You can only add up to 5 images per post'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -73,8 +73,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Future<void> _submitPost() async {
     if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter some content for your post'),
+        const SnackBar(
+          content: Text('Please enter some content for your post'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -151,7 +151,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       strokeWidth: 2,
                     ),
                   )
-                : Icon(
+                : const Icon(
                     Icons.check,
                     color: AppTheme.primaryColor,
                   ),
@@ -224,7 +224,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       width: 1,
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
@@ -232,7 +232,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         color: AppTheme.primaryColor,
                         size: 24,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         'Add Photos (0/5)',
                         style: TextStyle(
@@ -262,12 +262,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   if (_selectedImages.length < 5)
                     TextButton.icon(
                       onPressed: _pickImage,
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.add_photo_alternate_outlined,
                         color: AppTheme.primaryColor,
                         size: 20,
                       ),
-                      label: Text(
+                      label: const Text(
                         'Add More',
                         style: TextStyle(
                           color: AppTheme.primaryColor,

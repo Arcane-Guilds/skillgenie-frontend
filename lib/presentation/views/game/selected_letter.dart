@@ -6,7 +6,7 @@ import '../../../core/constants/game_constants.dart';
 import '../../viewmodels/game/game_viewmodel.dart';
 
 class SelectedLetterView extends StatefulWidget {
-  const SelectedLetterView({Key? key}) : super(key: key);
+  const SelectedLetterView({super.key});
 
   @override
   State<SelectedLetterView> createState() => _SelectedLetterViewState();
@@ -140,8 +140,8 @@ class LetterTile extends StatelessWidget {
     required this.text,
     this.won = false,
     this.index = 0,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

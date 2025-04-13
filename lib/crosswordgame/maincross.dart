@@ -69,7 +69,7 @@ void main() {
       Locale('en', ''),
       Locale('ru', '')
     ],
-    locale: Locale('en', ''),
+    locale: const Locale('en', ''),
     localeResolutionCallback: (locale, supportedLocales) {
       for (var supportedLocale in supportedLocales) {
         if (supportedLocale.languageCode == locale?.languageCode &&
@@ -200,12 +200,12 @@ class ColorTheme
 }
 
 class MainCrosswordScreen extends StatelessWidget {
-  const MainCrosswordScreen({Key? key}) : super(key: key);
+  const MainCrosswordScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     // Navigate to the search route which is the entry point for the crossword game
-    return SearchRoute();
+    return const SearchRoute();
   }
 }
 
@@ -216,12 +216,12 @@ class CrosswordRoute extends StatefulWidget {
   final bool lang_rus;
 
   const CrosswordRoute({
-    Key? key,
+    super.key,
     required this.pageid,
     required this.size,
     required this.diff,
     required this.lang_rus,
-  }) : super(key: key);
+  });
 
   @override
   _CrosswordRouteState createState() => _CrosswordRouteState();
@@ -355,7 +355,7 @@ class _CrosswordRouteState extends State<CrosswordRoute> {
                                   try {
                                     // Calculate help count based on size
                                     final helpCount = (widget.size / 2).ceil();
-                                    final bufInc = 3; // Medium difficulty buffer increment
+                                    const bufInc = 3; // Medium difficulty buffer increment
                                     
                                     Navigator.push(
                                       context,
@@ -415,10 +415,10 @@ class CrosswordDisplay extends StatelessWidget {
   final int size;
 
   const CrosswordDisplay({
-    Key? key,
+    super.key,
     required this.words,
     required this.size,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -456,7 +456,7 @@ class CrosswordDisplay extends StatelessWidget {
     try {
       // Calculate help count based on size
       final helpCount = (size / 2).ceil();
-      final bufInc = 3; // Medium difficulty buffer increment
+      const bufInc = 3; // Medium difficulty buffer increment
       
       return Scaffold(
         appBar: AppBar(

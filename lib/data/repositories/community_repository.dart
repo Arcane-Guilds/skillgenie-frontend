@@ -536,4 +536,32 @@ class CommunityRepository {
       return {'posts': [], 'total': 0};
     }
   }
+
+  Future<Post> updatePost(String token, String postId, String content, String title) async {
+    try {
+      final response = await client.put(
+        Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'content': content,
+          'title': title,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Post.fromJson(data);
+      } else {
+        final errorData = json.decode(response.body);
+        print('Error updating post: $errorData');
+        throw Exception('Failed to update post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+      }
+    } catch (e) {
+      print('Error in updatePost: $e');
+      throw Exception('Failed to update post: $e');
+    }
+  }
 } 

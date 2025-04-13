@@ -644,11 +644,13 @@ class CommunityViewModel extends ChangeNotifier {
         return;
       }
 
-      // Find the post in our list
+      // Find the post in both lists
       final postIndex = _posts.indexWhere((p) => p.id == postId);
-      final isCurrentlyLiked = postIndex >= 0 ? _posts[postIndex].isLiked : false;
+      final userPostIndex = _userPosts.indexWhere((p) => p.id == postId);
+      final isCurrentlyLiked = postIndex >= 0 ? _posts[postIndex].isLiked : 
+                              userPostIndex >= 0 ? _userPosts[userPostIndex].isLiked : false;
       
-      // Optimistically update the UI
+      // Optimistically update the UI in both lists
       if (postIndex >= 0) {
         final currentLikeCount = _posts[postIndex].likeCount;
         final updatedPost = _posts[postIndex].copyWith(
@@ -656,6 +658,16 @@ class CommunityViewModel extends ChangeNotifier {
           likeCount: isCurrentlyLiked ? currentLikeCount - 1 : currentLikeCount + 1
         );
         _posts[postIndex] = updatedPost;
+      }
+
+      // Update in user posts list if it exists there
+      if (userPostIndex >= 0) {
+        final currentLikeCount = _userPosts[userPostIndex].likeCount;
+        final updatedPost = _userPosts[userPostIndex].copyWith(
+          isLiked: !isCurrentlyLiked,
+          likeCount: isCurrentlyLiked ? currentLikeCount - 1 : currentLikeCount + 1
+        );
+        _userPosts[userPostIndex] = updatedPost;
       }
       
       // Also update the selected post if it's the same post
@@ -680,49 +692,78 @@ class CommunityViewModel extends ChangeNotifier {
         result = await _communityRepository.likePost(token, postId);
       }
       
-      // Update the post with the server-confirmed like status
-      if (result.containsKey('isLiked') && postIndex >= 0) {
+      // Update both lists with the server-confirmed like status
+      if (result.containsKey('isLiked')) {
         bool serverLikeStatus = result['isLiked'];
         
         // Update the cached like status with server response
         _updatePostLikeCache(postId, serverLikeStatus);
         
-        // If server response differs from our optimistic update, correct it
-        if (_posts[postIndex].isLiked != serverLikeStatus) {
+        // If server response differs from our optimistic update, correct it in both lists
+        if (postIndex >= 0 && _posts[postIndex].isLiked != serverLikeStatus) {
           final currentLikeCount = _posts[postIndex].likeCount;
           final updatedPost = _posts[postIndex].copyWith(
             isLiked: serverLikeStatus,
             likeCount: serverLikeStatus ? currentLikeCount + 1 : currentLikeCount - 1
           );
           _posts[postIndex] = updatedPost;
-          notifyListeners();
         }
+
+        if (userPostIndex >= 0 && _userPosts[userPostIndex].isLiked != serverLikeStatus) {
+          final currentLikeCount = _userPosts[userPostIndex].likeCount;
+          final updatedPost = _userPosts[userPostIndex].copyWith(
+            isLiked: serverLikeStatus,
+            likeCount: serverLikeStatus ? currentLikeCount + 1 : currentLikeCount - 1
+          );
+          _userPosts[userPostIndex] = updatedPost;
+        }
+
+        notifyListeners();
       }
     } catch (e) {
       print('Error toggling post like: $e');
       
-      // Revert the optimistic update in case of error
+      // Revert the optimistic update in case of error in both lists
       final postIndex = _posts.indexWhere((p) => p.id == postId);
+      final userPostIndex = _userPosts.indexWhere((p) => p.id == postId);
+      
+      // Determine the current like status from either list
+      bool? currentLikeStatus;
       if (postIndex >= 0) {
-        final isCurrentlyLiked = !_posts[postIndex].isLiked; // It was toggled already
-        final currentLikeCount = _posts[postIndex].likeCount;
-        final updatedPost = _posts[postIndex].copyWith(
-          isLiked: isCurrentlyLiked,
-          likeCount: isCurrentlyLiked ? currentLikeCount + 1 : currentLikeCount - 1
-        );
-        _posts[postIndex] = updatedPost;
-        
-        // Revert the cache update
-        _updatePostLikeCache(postId, isCurrentlyLiked);
+        currentLikeStatus = _posts[postIndex].isLiked;
+      } else if (userPostIndex >= 0) {
+        currentLikeStatus = _userPosts[userPostIndex].isLiked;
       }
       
-      if (_selectedPost?.id == postId) {
-        final isCurrentlyLiked = !_selectedPost!.isLiked; // It was toggled already
-        final currentLikeCount = _selectedPost!.likeCount;
-        _selectedPost = _selectedPost!.copyWith(
-          isLiked: isCurrentlyLiked,
-          likeCount: isCurrentlyLiked ? currentLikeCount + 1 : currentLikeCount - 1
-        );
+      if (currentLikeStatus != null) {
+        if (postIndex >= 0) {
+          final currentLikeCount = _posts[postIndex].likeCount;
+          final updatedPost = _posts[postIndex].copyWith(
+            isLiked: !currentLikeStatus,
+            likeCount: !currentLikeStatus ? currentLikeCount + 1 : currentLikeCount - 1
+          );
+          _posts[postIndex] = updatedPost;
+        }
+
+        if (userPostIndex >= 0) {
+          final currentLikeCount = _userPosts[userPostIndex].likeCount;
+          final updatedPost = _userPosts[userPostIndex].copyWith(
+            isLiked: !currentLikeStatus,
+            likeCount: !currentLikeStatus ? currentLikeCount + 1 : currentLikeCount - 1
+          );
+          _userPosts[userPostIndex] = updatedPost;
+        }
+        
+        if (_selectedPost?.id == postId) {
+          final currentLikeCount = _selectedPost!.likeCount;
+          _selectedPost = _selectedPost!.copyWith(
+            isLiked: !currentLikeStatus,
+            likeCount: !currentLikeStatus ? currentLikeCount + 1 : currentLikeCount - 1
+          );
+        }
+        
+        // Revert the cache update
+        _updatePostLikeCache(postId, !currentLikeStatus);
       }
       
       _errorMessage = 'Failed to update like status. Please try again.';
@@ -1030,7 +1071,7 @@ class CommunityViewModel extends ChangeNotifier {
  Future<void> loadUserPosts(String userId) async {
   _userPostsStatus = CommunityStatus.loading;
   _errorMessage = null;
-  notifyListeners(); // Notify UI to show loading state
+  notifyListeners();
 
   try {
     final token = _authViewModel.tokens?.accessToken;
@@ -1045,7 +1086,31 @@ class CommunityViewModel extends ChangeNotifier {
     
     if (result.containsKey('posts') && result['posts'] is List) {
       final List<dynamic> postsData = result['posts'];
-      _userPosts = postsData.map((postData) => Post.fromJson(postData)).toList();
+      
+      // Store the like status of current posts to preserve them
+      Map<String, bool> likeStatusMap = {};
+      for (var post in _userPosts) {
+        likeStatusMap[post.id] = post.isLiked;
+      }
+
+      _userPosts = postsData.map((postData) {
+        Post post = Post.fromJson(postData);
+        
+        // Apply cached like status first
+        bool cachedLikeStatus = _likedPostIds.contains(post.id);
+        
+        // Preserve like status if we already know it from the current session
+        if (likeStatusMap.containsKey(post.id)) {
+          post = post.copyWith(isLiked: likeStatusMap[post.id]);
+        } 
+        // Otherwise use the cached like status
+        else if (cachedLikeStatus) {
+          post = post.copyWith(isLiked: true);
+        }
+        
+        return post;
+      }).toList();
+
       _userPostsStatus = CommunityStatus.loaded;
     } else {
       _userPosts = [];
@@ -1057,6 +1122,54 @@ class CommunityViewModel extends ChangeNotifier {
     _userPostsStatus = CommunityStatus.error;
   }
   
-  notifyListeners(); // Notify UI to update
+  notifyListeners();
 }
+
+  // Update a post
+  Future<void> updatePost(String postId, String content, String title) async {
+    try {
+      final token = _authViewModel.tokens?.accessToken;
+      if (token == null) {
+        _errorMessage = 'Not authenticated';
+        notifyListeners();
+        return;
+      }
+
+      // Find the post in our list
+      final postIndex = _posts.indexWhere((p) => p.id == postId);
+      if (postIndex < 0) {
+        _errorMessage = 'Post not found';
+        notifyListeners();
+        return;
+      }
+
+      // Call the API to update the post
+      final updatedPost = await _communityRepository.updatePost(
+        token,
+        postId,
+        content,
+        title,
+      );
+
+      // Update the post in our list
+      _posts[postIndex] = updatedPost;
+
+      // Also update the selected post if it's the same post
+      if (_selectedPost?.id == postId) {
+        _selectedPost = updatedPost;
+      }
+
+      // Update in user posts if it exists there
+      final userPostIndex = _userPosts.indexWhere((p) => p.id == postId);
+      if (userPostIndex >= 0) {
+        _userPosts[userPostIndex] = updatedPost;
+      }
+
+      notifyListeners();
+    } catch (e) {
+      print('Error updating post: $e');
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
+  }
 } 

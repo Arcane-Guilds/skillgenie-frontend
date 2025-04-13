@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import 'package:go_router/go_router.dart';
+import 'package:skillGenie/data/models/community/post.dart';
 
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
@@ -11,6 +12,8 @@ import '../../../core/constants/cloudinary_constants.dart';
 import '../../viewmodels/community_viewmodel.dart';
 import '../community/post_detail_screen.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../community/update_post_screen.dart';
+import '../community/create_post_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -274,31 +277,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildUserPosts() {
-  return Consumer<CommunityViewModel>(
-    builder: (context, communityViewModel, _) {
-      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-      
-      if (communityViewModel.userPostsStatus == CommunityStatus.loading) {
-        return const Center(child: CircularProgressIndicator());
-      }
-      
-      if (communityViewModel.userPostsStatus == CommunityStatus.error) {
-        return Column(
-          children: [
-            Text(communityViewModel.errorMessage ?? 'Error loading posts'),
-            ElevatedButton(
-              onPressed: () => _loadUserPosts(profileViewModel.currentProfile!.id),
-              child: const Text('Retry'),
+    return Consumer<CommunityViewModel>(
+      builder: (context, communityViewModel, _) {
+        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+        
+        if (communityViewModel.userPostsStatus == CommunityStatus.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (communityViewModel.userPostsStatus == CommunityStatus.error) {
+          return Column(
+            children: [
+              Text(communityViewModel.errorMessage ?? 'Error loading posts'),
+              ElevatedButton(
+                onPressed: () => _loadUserPosts(profileViewModel.currentProfile!.id),
+                child: const Text('Retry'),
+              ),
+            ],
+          );
+        }
+
+        // Show "Create First Post" button if user has no posts
+        if (communityViewModel.userPosts.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.post_add,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'You haven\'t created any posts yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreatePostScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create Your First Post'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+              ],
             ),
-          ],
-        );
-      }
-      
-      return ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: communityViewModel.userPosts.length,
-        itemBuilder: (context, index) {
+          );
+        }
+        
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: communityViewModel.userPosts.length,
+          itemBuilder: (context, index) {
             final post = communityViewModel.userPosts[index];
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -340,6 +383,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
                           ),
+                          // Add 3-dots menu for post actions
+                          if (post.author.id == Provider.of<AuthViewModel>(context, listen: false).user?.id)
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _navigateToUpdatePost(post);
+                                } else if (value == 'delete') {
+                                  _showDeleteConfirmation(post.id);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Edit Post'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Delete Post'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -390,17 +467,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Icon(
-                            Icons.favorite,
-                            color: post.isLiked ? Colors.red : Colors.grey,
-                            size: 20,
+                          InkWell(
+                            onTap: () {
+                              final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+                              communityViewModel.togglePostLike(post.id);
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    post.isLiked ? Icons.favorite : Icons.favorite_border,
+                                    color: post.isLiked ? Theme.of(context).colorScheme.error : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    post.likeCount.toString(),
+                                    style: TextStyle(
+                                      color: post.isLiked ? Theme.of(context).colorScheme.error : Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          const SizedBox(width: 4),
-                          Text(post.likeCount.toString()),
                           const SizedBox(width: 16),
-                          const Icon(Icons.comment, size: 20),
-                          const SizedBox(width: 4),
-                          Text(post.commentCount.toString()),
+                          InkWell(
+                            onTap: () => _navigateToPostDetail(post.id),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.comment_outlined,
+                                    color: Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    post.commentCount.toString(),
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -436,6 +554,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => PostDetailScreen(postId: postId),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(String postId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Post'),
+        content: const Text('Are you sure you want to delete this post?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+                await communityViewModel.deletePost(postId);
+                
+                if (mounted) {
+                  // Remove the post from the UI immediately
+                  setState(() {
+                    // Remove from user posts list
+                    communityViewModel.userPosts.removeWhere((post) => post.id == postId);
+                  });
+                  
+                  _showSuccessSnackBar('Post deleted successfully');
+                }
+              } catch (e) {
+                if (mounted) {
+                  _showErrorSnackBar('Failed to delete post: ${e.toString()}');
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToUpdatePost(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UpdatePostScreen(post: post),
       ),
     );
   }

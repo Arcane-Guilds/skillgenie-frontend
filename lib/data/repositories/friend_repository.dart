@@ -12,7 +12,7 @@ class FriendRepository {
   final Logger _logger = Logger();
   final http.Client _client;
 
-  FriendRepository({http.Client? client}) : _client = client ?? http.Client();
+  FriendRepository({required http.Client client}) : _client = client;
 
   Future<Map<String, String>> _getAuthHeaders() async {
     final prefs = await SharedPreferences.getInstance();
@@ -26,10 +26,15 @@ class FriendRepository {
 
   void _handleApiError(http.Response response) {
     if (response.statusCode >= 400) {
-      final errorBody = jsonDecode(response.body);
-      final message = errorBody['message'] ?? 'An error occurred';
-      _logger.e('API Error: $message');
-      throw Exception(message);
+      try {
+        final errorBody = jsonDecode(response.body);
+        final message = errorBody['message'] ?? 'An error occurred';
+        _logger.e('API Error: $message');
+        throw Exception(message);
+      } catch (e) {
+        _logger.e('Failed to parse error response: ${response.body}');
+        throw Exception('An error occurred: ${response.statusCode}');
+      }
     }
   }
 
@@ -46,19 +51,19 @@ class FriendRepository {
 
       // Log the raw response for debugging
       _logger.d('Friends API response: ${response.body}');
-      
+
       // Handle empty response
       if (response.body.isEmpty || response.body == '[]') {
         _logger.i('Empty friends list from API');
         return [];
       }
-      
+
       final dynamic decodedJson = jsonDecode(response.body);
-      
-      // Case 1: Response is an array of objects
+
+      // Case 1: Response is an array of objects or strings
       if (decodedJson is List) {
         List<User> friends = [];
-        
+
         for (var item in decodedJson) {
           try {
             // Case 1a: Item is a string (just an ID)
@@ -67,11 +72,11 @@ class FriendRepository {
               // When we just have an ID, we need to fetch the user details separately
               // For now, create a minimal user with just ID
               friends.add(User(
-                id: item,
-                username: 'Friend', 
-                email: 'Loading...'
+                  id: item,
+                  username: 'Friend',
+                  email: 'Loading...'
               ));
-            } 
+            }
             // Case 1b: Item is a User object
             else if (item is Map<String, dynamic>) {
               _logger.d('Friend item is a user object');
@@ -82,18 +87,18 @@ class FriendRepository {
             _logger.e('Error parsing friend data: $e. Raw data: $item');
           }
         }
-        
+
         _logger.i('Parsed ${friends.length} friends from API');
         return friends;
-      } 
+      }
       // Case 2: Response is an object with a data field
       else if (decodedJson is Map && decodedJson.containsKey('data')) {
         final List<dynamic> data = decodedJson['data'];
         _logger.d('Friend data found in "data" field, ${data.length} items');
-        
+
         return data.map((item) => User.fromJson(item)).toList();
       }
-      
+
       // Fall through case - no valid data found
       _logger.w('Unexpected response format: ${response.body}');
       return [];
@@ -214,4 +219,104 @@ class FriendRepository {
       rethrow;
     }
   }
+
+  // Create a chat with a friend after accepting friend request
+  Future<Map<String, dynamic>> createChatWithFriend(String friendId) async {
+    try {
+      _logger.i('Creating chat with friend: $friendId');
+
+      // First, check if a chat already exists with this friend
+      final existingChat = await _checkExistingChatWithFriend(friendId);
+      if (existingChat != null) {
+        _logger.i('Chat already exists with friend: $friendId');
+        return existingChat;
+      }
+
+      final headers = await _getAuthHeaders();
+
+      // Use the standard POST endpoint for chat creation
+      final requestBody = jsonEncode({
+        'participants': [friendId],
+        'isGroupChat': false,
+      });
+
+      final response = await _client.post(
+        Uri.parse('${ApiConstants.baseUrl}/chat'),
+        headers: headers,
+        body: requestBody,
+      );
+
+      _handleApiError(response);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        _logger.i('Chat created successfully with friend: $friendId');
+        return jsonDecode(response.body);
+      } else {
+        _logger.w('Unexpected status code when creating chat: ${response
+            .statusCode}');
+        throw Exception('Failed to create chat with friend');
+      }
+    } catch (e) {
+      _logger.e('Error creating chat with friend: $e');
+      rethrow;
+    }
+  }
+
+  // Check if a chat already exists with a specific friend
+  Future<Map<String, dynamic>?> _checkExistingChatWithFriend(
+      String friendId) async {
+    try {
+      final headers = await _getAuthHeaders();
+      final response = await _client.get(
+        Uri.parse('${ApiConstants.baseUrl}/chat'),
+        headers: headers,
+      );
+
+      _handleApiError(response);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> chats = jsonDecode(response.body);
+
+        // Look for a direct chat with the friend
+        for (var chat in chats) {
+          // Check if it's a direct (non-group) chat
+          if (chat['isGroupChat'] == false) {
+            // Check if the friend is a participant
+            final List<dynamic> participants = chat['participants'];
+
+            // Loop through participants to find the friend
+            bool friendFound = false;
+            for (var participant in participants) {
+              String participantId = '';
+
+              // Handle both string IDs and full user objects
+              if (participant is String) {
+                participantId = participant;
+              } else if (participant is Map && participant.containsKey('id')) {
+                participantId = participant['id'];
+              } else if (participant is Map && participant.containsKey('_id')) {
+                participantId = participant['_id'];
+              }
+
+              if (participantId == friendId) {
+                friendFound = true;
+                break;
+              }
+            }
+
+            if (friendFound) {
+              _logger.i('Found existing chat with friend: $friendId');
+              return chat;
+            }
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      _logger.e('Error checking existing chats: $e');
+      return null; // Return null if there's an error, to allow chat creation
+    }
+  }
+
 }

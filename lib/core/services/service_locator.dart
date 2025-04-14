@@ -22,6 +22,7 @@ import '../../data/datasources/chatbot_local_datasource.dart';
 import '../constants/cloudinary_constants.dart';
 import '../constants/chatbot_constants.dart';
 import '../services/storage_service.dart';
+import '../storage/secure_storage.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/datasources/api_client.dart';
 
@@ -37,6 +38,8 @@ import '../../presentation/viewmodels/reminder_viewmodel.dart';
 import '../../presentation/viewmodels/community_viewmodel.dart';
 import '../../presentation/viewmodels/friend_viewmodel.dart';
 import '../services/notification_service.dart';
+import '../../data/repositories/chat_repository.dart';
+import '../../presentation/viewmodels/chat_viewmodel.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -149,7 +152,20 @@ Future<void> setupServiceLocator() async {
 
   serviceLocator.registerSingleton<FriendRepository>(
     FriendRepository(
-      client: serviceLocator<http.Client>(), // Replace with your actual API URL
+      client: serviceLocator<http.Client>(),
+    ),
+  );
+
+  // Register SecureStorage before using it in ChatRepository
+  // This is critical for authentication across the app, particularly for chat functionality
+  serviceLocator.registerSingleton<SecureStorage>(
+    SecureStorage(serviceLocator<SharedPreferences>()),
+  );
+
+  serviceLocator.registerSingleton<ChatRepository>(
+    ChatRepository(
+      client: serviceLocator<http.Client>(),
+      secureStorage: serviceLocator<SecureStorage>(),
     ),
   );
 
@@ -234,6 +250,13 @@ Future<void> setupServiceLocator() async {
     () => CommunityViewModel(
       communityRepository: serviceLocator<CommunityRepository>(),
       authViewModel: serviceLocator<AuthViewModel>(),
+    ),
+  );
+
+  serviceLocator.registerFactory<ChatViewModel>(() =>
+    ChatViewModel(
+      chatRepository: serviceLocator<ChatRepository>(),
+      secureStorage: serviceLocator<SecureStorage>(),
     ),
   );
 }

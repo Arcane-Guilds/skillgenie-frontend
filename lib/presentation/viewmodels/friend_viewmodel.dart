@@ -12,6 +12,11 @@ class FriendViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   
+  // Throttling variables
+  DateTime _lastFriendsApiCall = DateTime(1970);
+  DateTime _lastRequestsApiCall = DateTime(1970);
+  bool _friendsRefreshQueued = false;
+  
   // Getters
   List<User> get friends => _friends;
   FriendRequests? get friendRequests => _friendRequests;
@@ -23,11 +28,38 @@ class FriendViewModel extends ChangeNotifier {
   FriendViewModel({required FriendRepository friendRepository})
       : _friendRepository = friendRepository;
   
-  // Load friends
+  // Check if we should throttle an API call
+  bool _shouldThrottle(DateTime lastCall, {int minIntervalSeconds = 5}) {
+    final now = DateTime.now();
+    return now.difference(lastCall).inSeconds < minIntervalSeconds;
+  }
+  
+  // Load friends with throttling
   Future<void> loadFriends() async {
+    // Skip if already loading or if we called the API too recently
+    if (_isLoading) {
+      print('Skipping loadFriends - already loading');
+      return;
+    }
+    
+    if (_shouldThrottle(_lastFriendsApiCall)) {
+      print('Throttling loadFriends - called too recently');
+      
+      // If we need to refresh and aren't already queued, schedule a refresh
+      if (!_friendsRefreshQueued) {
+        _friendsRefreshQueued = true;
+        Future.delayed(Duration(seconds: 2), () {
+          _friendsRefreshQueued = false;
+          loadFriends();
+        });
+      }
+      return;
+    }
+    
     try {
       _setLoading(true);
       _clearError();
+      _lastFriendsApiCall = DateTime.now();
       
       print('Loading friends...');
       _friends = await _friendRepository.getFriends();
@@ -82,8 +114,15 @@ class FriendViewModel extends ChangeNotifier {
   
   // Refresh friends quietly without showing loading state
   Future<void> _refreshFriendsQuietly() async {
+    // Skip if we called the API too recently
+    if (_shouldThrottle(_lastFriendsApiCall, minIntervalSeconds: 2)) {
+      print('Throttling quiet refresh - called too recently');
+      return;
+    }
+    
     try {
       print('Quietly refreshing friends data...');
+      _lastFriendsApiCall = DateTime.now();
       final updatedFriends = await _friendRepository.getFriends();
       
       if (updatedFriends.isNotEmpty) {
@@ -97,11 +136,23 @@ class FriendViewModel extends ChangeNotifier {
     }
   }
   
-  // Load friend requests
+  // Load friend requests with throttling
   Future<void> loadFriendRequests() async {
+    // Skip if already loading or if we called the API too recently
+    if (_isLoading) {
+      print('Skipping loadFriendRequests - already loading');
+      return;
+    }
+    
+    if (_shouldThrottle(_lastRequestsApiCall)) {
+      print('Throttling loadFriendRequests - called too recently');
+      return;
+    }
+    
     try {
       _setLoading(true);
       _clearError();
+      _lastRequestsApiCall = DateTime.now();
       
       _friendRequests = await _friendRepository.getFriendRequests();
       notifyListeners();
@@ -156,17 +207,52 @@ class FriendViewModel extends ChangeNotifier {
       _clearError();
       
       // First accept the request
-      await _friendRepository.acceptFriendRequest(requestId);
+      final acceptedRequest = await _friendRepository.acceptFriendRequest(requestId);
       
-      // Then refresh friends list - make sure this happens after the acceptance
-      await loadFriends();
+      // Get the sender's ID and info to create a chat with them
+      final friendId = acceptedRequest.sender.id;
+      final newFriend = acceptedRequest.sender;
       
-      // Finally refresh the requests to remove the accepted request
-      await loadFriendRequests();
+      // Update local friends list immediately
+      if (!_friends.any((friend) => friend.id == newFriend.id)) {
+        _friends.add(newFriend);
+        notifyListeners();
+      }
+      
+      // Update local friend requests list to remove this request
+      if (_friendRequests != null) {
+        _friendRequests!.received.removeWhere((request) => request.id == requestId);
+        notifyListeners();
+      }
+      
+      // Create a chat with the new friend using the standard POST endpoint
+      try {
+        print('Creating chat with new friend: $friendId');
+        final chatResult = await _friendRepository.createChatWithFriend(friendId);
+        print('Chat created: ${chatResult['id'] ?? 'Unknown ID'}');
+      } catch (chatError) {
+        print('Warning: Could not create chat with friend: $chatError');
+        // Don't fail the whole operation if chat creation fails
+      }
+      
+      // Then refresh friends list in background - this should be fast since we already added the friend locally
+      _lastFriendsApiCall = DateTime(1970); // Reset throttling to force refresh
+      loadFriends().then((_) {
+        print('Background friends refresh completed');
+      });
+      
+      // Finally refresh the requests to ensure we're in sync with the server
+      _lastRequestsApiCall = DateTime(1970); // Reset throttling to force refresh
+      loadFriendRequests().then((_) {
+        print('Background requests refresh completed');
+      });
       
       // Log confirmation for debugging
-      print('Friend request accepted, refreshed lists. Friends count: ${_friends.length}');
+      print('Friend request accepted, lists updated. Friends count: ${_friends.length}');
+      
+      _setLoading(false);
     } catch (e) {
+      print('Error during accept friend request: $e');
       _setError('Failed to accept friend request: $e');
       _setLoading(false);
     }
@@ -178,11 +264,24 @@ class FriendViewModel extends ChangeNotifier {
       _setLoading(true);
       _clearError();
       
+      // First reject the request on the server
       await _friendRepository.rejectFriendRequest(requestId);
       
-      // Refresh friend requests after rejecting
-      await loadFriendRequests();
+      // Update local friend requests list to remove this request
+      if (_friendRequests != null) {
+        _friendRequests!.received.removeWhere((request) => request.id == requestId);
+        notifyListeners();
+      }
+      
+      // Refresh friend requests in the background to ensure we're in sync with the server
+      _lastRequestsApiCall = DateTime(1970); // Reset throttling to force refresh
+      loadFriendRequests().then((_) {
+        print('Background requests refresh completed after rejection');
+      });
+      
+      _setLoading(false);
     } catch (e) {
+      print('Error rejecting friend request: $e');
       _setError('Failed to reject friend request: $e');
       _setLoading(false);
     }

@@ -8,6 +8,8 @@ import '../../core/constants/api_constants.dart';
 import 'package:logging/logging.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../datasources/auth_local_datasource.dart';
+import '../../core/storage/secure_storage.dart';
+import 'package:get_it/get_it.dart';
 
 /// Repository for authentication-related operations
 class AuthRepository {
@@ -20,6 +22,28 @@ class AuthRepository {
     required AuthLocalDataSource localDataSource,
   })  : _remoteDataSource = remoteDataSource,
         _localDataSource = localDataSource;
+
+  /// Get the SecureStorage instance from the service locator
+  Future<SecureStorage> getSecureStorage() async {
+    try {
+      // Try to get it from the service locator
+      final GetIt serviceLocator = GetIt.instance;
+      if (serviceLocator.isRegistered<SecureStorage>()) {
+        _logger.info('Getting SecureStorage from service locator');
+        return serviceLocator<SecureStorage>();
+      }
+      
+      // If not registered, create a new instance
+      _logger.warning('SecureStorage not registered, creating new instance');
+      final prefs = await SharedPreferences.getInstance();
+      return SecureStorage(prefs);
+    } catch (e) {
+      _logger.severe('Error getting SecureStorage: $e');
+      // Fallback to creating a new instance
+      final prefs = await SharedPreferences.getInstance();
+      return SecureStorage(prefs);
+    }
+  }
 
   /// Sign in with email and password
   Future<AuthResponse> signIn(String email, String password) async {

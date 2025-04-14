@@ -13,11 +13,11 @@ class CourseDetailScreen extends StatefulWidget {
   final int? initialChapterIndex;
 
   const CourseDetailScreen({
-    Key? key, 
+    super.key, 
     required this.courseId, 
     this.initialLevelIndex,
     this.initialChapterIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -364,19 +364,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
           
           // Concept Introduction Section
-          if (chapter.conceptIntroduction != null && chapter.conceptIntroduction!.isNotEmpty)
+          if (chapter.conceptIntroduction.isNotEmpty)
             _buildContentSection(
               title: 'Concept Introduction',
-              content: chapter.conceptIntroduction!,
+              content: chapter.conceptIntroduction,
               icon: Icons.lightbulb,
               color: Colors.purple,
             ),
           
           // Real-World Application Section
-          if (chapter.realWorldApplication != null && chapter.realWorldApplication!.isNotEmpty)
+          if (chapter.realWorldApplication.isNotEmpty)
             _buildContentSection(
               title: 'Real-World Application',
-              content: chapter.realWorldApplication!,
+              content: chapter.realWorldApplication,
               icon: Icons.public,
               color: Colors.green,
             ),
@@ -560,7 +560,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ],
                     ),
                   )
-                ).toList(),
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Your Solution:',
@@ -644,7 +644,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 ],
                               ),
                             ),
-                          ).toList(),
+                          ),
                           const SizedBox(height: 16),
                         ],
                         Center(
@@ -829,11 +829,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        Row(
+        const Row(
           children: [
             Icon(Icons.psychology, color: Colors.indigo),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'Concept Explanation',
               style: TextStyle(
                 fontSize: 20,
@@ -1015,11 +1015,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        Row(
+        const Row(
           children: [
             Icon(Icons.school, color: Colors.teal),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'Tutorial',
               style: TextStyle(
                 fontSize: 20,
@@ -1051,7 +1051,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           Container(
                             width: 32,
                             height: 32,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.teal,
                               shape: BoxShape.circle,
                             ),
@@ -1148,11 +1148,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        Row(
+        const Row(
           children: [
             Icon(Icons.library_books, color: Colors.orange),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'Additional Resources',
               style: TextStyle(
                 fontSize: 20,
@@ -1197,11 +1197,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 // Videos
                 if (additionalResources.videos != null && 
                     additionalResources.videos.isNotEmpty) ...[
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.video_library, color: Colors.red),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Videos',
                         style: TextStyle(
                           fontSize: 18,
@@ -1220,11 +1220,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 // Additional Exercises
                 if (additionalResources.exercises != null && 
                     additionalResources.exercises.isNotEmpty) ...[
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.extension, color: Colors.green),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Practice Exercises',
                         style: TextStyle(
                           fontSize: 18,
@@ -1401,12 +1401,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.green),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                        const SizedBox(width: 4),
-                        const Text(
+                        Icon(Icons.check_circle, color: Colors.green, size: 16),
+                        SizedBox(width: 4),
+                        Text(
                           'Completed',
                           style: TextStyle(
                             color: Colors.green,
@@ -1671,7 +1671,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   ? option == correctAnswer
                   : option == selectedAnswer,
               ),
-            ).toList(),
+            ),
             if (!isCompleted && selectedAnswer != null) ...[
               const SizedBox(height: 16),
               Row(

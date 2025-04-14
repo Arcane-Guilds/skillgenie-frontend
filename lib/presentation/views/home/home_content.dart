@@ -725,35 +725,20 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
     int completedExercises = 0;
     
     // Check if course.content or course.content.levels is null
-    if (course.content == null || course.content.levels == null) {
+    if (course.content.levels == null) {
       return 0.0;
     }
     
     for (int levelIndex = 0; levelIndex < course.content.levels.length; levelIndex++) {
       final level = course.content.levels[levelIndex];
       
-      // Check if level.chapters is null
-      if (level.chapters == null) {
-        continue;
-      }
-      
       for (int chapterIndex = 0; chapterIndex < level.chapters.length; chapterIndex++) {
         final chapter = level.chapters[chapterIndex];
-        
-        // Check if chapter.exercises is null
-        if (chapter.exercises == null) {
-          continue;
-        }
         
         for (int exerciseIndex = 0; exerciseIndex < chapter.exercises.length; exerciseIndex++) {
           totalExercises++;
           
           final progressKey = 'L${levelIndex + 1}C${chapterIndex + 1}E${exerciseIndex + 1}';
-          
-          // Check if course.progress is null
-          if (course.progress == null) {
-            continue;
-          }
           
           // Safely get the progress value without casting
           final progress = course.progress[progressKey];
@@ -1103,9 +1088,9 @@ class SkillRoadmapScreen extends StatefulWidget {
   final Map<String, dynamic> skill;
 
   const SkillRoadmapScreen({
-    Key? key,
+    super.key,
     required this.skill,
-  }) : super(key: key);
+  });
 
   @override
   State<SkillRoadmapScreen> createState() => _SkillRoadmapScreenState();
@@ -1388,9 +1373,9 @@ class _SkillRoadmapScreenState extends State<SkillRoadmapScreen> with SingleTick
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Your Progress',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1959,12 +1944,12 @@ class _SkillRoadmapScreenState extends State<SkillRoadmapScreen> with SingleTick
                   ),
                   elevation: 4,
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.play_arrow),
-                    const SizedBox(width: 8),
-                    const Text(
+                    Icon(Icons.play_arrow),
+                    SizedBox(width: 8),
+                    Text(
                       'Begin Lesson',
                       style: TextStyle(
                         fontSize: 16,

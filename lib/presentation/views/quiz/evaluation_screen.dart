@@ -194,9 +194,9 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          if (question.options != null && question.options!.isNotEmpty)
-            ...question.options!.map((option) => _buildOptionRadio(questionKey, option)),
-          if (question.options == null || question.options!.isEmpty)
+          if (question.options.isNotEmpty)
+            ...question.options.map((option) => _buildOptionRadio(questionKey, option)),
+          if (question.options.isEmpty)
             TextFormField(
               initialValue: _answers[questionKey],
               decoration: const InputDecoration(

@@ -3,23 +3,38 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../data/models/community/post.dart';
 import '../../viewmodels/community_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
 
-class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+class UpdatePostScreen extends StatefulWidget {
+  final Post post;
+
+  const UpdatePostScreen({super.key, required this.post});
 
   @override
-  State<CreatePostScreen> createState() => _CreatePostScreenState();
+  State<UpdatePostScreen> createState() => _UpdatePostScreenState();
 }
 
-class _CreatePostScreenState extends State<CreatePostScreen> {
-  final TextEditingController _contentController = TextEditingController();
+class _UpdatePostScreenState extends State<UpdatePostScreen> {
+  late TextEditingController _contentController;
+  late TextEditingController _titleController;
   final List<String> _selectedImages = [];
+  final List<File> _newImages = [];
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentController = TextEditingController(text: widget.post.content);
+    _titleController = TextEditingController(text: widget.post.title);
+    _selectedImages.addAll(widget.post.images);
+  }
 
   @override
   void dispose() {
     _contentController.dispose();
+    _titleController.dispose();
     super.dispose();
   }
 
@@ -35,6 +50,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       if (image != null && mounted) {
         setState(() {
+          _newImages.add(File(image.path));
           _selectedImages.add(image.path);
         });
       }
@@ -50,11 +66,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  Future<void> _createPost() async {
+  void _removeImage(int index) {
+    setState(() {
+      // If the image is a new one (not from the original post)
+      if (index >= widget.post.images.length) {
+        final newImageIndex = index - widget.post.images.length;
+        _newImages.removeAt(newImageIndex);
+      }
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  Future<void> _updatePost() async {
     if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please write something in your post'),
+          content: Text('Content cannot be empty'),
           backgroundColor: Colors.red,
         ),
       );
@@ -64,17 +91,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final viewModel = Provider.of<CommunityViewModel>(context, listen: false);
-      final post = await viewModel.createPost(_contentController.text.trim(), _selectedImages);
+      final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+      
+      // Get the list of existing images (original images that are still selected)
+      final List<String> existingImages = _selectedImages
+          .where((image) => widget.post.images.contains(image))
+          .toList();
+
+      await communityViewModel.updatePost(
+        widget.post.id,
+        _contentController.text.trim(),
+        _titleController.text.trim(),
+        existingImages: existingImages,
+        newImages: _newImages,
+      );
 
       if (mounted) {
-        // Refresh posts to get updated data with author info
-        await viewModel.loadPosts();
-        
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Post created successfully!'),
+            content: Text('Post updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -83,7 +119,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error creating post: ${e.toString()}'),
+            content: Text('Failed to update post: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -95,20 +131,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Post'),
+        title: const Text('Edit Post'),
         actions: [
           TextButton(
-            onPressed: _isLoading ? null : _createPost,
+            onPressed: _isLoading ? null : _updatePost,
             child: _isLoading
                 ? const SizedBox(
                     width: 20,
@@ -118,7 +148,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('Post'),
+                : const Text('Update'),
           ),
         ],
       ),
@@ -127,6 +157,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.all(16),
+              ),
+              maxLines: 1,
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _contentController,
               decoration: const InputDecoration(
@@ -154,7 +194,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             image: DecorationImage(
-                              image: FileImage(File(_selectedImages[index])),
+                              image: _selectedImages[index].startsWith('http')
+                                  ? NetworkImage(_selectedImages[index])
+                                  : FileImage(File(_selectedImages[index])) as ImageProvider,
                               fit: BoxFit.cover,
                             ),
                           ),

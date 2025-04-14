@@ -65,7 +65,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
     Size size = MediaQuery.of(context).size;
 
     // Challenge categories
-    List<String> _challengesTypes = [
+    List<String> challengesTypes = [
       'Recommended',
     ];
 
@@ -87,6 +87,10 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     width: size.width * .9,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -111,10 +115,6 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                         ),
                       ],
                     ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
                   ),
                 ],
               ),
@@ -127,7 +127,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
               width: size.width,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _challengesTypes.length,
+                itemCount: challengesTypes.length,
                 itemBuilder: (BuildContext context, int index) {
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -138,7 +138,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                         });
                       },
                       child: Text(
-                        _challengesTypes[index],
+                        challengesTypes[index],
                         style: TextStyle(
                           fontSize: 16.6,
                           fontWeight: selectedIndex == index
@@ -180,6 +180,19 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                     child: Container(
                       width: 300,
                       margin: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withOpacity(.8),
+                        borderRadius: BorderRadius.circular(20),
+                        image: DecorationImage(
+                          image: NetworkImage(
+                              'https://source.unsplash.com/random?sig=$index&coding'),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.7),
+                            BlendMode.darken,
+                          ),
+                        ),
+                      ),
                       child: Stack(
                         children: [
                           Positioned(
@@ -244,19 +257,6 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                             ),
                           ),
                         ],
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(.8),
-                        borderRadius: BorderRadius.circular(20),
-                        image: DecorationImage(
-                          image: NetworkImage(
-                              'https://source.unsplash.com/random?sig=$index&coding'),
-                          fit: BoxFit.cover,
-                          colorFilter: ColorFilter.mode(
-                            Colors.black.withOpacity(0.7),
-                            BlendMode.darken,
-                          ),
-                        ),
                       ),
                     ),
                   );

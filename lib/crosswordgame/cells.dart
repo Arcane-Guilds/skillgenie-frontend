@@ -11,7 +11,7 @@ import 'crossword.dart';
 import 'maincross.dart';
 
 class Word extends StatelessWidget {
-  const Word ({ Key? key, required this.hor, required this.children, required this.parent, required this.index}) : super(key: key);
+  const Word ({ super.key, required this.hor, required this.children, required this.parent, required this.index});
   final List<Widget> children;
   final Field_Word parent;
   final int index;
@@ -82,8 +82,8 @@ class Word extends StatelessWidget {
 }
 
 class CellCross extends StatelessWidget { //Ячейка кроссворда
-  CellCross({ Key? key, required this.last, this.letter='A', this.pseudo_focused=false, required this.let_ind, required this.word_ind, required this.light_highlight,
-    required this.mistake, this.clone_ind = -1, this.clone_let_ind = -1}) : super(key: key);
+  CellCross({ super.key, required this.last, this.letter='A', this.pseudo_focused=false, required this.let_ind, required this.word_ind, required this.light_highlight,
+    required this.mistake, this.clone_ind = -1, this.clone_let_ind = -1});
   final bool last; //Является ли данная ячейка последней?
   final bool mistake; //Есть ли в этой ячейке ошибка
   final int let_ind;  //Индекс буквы
@@ -188,7 +188,7 @@ class CellCross extends StatelessWidget { //Ячейка кроссворда
 
 // ReadOnlyCell - ячейка с неизменяемым содержимым, для случаев посторонних символов
 class ReadOnlyCell extends StatelessWidget { //Ячейка кроссворда
-  ReadOnlyCell({ Key? key, required this.last, this.letter='A'}) : super(key: key);
+  ReadOnlyCell({ super.key, required this.last, this.letter='A'});
   final bool last; //Является ли данная ячейка последней?
   final String letter;  //Буква на этом месте
   final _biggerFont = const TextStyle(fontSize: 40);

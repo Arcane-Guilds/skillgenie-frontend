@@ -485,4 +485,132 @@ class CommunityRepository {
       throw Exception('Failed to unlike reply: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getUserPosts(String token, String userId) async {
+    try {
+      final url = '${ApiConstants.baseUrl}/community/posts/user/$userId';
+      print('Requesting user posts from: $url');
+      
+      final response = await client.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Response status code: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        try {
+          final String responseBody = response.body;
+          if (responseBody.isEmpty) {
+            print('Empty response body');
+            return {'posts': [], 'total': 0};
+          }
+          
+          final data = json.decode(responseBody) as Map<String, dynamic>;
+          print('Response data preview: ${data.toString().substring(0, min(100, data.toString().length))}...');
+          
+          if (!data.containsKey('posts')) {
+            print('Response does not contain posts field');
+            return {'posts': [], 'total': 0};
+          }
+          
+          if (data['posts'] is! List) {
+            print('Posts field is not a List: ${data['posts'].runtimeType}');
+            return {'posts': [], 'total': 0};
+          }
+          
+          return data;
+        } catch (parseError) {
+          print('Error parsing response: $parseError');
+          return {'posts': [], 'total': 0};
+        }
+      } else {
+        print('Server error: ${response.body}');
+        return {'posts': [], 'total': 0};
+      }
+    } catch (e) {
+      print('Error in getUserPosts: $e');
+      return {'posts': [], 'total': 0};
+    }
+  }
+
+  Future<Post> updatePost(String token, String postId, String content, String title, {List<String>? existingImages, List<File>? newImages}) async {
+    try {
+      // Create multipart request if we have new images
+      if (newImages != null && newImages.isNotEmpty) {
+        var request = http.MultipartRequest(
+          'PUT',
+          Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId'),
+        );
+
+        // Add authorization header
+        request.headers.addAll({
+          'Authorization': 'Bearer $token',
+        });
+
+        // Add text fields
+        request.fields['content'] = content;
+        request.fields['title'] = title;
+        
+        // Add existing images if any
+        if (existingImages != null) {
+          request.fields['existingImages'] = json.encode(existingImages);
+        }
+
+        // Add new image files
+        for (var i = 0; i < newImages.length; i++) {
+          final file = newImages[i];
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'images',
+              file.path,
+              filename: 'image_${i + 1}.jpg',
+            ),
+          );
+        }
+
+        // Send the request
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error updating post: $errorData');
+          throw Exception('Failed to update post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        }
+      } else {
+        // No new images, use regular JSON request
+        final response = await client.put(
+          Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({
+            'content': content,
+            'title': title,
+            'existingImages': existingImages,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error updating post: $errorData');
+          throw Exception('Failed to update post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        }
+      }
+    } catch (e) {
+      print('Error in updatePost: $e');
+      throw Exception('Failed to update post: $e');
+    }
+  }
 } 

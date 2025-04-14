@@ -14,7 +14,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CrosswordRoute extends StatefulWidget {
   const CrosswordRoute({
-    Key? key,
+    super.key,
     required this.pageid,
     required this.size,
     required this.diff,
@@ -22,7 +22,7 @@ class CrosswordRoute extends StatefulWidget {
     this.target = 15,
     this.recursive_target = 3,
     this.max_len = 15,
-  }) : super(key: key);
+  });
 
   final int pageid;
   final bool lang_rus;
@@ -98,7 +98,7 @@ class CrosswordRouteState extends State<CrosswordRoute>
             if (snapshot.data == null || snapshot.data!.isEmpty) {
               return Scaffold(
                 appBar: AppBar(
-                  title: Text('Error'),
+                  title: const Text('Error'),
                   backgroundColor: Colors.red,
                 ),
                 body: Center(
@@ -107,7 +107,7 @@ class CrosswordRouteState extends State<CrosswordRoute>
                     children: [
                       const Icon(Icons.error_outline, color: Colors.red, size: 64),
                       const SizedBox(height: 16),
-                      Text(
+                      const Text(
                         'No results found',
                         textAlign: TextAlign.center,
                       ),
@@ -116,7 +116,7 @@ class CrosswordRouteState extends State<CrosswordRoute>
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: Text('Back'),
+                        child: const Text('Back'),
                       ),
                     ],
                   ),
@@ -149,7 +149,7 @@ class CrosswordRouteState extends State<CrosswordRoute>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(color: ColorTheme.GetLoadColor(context),),
-                      Text('Getting links'),
+                      const Text('Getting links'),
                     ],
                   )
               ),

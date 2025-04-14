@@ -36,8 +36,8 @@ class _SelectableLetterContent extends StatelessWidget {
   
   const _SelectableLetterContent({
     required this.index, 
-    Key? key
-  }) : super(key: key);
+    super.key
+  });
 
   bool _isActive(int index, List<int> selectedText) {
     return selectedText.contains(index);
@@ -63,8 +63,8 @@ class Letter extends StatelessWidget {
   
   const Letter({
     required this.text,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../../core/constants/game_constants.dart';
 
 /// Represents the state of the word jumble game

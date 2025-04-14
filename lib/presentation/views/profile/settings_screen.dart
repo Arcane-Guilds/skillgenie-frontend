@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final profile = await profileViewModel.getUserProfile();
       if (mounted) {
         setState(() {
-          _usernameController.text = profile.username;
+          _usernameController.text = profile!.username;
           _bioController.text = profile.bio ?? '';
         });
       }
@@ -156,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       Text(
                         reminderVM.reminderTime != null
-                            ? '${reminderVM.reminderTime!.format(context)}'
+                            ? reminderVM.reminderTime!.format(context)
                             : 'Not set',
                         style: TextStyle(
                           color: Colors.grey[600],
@@ -249,7 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               content: Form(
                 key: _formKey,
                 child: SingleChildScrollView(
-                  child: Container(
+                  child: SizedBox(
                     width: double.maxFinite,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

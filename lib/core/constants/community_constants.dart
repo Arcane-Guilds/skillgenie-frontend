@@ -15,7 +15,5 @@ class CommunityConstants {
   // Likes endpoints
   static const String likes = '$basePath/likes';
 
-  // Query parameters
-  static const String pageParam = 'page';
-  static const String limitParam = 'limit';
+
 } 

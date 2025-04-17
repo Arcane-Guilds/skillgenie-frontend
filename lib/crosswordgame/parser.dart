@@ -1,6 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'dart:math';
 import 'package:characters/characters.dart';
 
 List<dynamic> CleanText (String source, String title, [bool pass_brackets = true])  //Удаление HTML-тегов, сносок, нечитаемых символов и т.д.

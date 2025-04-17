@@ -2,20 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:skillGenie/globals.dart';
-import 'package:skillGenie/data/models/game_model.dart';
+import '../../../core/constants/game_constants.dart';
+import '../../viewmodels/game/game_viewmodel.dart';
 
-import '../../../core/controllers/game_controller.dart';
-
-class SelectedLetter extends StatefulWidget {
-  final GameController gameController;
-  const SelectedLetter({required this.gameController, super.key});
+class SelectedLetterView extends StatefulWidget {
+  const SelectedLetterView({super.key});
 
   @override
-  State<SelectedLetter> createState() => _SelectedLetterState();
+  State<SelectedLetterView> createState() => _SelectedLetterViewState();
 }
 
-class _SelectedLetterState extends State<SelectedLetter>
+class _SelectedLetterViewState extends State<SelectedLetterView>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late final List<Animation<double>> _tweens;
@@ -24,7 +21,6 @@ class _SelectedLetterState extends State<SelectedLetter>
     return List.generate(
       tweenNumber,
       (index) {
-        // double interval = 1 / tweenNumber;
         double interval = 0.2;
         double begin = interval * index;
         return Tween(
@@ -68,42 +64,35 @@ class _SelectedLetterState extends State<SelectedLetter>
     return selectedList[index] != -1;
   }
 
-  String _getText(int index) {
-    int textIndex = widget.gameController.state.selectedText[index];
-    return widget.gameController.state.text[textIndex];
-  }
-
-  bool _getWon() {
-    return widget.gameController.state.won ?? false;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameState>(
-      builder: (context, state, _) {
+    return Consumer<GameViewModel>(
+      builder: (context, viewModel, _) {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(
               5,
-              (index) =>
-                  _buildButton(_isActive(index, state.selectedText), index)),
+              (index) => _buildButton(
+                    _isActive(index, viewModel.selectedText),
+                    index,
+                    viewModel,
+                  )),
         );
       },
     );
   }
 
-  Widget _buildButton(bool active, int index) {
+  Widget _buildButton(bool active, int index, GameViewModel viewModel) {
     return GestureDetector(
       onTap: () {
         if (!_controller.isAnimating) {
-          widget.gameController.removeWord(index);
+          viewModel.removeWord(index);
         }
         if (_controller.isCompleted) {
           _controller.reset();
         }
       },
       child: Container(
-        // color: Colors.blueGrey,
         width: 50,
         height: 50,
         decoration: curvedBox.copyWith(
@@ -121,25 +110,31 @@ class _SelectedLetterState extends State<SelectedLetter>
           },
           child: RotationTransition(
             turns: _tweens[index],
-            child: Letter(
+            child: LetterTile(
               index: index,
               started: _controller.isAnimating,
-              text: active ? _getText(index) : "",
+              text: active ? _getLetterText(index, viewModel) : "",
               done: _controller.isCompleted,
-              won: _getWon(),
+              won: viewModel.won ?? false,
             ),
           ),
         ),
       ),
     );
   }
+  
+  String _getLetterText(int index, GameViewModel viewModel) {
+    int textIndex = viewModel.selectedText[index];
+    return viewModel.text[textIndex];
+  }
 }
 
-class Letter extends StatelessWidget {
+class LetterTile extends StatelessWidget {
   final bool started, done, won;
   final int index;
   final String text;
-  const Letter({
+  
+  const LetterTile({
     this.started = false,
     this.done = false,
     required this.text,
@@ -157,7 +152,7 @@ class Letter extends StatelessWidget {
       duration: gameAnimationDuration,
       decoration: curvedBox.copyWith(
         color: done ? Colors.white : const Color.fromRGBO(255, 255, 254, 1),
-        boxShadow: [gameBoxShadow],
+        boxShadow: const [gameBoxShadow],
       ),
       onEnd: () {
         if (done) {
@@ -167,7 +162,6 @@ class Letter extends StatelessWidget {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 1250),
         curve: Interval(begin, end),
-        onEnd: () {},
         opacity: started || done ? 0 : 1,
         child: Center(
           child: Text(

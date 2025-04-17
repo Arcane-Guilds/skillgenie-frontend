@@ -3,7 +3,7 @@ import 'maincross.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ErrorRoute extends StatelessWidget {
-  ErrorRoute({ Key? key, required this.error }) : super(key: key);
+  ErrorRoute({ super.key, required this.error });
   String error;
 
   @override
@@ -13,15 +13,15 @@ class ErrorRoute extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Text(AppLocalizations.of(context)!.error, style: TextStyle(fontSize: 25, color: ColorTheme.GetTextColor(context)),),
-            Stack(
+            Text('Error', style: TextStyle(fontSize: 25, color: ColorTheme.GetTextColor(context)),),
+            const Stack(
               alignment: Alignment.center,
-              children: const [
+              children: [
                 Icon (Icons.error_outline, color: Colors.red, size: 180)
               ],
             ),
             Column(children: [
-              Text(error != '' ? error : AppLocalizations.of(context)!.errorUnknown),
+              Text(error != '' ? error : 'Unknown error'),
             ],),  
             Stack(
               alignment: Alignment.center, 

@@ -1,6 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:math' as math;
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../data/models/user_model.dart';
+import '../../../presentation/viewmodels/course_viewmodel.dart';
+import '../../../presentation/viewmodels/auth/auth_viewmodel.dart';
+import '../../../data/models/course_model.dart';
+import '../../views/course/course_detail_screen.dart';
 
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
@@ -10,7 +20,33 @@ class HomeContent extends StatefulWidget {
 }
 
 class _HomeContentState extends State<HomeContent> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  // Remove the late TabController since it's not being used but disposed
+  // late TabController _tabController;
+  bool _isLoading = true;
+
+    Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? userJson = prefs.getString("user");
+
+    if (userJson != null) {
+      final user = User.fromJson(jsonDecode(userJson));
+      return user.id;
+    }
+    return null;
+  }
+
+  void _navigateToQuiz() async {
+    final userId = await getUserId();
+    if (userId != null) {
+      context.push('/quiz/$userId');
+    } else {
+      // Handle the case when userId is null
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User ID not found')),
+      );
+    }
+  }
+
   /*final List<String> _categories = [
     "All Skills",
     "Popular",
@@ -129,12 +165,29 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-   // _tabController = TabController(length: _categories.length, vsync: this);
+    // Use post-frame callback to ensure the widget is built before fetching data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchUserCourses();
+    });
+  }
+
+  Future<void> _fetchUserCourses() async {
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final courseViewModel = Provider.of<CourseViewModel>(context, listen: false);
+    
+    if (authViewModel.user != null) {
+      await courseViewModel.fetchUserCourses(authViewModel.user!.id);
+    }
+    
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
   void dispose() {
-    //_tabController.dispose();
+    // Remove the _tabController.dispose() since the controller isn't used
+    // _tabController.dispose();
     super.dispose();
   }
 
@@ -160,6 +213,68 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
           // Learning preferences section
           //_buildSectionTitle('Learning Preferences'),
           //_buildLearningPreferencesSection(),
+
+          // Chatbot Card
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: InkWell(
+                onTap: () => context.push('/chatbot'),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.smart_toy,
+                              color: Colors.blue,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'AI Assistant',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Chat with our AI assistant to get help with your learning',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 16),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
 
           const SizedBox(height: 80), // Bottom padding for FAB
         ],
@@ -287,6 +402,8 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
   }*/
 
   Widget _buildSkillsGrid() {
+    final courseViewModel = Provider.of<CourseViewModel>(context);
+    
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -300,178 +417,391 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
             ),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.95,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else if (courseViewModel.errorMessage != null)
+            Center(
+              child: Text(
+                'Error: ${courseViewModel.errorMessage}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            )
+          else if (courseViewModel.userCourses.isEmpty)
+            _buildEmptyCoursesMessage()
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Determine if we should use grid or list based on screen width
+                final isWideScreen = constraints.maxWidth > 600;
+                
+                if (isWideScreen) {
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 1.2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    itemCount: courseViewModel.userCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = courseViewModel.userCourses[index];
+                      return _buildCourseCard(course);
+                    },
+                  );
+                } else {
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: courseViewModel.userCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = courseViewModel.userCourses[index];
+                      return _buildCourseCard(course);
+                    },
+                  );
+                }
+              },
             ),
-            itemCount: _skills.length,
-            itemBuilder: (context, index) {
-              final skill = _skills[index];
-              return _buildSkillCard(skill);
-            },
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildSkillCard(Map<String, dynamic> skill) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SkillRoadmapScreen(skill: skill),
+  Widget _buildEmptyCoursesMessage() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.school_outlined,
+            size: 48,
+            color: Colors.grey,
           ),
-        );
+          const SizedBox(height: 16),
+          const Text(
+            'No courses yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Take a quiz to get personalized course recommendations',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _navigateToQuiz,
+            child: const Text('Take Quiz'),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCourseCard(Course course) {
+    final Color courseColor = _getCourseColor(course.title);
+    
+    return GestureDetector(
+      key: ValueKey('course_${course.id}'),
+      onTap: () {
+        // Use a safer navigation method with future to avoid Hero animation issues
+        Future.microtask(() {
+          context.push('/course/${course.id}');
+        });
       },
       child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: skill['color'].withOpacity(0.2),
+              color: courseColor.withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Skill icon with glossy effect
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: skill['color'].withOpacity(0.1),
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      skill['color'].withOpacity(0.7),
-                      skill['color'],
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: skill['color'].withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Course header with color and icon
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                color: courseColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
-                child: ClipOval(
-                  child: Stack(
-                    children: [
-                      // Icon
-                      Center(
-                        child: Icon(
-                          _getIconForSkill(skill['name']),
-                          color: Colors.white,
-                          size: 30,
-                        ),
+              ),
+              child: Stack(
+                children: [
+                  // Pattern overlay
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.1,
+                      child: CustomPaint(
+                        painter: DotPatternPainter(),
                       ),
-                      // Glossy effect
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 30,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white.withOpacity(0.4),
-                                Colors.white.withOpacity(0.1),
-                              ],
-                            ),
+                    ),
+                  ),
+                  // Course title
+                  Positioned(
+                    left: 16,
+                    bottom: 16,
+                    right: 80,
+                    child: Text(
+                      course.title,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 4.0,
+                            color: Colors.black26,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Course icon
+                  Positioned(
+                    right: 16,
+                    top: 16,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _getIconForCourse(course.title),
+                        color: courseColor,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Course content
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    course.content.overview,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      height: 1.5,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+                  // Course stats
+                  Row(
+                    children: [
+                      _buildCourseStat(
+                        Icons.book,
+                        '${course.content.levels.length} Levels',
+                      ),
+                      const SizedBox(width: 16),
+                      _buildCourseStat(
+                        Icons.extension,
+                        '${_countExercises(course)} Exercises',
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: courseColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Level ${course.currentLevel + 1}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: courseColor,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Skill name
-              Text(
-                skill['name'],
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              // Skill level and lessons in a row to save space
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: skill['color'].withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      skill['level'],
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: skill['color'],
-                        fontWeight: FontWeight.w500,
+                  const SizedBox(height: 12),
+                  // Progress indicator
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${(_calculateCourseProgress(course) * 100).toInt()}% Complete',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          Text(
+                            '${_countCompletedExercises(course)}/${_countExercises(course)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${skill['lessons']} lessons',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey[600],
-                    ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: _calculateCourseProgress(course),
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(courseColor),
+                          minHeight: 6,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              // Popular badge if applicable
-              if (skill['isPopular'])
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    'Popular',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _buildCourseStat(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: Colors.grey[600],
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _calculateCourseProgress(Course course) {
+    int totalExercises = 0;
+    int completedExercises = 0;
+    
+    // Check if course.content or course.content.levels is null
+    if (course.content.levels == null) {
+      return 0.0;
+    }
+    
+    for (int levelIndex = 0; levelIndex < course.content.levels.length; levelIndex++) {
+      final level = course.content.levels[levelIndex];
+      
+      for (int chapterIndex = 0; chapterIndex < level.chapters.length; chapterIndex++) {
+        final chapter = level.chapters[chapterIndex];
+        
+        for (int exerciseIndex = 0; exerciseIndex < chapter.exercises.length; exerciseIndex++) {
+          totalExercises++;
+          
+          final progressKey = 'L${levelIndex + 1}C${chapterIndex + 1}E${exerciseIndex + 1}';
+          
+          // Safely get the progress value without casting
+          final progress = course.progress[progressKey];
+          
+          // Check if progress is not null and is at least 1
+          if (progress != null && progress >= 1) {
+            completedExercises++;
+          }
+        }
+      }
+    }
+    
+    return totalExercises > 0 ? completedExercises / totalExercises : 0.0;
+  }
+
+  IconData _getIconForCourse(String courseName) {
+    switch (courseName.toLowerCase()) {
+      case 'flutter development':
+        return Icons.flutter_dash;
+      case 'react native':
+        return Icons.code;
+      case 'node.js':
+        return Icons.javascript;
+      case 'python':
+        return Icons.code;
+      case 'machine learning':
+        return Icons.psychology;
+      case 'web development':
+        return Icons.web;
+      case 'data analysis mastery':
+        return Icons.analytics;
+      default:
+        return Icons.school;
+    }
+  }
+
+  // Helper method to get course level based on current level
+  String _getCourseLevel(int currentLevel) {
+    if (currentLevel == 0) return 'Beginner';
+    if (currentLevel == 1) return 'Intermediate';
+    return 'Advanced';
+  }
+
+  // Helper method to get course progress
+  double _getCourseProgress(Course course) {
+    if (course.content.levels.isEmpty) return 0.0;
+    return course.currentLevel / course.content.levels.length;
+  }
+
+  // Helper method to get a color based on course title
+  Color _getCourseColor(String title) {
+    final List<Color> colors = [
+      const Color(0xFF1CB0F6), // Blue
+      const Color(0xFF58CC02), // Green
+      const Color(0xFFFF9600), // Orange
+      const Color(0xFFFF4B4B), // Red
+      const Color(0xFFA560E8), // Purple
+    ];
+    
+    // Use a hash of the title to pick a consistent color
+    final int hash = title.hashCode.abs();
+    return colors[hash % colors.length];
+  }
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -711,6 +1041,28 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
       ),
     );
   }*/
+
+  int _countExercises(Course course) {
+    int count = 0;
+    for (final level in course.content.levels) {
+      for (final chapter in level.chapters) {
+        count += chapter.exercises.length;
+      }
+    }
+    return count;
+  }
+
+  int _countCompletedExercises(Course course) {
+    int count = 0;
+    for (final entry in course.progress.entries) {
+      final progress = (entry.value as int?) ?? 0; // Ensure it's an int
+      if (progress >= 1) { // Now it's a valid boolean condition
+        count++;
+      }
+    }
+    return count;
+  }
+
 }
 
 IconData _getIconForSkill(String skillName) {
@@ -736,9 +1088,9 @@ class SkillRoadmapScreen extends StatefulWidget {
   final Map<String, dynamic> skill;
 
   const SkillRoadmapScreen({
-    Key? key,
+    super.key,
     required this.skill,
-  }) : super(key: key);
+  });
 
   @override
   State<SkillRoadmapScreen> createState() => _SkillRoadmapScreenState();
@@ -1021,9 +1373,9 @@ class _SkillRoadmapScreenState extends State<SkillRoadmapScreen> with SingleTick
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Your Progress',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1592,12 +1944,12 @@ class _SkillRoadmapScreenState extends State<SkillRoadmapScreen> with SingleTick
                   ),
                   elevation: 4,
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.play_arrow),
-                    const SizedBox(width: 8),
-                    const Text(
+                    Icon(Icons.play_arrow),
+                    SizedBox(width: 8),
+                    Text(
                       'Begin Lesson',
                       style: TextStyle(
                         fontSize: 16,

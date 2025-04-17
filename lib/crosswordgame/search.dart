@@ -12,217 +12,122 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'maincross.dart';
+import 'cross_settings.dart';
 
-class SearchRoute extends StatefulWidget
-{
-  const SearchRoute({ Key? key}) : super(key: key);
-
-  @override
-  State<SearchRoute> createState() => _SearchRouteState();
-}
-
-class _SearchRouteState extends State<SearchRoute> with SingleTickerProviderStateMixin
-{
-
-  @override
-  void initState() {
-    super.initState();
-  }
+class SearchRoute extends StatelessWidget {
+  const SearchRoute({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Wiki Crossword', style: TextStyle(color: ColorTheme.GetTextColor(context)),),
-        centerTitle: true,
-        backgroundColor: ColorTheme.GetAppBarColor(context), 
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Wiki Crossword'),
+          backgroundColor: Colors.transparent,
+        ),
+        body: const SearchScreen(),
       ),
-      body: const SearchTab(), 
     );
   }
 }
 
-class SearchTab extends StatefulWidget {  //Вкладка поиска
-  const SearchTab({ Key? key }) : super(key: key);
+class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
 
   @override
-  _SearchTabState createState() => _SearchTabState();
+  _SearchScreenState createState() => _SearchScreenState();
 }
 
-class _SearchTabState extends State<SearchTab> {
+class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderStateMixin {
   late Future<Map<String, int>>? search; //Результаты поиска
   TextStyle header_style = const TextStyle(fontSize: 25);
   late bool language_rus;
   String query = '';
+  
   @override
-  void initState()
-  {
+  void initState() {
     super.initState();
-    language_rus = true;
-    search = null; 
+    language_rus = false;
+    search = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: FutureBuilder(
-        future: search,
-        initialData: const <String, int> {},
-        builder: (BuildContext context, AsyncSnapshot<Map<String, int>> snapshot) {
-          Widget result;
-          if (snapshot.connectionState == ConnectionState.done && snapshot.data != null)
-          {
-            if (snapshot.data!.isEmpty) //Если запрос не дал результата
-            {
-              result = (
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.cancel, color: Colors.red,),
-                      Text(AppLocalizations.of(context)!.searchNoResults)
-                    ] 
-                  )
-                )
-              );
-            }
-            else  //Выдача списка
-            {
-              List<Widget> result_list = [];
-              for(var a in snapshot.data!.entries)
-              {
-                result_list.add(
-                  IntrinsicWidth(
-                    child: Card(
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/cross_settings', arguments: [a.value, a.key, language_rus]);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),child: Text(
-                            a.key,
-                            style: header_style
-                          ),
-                        )
-                      ))
-                  )
-                );
-              }
-              result = Expanded(
-                child: ListView(children: result_list,)
-              );
-              
-            }
-          }
-          else if(snapshot.connectionState == ConnectionState.none)
-          {
-            result = Padding(
-              padding: const EdgeInsets.all(8),
-              child: Center(child: Text(AppLocalizations.of(context)==null?'':AppLocalizations.of(context)!.searchEnterQuery),));
-          }
-          else if (snapshot.hasError)
-          {
-            result = Center(child: Text('${AppLocalizations.of(context)!.searchError}: ${snapshot.error}'),);
-          }
-          else
-          {
-            result = const SizedBox.shrink();
-          }
-          return Column(
-            children: [
-              Align(
-                alignment: Alignment.topCenter,
-                heightFactor: 1,
-                child: Card(
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(15.0))),
-                  child:Row(
-                    children: [
-                      Padding(  //Выбор языка
-                        padding: const EdgeInsets.fromLTRB(16, 8, 2, 8),
-                        child: IconButton(
-                          splashRadius: 28,
-                          icon: Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: Container(
-                              alignment: Alignment.center,
-                              width: kIsWeb? 32 : (Platform.isAndroid ? 20 : 32),  //Подстраивание под размер MaterialIcon (16/20 -> 32/40 -> 28/36 (с вычетом обводки))
-                              height: kIsWeb? 32 : (Platform.isAndroid ? 20 : 32),
-                              child: Flag.fromCode(language_rus?FlagsCode.RU:FlagsCode.GB, borderRadius: 3.0, flagSize: FlagSize.size_1x1,),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5.0),
-                                border: Border.all(
-                                  color: ColorTheme.GetTextColor(context),
-                                  width: 2,
-                                ),
-                              ),
-                            ), 
-                          ),
-    
-                          onPressed: () {
-                            setState(() {
-                              language_rus = !language_rus;
-                            });
-                          },
-                        )
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(2, 8, 8, 8),
-                        child: IconButton(
-                          splashRadius: 28,
-                          icon: Icon(Icons.casino_outlined, color: ColorTheme.GetTextColor(context)),  
-                          onPressed: () {
-                            setState(() {
-                              search = SearchRandom(language_rus);
-                            });
-                          },
-                        )
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                          child:TextField(
-                            cursorColor: ColorTheme.GetTextColor(context),
-                            decoration: null,
-                            onChanged: (str) {
-                              query = str;
-                            },
-                            onEditingComplete: () {
-                              setState(() {
-                                if (query != '')
-                                {
-                                  search = SearchWiki(query, language_rus);
-                                }    
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-                        child: snapshot.connectionState == ConnectionState.done || snapshot.connectionState == ConnectionState.none ? 
-                        IconButton(
-                          splashRadius: 28,
-                          icon: Icon(Icons.search, color: ColorTheme.GetTextColor(context)),
-                          onPressed: () {
-                            setState(() {
-                              if (query != '')
-                              {
-                                search = SearchWiki(query, language_rus);
-                              }
-                            });
-                          },
-                        ) :
-                        CircularProgressIndicator(color: ColorTheme.GetLoadColor(context))
-                      ),
-                    ]
-                  ) 
-                ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            decoration: InputDecoration(
+              labelText: 'Search Wikipedia',
+              hintText: 'Enter a topic to create a crossword',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
               ),
-              result,
-            ]
-          );
-        }
-      )
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  if (query.isNotEmpty) {
+                    setState(() {
+                      search = WikiSearch(query, language_rus);
+                    });
+                  }
+                },
+              ),
+            ),
+            onChanged: (value) {
+              query = value;
+            },
+            onSubmitted: (value) {
+              if (value.isNotEmpty) {
+                setState(() {
+                  query = value;
+                  search = WikiSearch(query, language_rus);
+                });
+              }
+            },
+          ),
+        ),
+        Expanded(
+          child: search == null
+              ? const Center(child: Text('Search for a topic to create a crossword'))
+              : FutureBuilder<Map<String, int>>(
+                  future: search,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No results found'));
+                    } else {
+                      return ListView.builder(
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          String title = snapshot.data!.keys.elementAt(index);
+                          int pageId = snapshot.data!.values.elementAt(index);
+                          return ListTile(
+                            title: Text(title),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CrosswordSettingsRoute(
+                                    pageid: pageId,
+                                    title: title,
+                                    language: language_rus,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
@@ -281,4 +186,9 @@ Future <Map<String, int>> SearchRandom(bool is_rus) async
     final_res.putIfAbsent(results[i]['title'], () => results[i]['id']);
   }
   return final_res;
+}
+
+Future<Map<String, int>> WikiSearch(String query, bool is_rus) async {
+  // This is just a wrapper around SearchWiki for better naming
+  return SearchWiki(query, is_rus);
 }

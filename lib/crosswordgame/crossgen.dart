@@ -294,9 +294,9 @@ class Gen_Crossword {
     {
       word_inputs.add(CreateWord(Field, -1));
       positioned_words.add(Positioned(
-        child: word_inputs.last,
         top: Field.y.toDouble() * 80,
         left: Field.x.toDouble() * 80,
+        child: word_inputs.last,
       ));
     }
     return InteractiveViewer(
@@ -323,9 +323,9 @@ class Gen_Crossword {
     {
       word_inputs.add(CreateWord(source[i], word_ind));
       positioned_words.add(Positioned(
-        child: word_inputs.last,
         top: source[i].y.toDouble() * 80,
         left: source[i].x.toDouble() * 80,
+        child: word_inputs.last,
       ));
     }
     return InteractiveViewer(
@@ -413,8 +413,8 @@ class Gen_Crossword {
     var result = Word (
       index: field.num,
       hor: field.hor,
-      children: Cells,
-      parent: field,     
+      parent: field,
+      children: Cells,     
     );
     return result;
   }
@@ -451,6 +451,11 @@ class Field_Word {
         in_word += '_';
       }
     }
+    // Initialize other properties with default values
+    highlighted = -1;
+    pic_showed = false;
+    mistakes = {};
+    inters = [];
   }
   int highlighted = -1;
   String word;

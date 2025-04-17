@@ -1,40 +1,59 @@
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as path;
-import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart';
-import '../../core/services/profile_service.dart';
+import 'package:logging/logging.dart';
+import '../datasources/profile_remote_datasource.dart';
+import '../datasources/profile_local_datasource.dart';
+import '../repositories/auth_repository.dart';
 import '../../core/services/storage_service.dart';
 import '../models/user_model.dart';
 import '../models/api_exception.dart';
 
+/// Repository for profile-related operations
 class ProfileRepository {
-  final ProfileService _profileService;
+  final ProfileRemoteDataSource _remoteDataSource;
+  final ProfileLocalDataSource _localDataSource;
+  final AuthRepository _authRepository;
   final StorageService _storageService;
+  final Logger _logger = Logger('ProfileRepository');
 
   ProfileRepository({
-    required ProfileService profileService,
+    required ProfileRemoteDataSource remoteDataSource,
+    required ProfileLocalDataSource localDataSource,
+    required AuthRepository authRepository,
     required StorageService storageService,
-  })  : _profileService = profileService,
+  })  : _remoteDataSource = remoteDataSource,
+        _localDataSource = localDataSource,
+        _authRepository = authRepository,
         _storageService = storageService;
 
   /// Get the user profile from the API or cache
   Future<User> getUserProfile({bool forceRefresh = false}) async {
     try {
-      // If we're forcing a refresh, we'll always go to the API
-      if (forceRefresh) {
-        return await _profileService.fetchUserProfile();
+      _logger.info('Getting user profile, forceRefresh: $forceRefresh');
+      
+      // If not forcing a refresh, try to get from cache first
+      if (!forceRefresh) {
+        final cachedProfile = await _localDataSource.getCachedProfile();
+        if (cachedProfile != null) {
+          _logger.info('Returning cached profile for user: ${cachedProfile.username}');
+          return cachedProfile;
+        }
       }
-
-      // Try to get cached profile first
-      final cachedProfile = await _profileService.getCachedProfile();
-      if (cachedProfile != null) {
-        return cachedProfile;
+      
+      // Get tokens for API call
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
       }
-
-      // If no cached profile, fetch from API
-      return await _profileService.fetchUserProfile();
+      
+      // Fetch from API
+      final profile = await _remoteDataSource.fetchUserProfile(tokens.accessToken);
+      
+      // Cache the profile
+      await _localDataSource.cacheProfile(profile);
+      
+      return profile;
     } catch (e) {
+      _logger.severe('Error getting user profile: $e');
       throw _handleException(e);
     }
   }
@@ -42,105 +61,206 @@ class ProfileRepository {
   /// Update the user profile
   Future<void> updateUserProfile(User profile) async {
     try {
-      await _profileService.updateUserProfile(profile);
+      _logger.info('Updating user profile for: ${profile.username}');
+      
+      // Get tokens for API call
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+      
+      // Update profile via API
+      await _remoteDataSource.updateUserProfile(tokens.accessToken, profile.toJson());
+      
+      // Update cached profile
+      await _localDataSource.cacheProfile(profile);
     } catch (e) {
+      _logger.severe('Error updating user profile: $e');
       throw _handleException(e);
     }
   }
 
-  /// Update the user's bio
+  /// Update user bio
   Future<void> updateBio(String bio) async {
     try {
-      await _profileService.updateBio(bio);
-    } catch (e) {
-      throw _handleException(e);
-    }
-  }
-
-  /// Upload and update the user's profile image
-  /// Returns the Cloudinary URL of the uploaded image
-  Future<String?> uploadProfileImage(File image, {Function(double)? onProgress}) async {
-    try {
-      // Method 1: Direct upload to Cloudinary from the client
-      // This is faster but less secure
-      final cloudinaryUrl = await _storageService.uploadProfileImage(
-        image,
-        onProgress: onProgress,
-      );
-
-      if (cloudinaryUrl != null) {
-        // Update the user profile with the new image URL
-        await _profileService.updateProfileImage(cloudinaryUrl);
-        return cloudinaryUrl;
+      _logger.info('Updating user bio');
+      
+      // Get tokens for API call
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
       }
-
-      // If direct upload fails, try uploading via the backend
-      return await _uploadViaBackend(image, onProgress: onProgress);
+      
+      // Update bio via API
+      await _remoteDataSource.updateBio(tokens.accessToken, bio);
+      
+      // Update cached profile
+      final cachedProfile = await _localDataSource.getCachedProfile();
+      if (cachedProfile != null) {
+        final updatedProfile = cachedProfile.copyWith(bio: bio);
+        await _localDataSource.cacheProfile(updatedProfile);
+      }
     } catch (e) {
+      _logger.severe('Error updating bio: $e');
       throw _handleException(e);
     }
   }
 
-  /// Upload profile image via the backend
-  /// This is more secure but slightly slower
-  Future<String?> _uploadViaBackend(File image, {Function(double)? onProgress}) async {
+  /// Update username
+  Future<void> updateUsername(String username) async {
     try {
-      // Create a multipart file from the image
-      final fileExtension = path.extension(image.path).replaceAll('.', '');
-      final mimeType = lookupMimeType(image.path) ?? 'image/$fileExtension';
+      _logger.info('Updating username to: $username');
+      
+      // Get tokens for API call
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+      
+      // Update username via API
+      await _remoteDataSource.updateUsername(tokens.accessToken, username);
+      
+      // Update cached profile
+      final cachedProfile = await _localDataSource.getCachedProfile();
+      if (cachedProfile != null) {
+        final updatedProfile = cachedProfile.copyWith(username: username);
+        await _localDataSource.cacheProfile(updatedProfile);
+      }
+    } catch (e) {
+      _logger.severe('Error updating username: $e');
+      throw _handleException(e);
+    }
+  }
 
-      final multipartFile = http.MultipartFile(
-        'file',
-        image.openRead(),
-        await image.length(),
-        filename: path.basename(image.path),
-        contentType: MediaType.parse(mimeType),
-      );
-
-      // Upload the image via the backend
-      return await _profileService.uploadProfileImageToCloudinary(
-        multipartFile,
+  /// Upload profile image and update profile
+  Future<void> updateProfileImage(
+    File imageFile, {
+    Function(double)? onProgress,
+  }) async {
+    try {
+      _logger.info('Uploading profile image');
+      
+      // Upload image to storage service
+      final imageUrl = await _storageService.uploadProfileImage(
+        imageFile,
         onProgress: onProgress,
       );
+      
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw ApiException('Failed to upload image', 500, 'Empty URL returned');
+      }
+      
+      // Get tokens for API call
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+      
+      // Update profile with new image URL
+      await _remoteDataSource.updateProfileImage(tokens.accessToken, imageUrl);
+      
+      // Update cached profile
+      final cachedProfile = await _localDataSource.getCachedProfile();
+      if (cachedProfile != null) {
+        final updatedProfile = cachedProfile.copyWith(avatar: imageUrl);
+        await _localDataSource.cacheProfile(updatedProfile);
+      }
     } catch (e) {
+      _logger.severe('Error updating profile image: $e');
       throw _handleException(e);
     }
   }
 
-  /// Delete the user's profile image
+  /// Delete profile image
   Future<bool> deleteProfileImage() async {
     try {
-      return await _profileService.deleteProfileImageFromCloudinary();
+      _logger.info('Deleting profile image');
+      
+      // Get the current profile to get the avatar URL
+      final currentProfile = await _localDataSource.getCachedProfile();
+      if (currentProfile == null || currentProfile.avatar?.isEmpty == true) {
+        return true; // No image to delete
+      }
+
+      // Ensure we have a non-null avatar URL
+      final avatarUrl = currentProfile.avatar;
+      if (avatarUrl == null || avatarUrl.isEmpty) {
+        return true; // No image to delete
+      }
+      
+      // Delete image from storage service
+      final success = await _storageService.deleteProfileImage(avatarUrl);
+      
+      if (success) {
+        // Get tokens for API call
+        final tokens = await _authRepository.getTokens();
+        if (tokens == null) {
+          throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+        }
+        
+        // Update profile to remove image URL
+        await _remoteDataSource.updateProfileImage(tokens.accessToken, '');
+        
+        // Update cached profile
+        final updatedProfile = currentProfile.copyWith(avatar: '');
+        await _localDataSource.cacheProfile(updatedProfile);
+      }
+      
+      return success;
     } catch (e) {
+      _logger.severe('Error deleting profile image: $e');
       throw _handleException(e);
     }
   }
 
-  /// Update the user's password
-  /// Returns true if password was successfully updated
-  Future<bool> updatePassword(String currentPassword, String newPassword) async {
+  /// Update password
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
     try {
+      _logger.info('Updating password');
+      
       // Validate password requirements
       _validatePasswordRequirements(newPassword);
-
-      // Call the service to update the password
-      await _profileService.updatePassword(currentPassword, newPassword);
-
-      // Clear the profile cache after password change
-      await _profileService.clearCache();
-
-      return true;
+      
+      // Get tokens for API call
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+      
+      // Update password via API
+      await _remoteDataSource.updatePassword(
+        tokens.accessToken,
+        currentPassword,
+        newPassword,
+      );
+      
+      // Clear cached profile after password change
+      await _localDataSource.clearCachedProfile();
     } catch (e) {
+      _logger.severe('Error updating password: $e');
       throw _handleException(e);
     }
   }
 
-  /// Delete the user profile
-  Future<void> deleteUserProfile() async {
+  /// Delete user account
+  Future<void> deleteAccount() async {
     try {
-      await _profileService.deleteUserProfile();
-      await _profileService.clearCache();
+      _logger.info('Deleting user account');
+      
+      // Get tokens for API call
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+      
+      // Delete account via API
+      await _remoteDataSource.deleteAccount(tokens.accessToken);
+      
+      // Clear local data
+      await _localDataSource.clearCachedProfile();
+      await _authRepository.signOut();
     } catch (e) {
+      _logger.severe('Error deleting account: $e');
       throw _handleException(e);
     }
   }
@@ -148,8 +268,10 @@ class ProfileRepository {
   /// Clear the profile cache
   Future<void> clearCache() async {
     try {
-      await _profileService.clearCache();
+      _logger.info('Clearing profile cache');
+      await _localDataSource.clearCachedProfile();
     } catch (e) {
+      _logger.severe('Error clearing cache: $e');
       throw _handleException(e);
     }
   }
@@ -188,7 +310,7 @@ class ProfileRepository {
       );
     }
 
-    if (!RegExp(r'[!@#\$%\^&\*\(\),.?":{}|<>=+\-_]').hasMatch(password)) {
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>=+\-_]').hasMatch(password)) {
       throw ApiException(
         'Password must contain at least one special character',
         400,
@@ -197,71 +319,22 @@ class ProfileRepository {
     }
   }
 
-  /// Update the user's username
-  Future<void> updateUsername(String username) async {
-    try {
-      // Validate username
-      _validateUsername(username);
-
-      // Call the service to update the username
-      await _profileService.updateUsername(username);
-    } catch (e) {
-      throw _handleException(e);
-    }
-  }
-
-  /// Validate username requirements
-  void _validateUsername(String username) {
-    if (username.isEmpty) {
-      throw ApiException(
-        'Username cannot be empty',
-        400,
-        'Invalid username',
-      );
-    }
-
-    if (username.length < 3) {
-      throw ApiException(
-        'Username must be at least 3 characters long',
-        400,
-        'Invalid username',
-      );
-    }
-
-    if (username.length > 30) {
-      throw ApiException(
-        'Username must be less than 30 characters long',
-        400,
-        'Invalid username',
-      );
-    }
-
-    // Only allow alphanumeric characters, underscores, and hyphens
-    if (!RegExp(r'^[a-zA-Z0-9_\-]+$').hasMatch(username)) {
-      throw ApiException(
-        'Username can only contain letters, numbers, underscores, and hyphens',
-        400,
-        'Invalid username',
-      );
-    }
-  }
-
-  /// Standardized exception handling
-  Exception _handleException(dynamic e) {
+  /// Handle exceptions and convert to appropriate error types
+  ApiException _handleException(dynamic e) {
     if (e is ApiException) {
       return e;
     }
-
+    
     if (e is SocketException) {
       return ApiException(
         'Network connection error. Please check your internet connection.',
-        -1,
+        503,
         e.toString(),
       );
     }
-
+    
     return ApiException(
-      'An unexpected error occurred',
+      'An unexpected error occurred.',
       500,
       e.toString(),
     );

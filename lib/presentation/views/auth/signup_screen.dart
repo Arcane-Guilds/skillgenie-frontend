@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../viewmodels/signup_viewmodel.dart';
+import '../../viewmodels/auth/signup_viewmodel.dart';
+import '../../../core/services/service_locator.dart';
 
 
 class SignUpScreen extends StatelessWidget {
@@ -11,7 +12,7 @@ class SignUpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => SignUpViewModel(),
+      create: (_) => serviceLocator<SignUpViewModel>(),
       child: const SignUpScreenContent(),
     );
   }

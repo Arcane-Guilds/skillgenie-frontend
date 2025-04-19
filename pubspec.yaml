@@ -79,6 +79,8 @@ dependencies:
   flutter_code_editor: ^0.3.2
   flutter_dotenv: ^5.2.1
 
+  flutter_secure_storage: ^8.0.0
+
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_test:

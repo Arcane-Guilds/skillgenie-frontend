@@ -3,19 +3,29 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:skillGenie/presentation/viewmodels/chat_viewmodel.dart';
 
 import 'core/navigation/app_router.dart';
 import 'core/services/service_locator.dart';
+import 'core/storage/secure_storage.dart';
+import 'data/datasources/api_client.dart';
 
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
+import 'data/repositories/auth_repository.dart';
+import 'data/repositories/chat_repository.dart';
+import 'data/repositories/course_repository.dart';
+import 'data/repositories/friend_repository.dart';
 import 'presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'presentation/viewmodels/profile_viewmodel.dart';
 import 'presentation/viewmodels/course_viewmodel.dart';
 import 'presentation/viewmodels/lab_viewmodel.dart';
 import 'presentation/viewmodels/community_viewmodel.dart';
+import 'presentation/viewmodels/friend_viewmodel.dart';
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class AppErrorHandler {
   static void handleError(Object error, StackTrace stackTrace) {
@@ -96,6 +106,12 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (context) => serviceLocator<CommunityViewModel>(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => serviceLocator<FriendViewModel>(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => serviceLocator<ChatViewModel>(),
         ),
       ],
       child: MaterialApp.router(

@@ -614,6 +614,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('My Profile'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.group),
+            onPressed: () {
+              GoRouter.of(context).go('/friends');
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _navigateToSettings,
           ),

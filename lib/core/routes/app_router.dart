@@ -1,4 +1,4 @@
-import 'package:skillGenie/data/models/evaluation_question.dart';
+ import 'package:skillGenie/data/models/evaluation_question.dart';
 import 'package:skillGenie/presentation/views/game/games_screens.dart';
 import 'package:skillGenie/presentation/views/game/game_page.dart';
 import 'package:skillGenie/presentation/views/summary/summary_page.dart';
@@ -29,7 +29,9 @@ import '../../presentation/views/community/post_detail_screen.dart';
 import '../../presentation/views/course/course_detail_screen.dart';
 import '../../presentation/views/course/course_roadmap_screen.dart';
 import '../../presentation/views/course/lab_screen.dart';
+import '../../presentation/views/chat/chat_list_screen.dart';
 import '../../presentation/views/chat/chat_detail_screen.dart';
+import '../../presentation/views/chat/create_chat_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 
@@ -153,9 +155,10 @@ class CustomHeroController extends HeroController {
     super.dispose();
   }
 
+  @override
   Widget createPlatformSpecificHeroFlightShuttleBuilder(Widget child) {
     // Always use basic fade transition which is less problematic
-    return FadeTransition(opacity: const AlwaysStoppedAnimation(1.0), child: child);
+    return FadeTransition(opacity: AlwaysStoppedAnimation(1.0), child: child);
   }
 }
 
@@ -324,14 +327,15 @@ return LabScreen(chapterId: chapterId);
       return PostDetailScreen(postId: postId);
     },
   ),
-  GoRoute(
-    path: '/chat/detail',
-    name: 'chatDetail',
-    builder: (context, state) {
-      final chatId = state.extra as String;
-      return ChatDetailScreen(chatId: chatId);
-    },
-  ),
+GoRoute(path: '/chat', builder: (context, state) => const ChatListScreen()),
+    GoRoute(
+      path: '/chat/detail',
+      builder: (context, state) {
+        final chatId = state.extra as String;
+        return ChatDetailScreen(chatId: chatId);
+      },
+    ),
+    GoRoute(path: '/chat/create', builder: (context, state) => const CreateChatScreen()),
 ShellRoute(
 builder: (context, state, child) {
 int index = _getTabIndex(state.fullPath ?? '/home');

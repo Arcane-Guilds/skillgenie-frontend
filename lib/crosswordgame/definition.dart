@@ -26,12 +26,12 @@ class _DefinitionState extends State<Definition> {
 
   @override
   Widget build(BuildContext context) {
-    List<DefCross> res = [];  //Непосредственно слово
+    List<DefCross> res = [];
     if (widget.source != null)
     {
       for (int i = 0; i < widget.source!.length; i++)
       {
-        if (widget.source!.word.substring(i, i+1).contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))  //Посторонние символы
+        if (widget.source!.word.substring(i, i+1).contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))
         {
           res.add( 
             DefCross(

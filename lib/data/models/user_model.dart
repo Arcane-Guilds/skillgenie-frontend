@@ -18,14 +18,34 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'] ?? json['_id'], // Handle both id and _id
-      username: json['username'],
-      email: json['email'],
-      role: json['role'],
-      avatar: json['avatar'],
-      bio: json['bio'],
-    );
+    try {
+      final id = json['id'] ?? json['_id'] ?? ''; // Handle both id and _id
+      if (id == '') {
+        print('Warning: User has no ID: $json');
+      }
+
+      // For username and email, provide defaults if missing
+      final username = json['username'] ?? 'Unknown User';
+      final email = json['email'] ?? 'no-email@example.com';
+
+      return User(
+        id: id,
+        username: username,
+        email: email,
+        role: json['role'],
+        avatar: json['avatar'],
+        bio: json['bio'],
+      );
+    } catch (e) {
+      print('Error parsing User JSON: $e');
+      print('JSON data: $json');
+      // Return a minimal user object with error markers in case of parsing failure
+      return User(
+        id: json['id'] ?? json['_id'] ?? 'error',
+        username: 'Error: ${json['username'] ?? 'Unknown'}',
+        email: 'error@example.com',
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -29,7 +29,7 @@ void main() {
     initialRoute: '/',
 
     routes: {
-      '/': (context) => const SearchRoute(),  //Поиск статей в Википедии
+      '/': (context) => const SearchRoute(),
     },
     onGenerateRoute: (settings) {
       switch (settings.name)

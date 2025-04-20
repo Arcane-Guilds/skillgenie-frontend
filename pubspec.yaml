@@ -82,10 +82,7 @@ dependencies:
   flutter_dotenv: ^5.2.1
 
   flutter_secure_storage: ^8.0.0
-<<<<<<< Updated upstream
-=======
   circular_countdown_timer: ^0.2.4
->>>>>>> Stashed changes
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

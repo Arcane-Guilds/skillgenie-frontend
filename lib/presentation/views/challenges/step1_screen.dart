@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< Updated upstream
-
-import 'party_code_screen.dart';
-
-=======
 import 'step2_screen.dart';
->>>>>>> Stashed changes
 
 class Step1Screen extends StatefulWidget {
   final String name;

@@ -13,44 +13,27 @@ class ChatRepository {
   final SecureStorage _secureStorage;
   io.Socket? _socket;
   String? _currentUserId;
-<<<<<<< Updated upstream
-  
-=======
 
->>>>>>> Stashed changes
   final String baseUrl = ApiConstants.baseUrl;
 
   // Callback properties - changed from final to regular properties
   void Function(Chat chat)? _onNewChat;
   void Function(Message message)? _onNewMessage;
   void Function(String chatId, String userId)? _onMessagesRead;
-<<<<<<< Updated upstream
-  
-=======
 
->>>>>>> Stashed changes
   // Getters and setters for callbacks
   void Function(Chat chat)? get onNewChat => _onNewChat;
   set onNewChat(void Function(Chat chat)? callback) {
     _onNewChat = callback;
   }
-<<<<<<< Updated upstream
-  
-=======
 
->>>>>>> Stashed changes
   void Function(Message message)? get onNewMessage => _onNewMessage;
   set onNewMessage(void Function(Message message)? callback) {
     _onNewMessage = callback;
   }
-<<<<<<< Updated upstream
-  
-  void Function(String chatId, String userId)? get onMessagesRead => _onMessagesRead;
-=======
 
   void Function(String chatId, String userId)? get onMessagesRead =>
       _onMessagesRead;
->>>>>>> Stashed changes
   set onMessagesRead(void Function(String chatId, String userId)? callback) {
     _onMessagesRead = callback;
   }
@@ -73,23 +56,6 @@ class ChatRepository {
   Future<Map<String, String>> _getHeaders() async {
     try {
       final token = await _secureStorage.getToken();
-<<<<<<< Updated upstream
-      
-      if (token == null || token.isEmpty) {
-        print('WARNING: Authentication token is null or empty. Checking shared prefs directly...');
-        
-        // Try to get token directly from shared prefs as a last resort
-        final prefs = await SharedPreferences.getInstance();
-        final directToken = prefs.getString('accessToken');
-        
-        
-        if (directToken != null && directToken.isNotEmpty) {
-          print('Found token directly in shared preferences');
-          
-          // Save it to secure storage for next time
-          await _secureStorage.setToken(directToken);
-          
-=======
 
       if (token == null || token.isEmpty) {
         print(
@@ -105,20 +71,11 @@ class ChatRepository {
           // Save it to secure storage for next time
           await _secureStorage.setToken(directToken);
 
->>>>>>> Stashed changes
           return {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $directToken',
           };
         }
-<<<<<<< Updated upstream
-        
-        throw Exception('Authentication token is missing');
-      }
-      
-      print('Adding auth token to headers: Bearer ${token.length > 10 ? token.substring(0, 10) + "..." : token}');
-      
-=======
 
         throw Exception('Authentication token is missing');
       }
@@ -126,7 +83,6 @@ class ChatRepository {
       print(
           'Adding auth token to headers: Bearer ${token.length > 10 ? token.substring(0, 10) + "..." : token}');
 
->>>>>>> Stashed changes
       return {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -151,13 +107,8 @@ class ChatRepository {
     // Close existing socket if any
     _socket?.disconnect();
 
-<<<<<<< Updated upstream
-    // Create new socket connection
-    _socket = io.io('$baseUrl/chat', <String, dynamic>{
-=======
     // Create new socket connection with the emulator IP
     _socket = io.io(baseUrl, <String, dynamic>{
->>>>>>> Stashed changes
       'transports': ['websocket'],
       'autoConnect': false,
       'auth': {'token': token},
@@ -199,11 +150,7 @@ class ChatRepository {
         Uri.parse('$baseUrl/chat'),
         headers: await _getHeaders(),
       );
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
         return jsonData.map((chat) => Chat.fromJson(chat)).toList();
@@ -223,11 +170,7 @@ class ChatRepository {
         Uri.parse('$baseUrl/chat/$chatId'),
         headers: await _getHeaders(),
       );
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       if (response.statusCode == 200) {
         final dynamic jsonData = json.decode(response.body);
         return Chat.fromJson(jsonData);
@@ -247,31 +190,6 @@ class ChatRepository {
     String? name,
   }) async {
     try {
-<<<<<<< Updated upstream
-      print('Creating chat with participants: $participants, isGroupChat: $isGroupChat');
-      
-      // Get current user ID first for validation
-      final currentUserId = await _secureStorage.getUserId();
-      if (currentUserId == null) {
-        print('WARNING: Current user ID is null, authentication might be incomplete');
-      } else {
-        print('Current user ID: $currentUserId');
-      }
-      
-      // Debug: Get token directly and verify it's not null
-      final directToken = await _secureStorage.getToken();
-      print('Direct token check before creating headers: ${directToken != null ? "Token exists" : "TOKEN IS NULL!"}');
-      
-      // First ensure we have a valid token before proceeding
-      final headers = await _getHeaders();
-      
-      // Print all headers for debugging
-      print('All request headers: $headers');
-      
-      if (!headers.containsKey('Authorization')) {
-        print('ERROR: Authorization header is missing');
-        
-=======
       print(
           'Creating chat with participants: $participants, isGroupChat: $isGroupChat');
 
@@ -298,7 +216,6 @@ class ChatRepository {
       if (!headers.containsKey('Authorization')) {
         print('ERROR: Authorization header is missing');
 
->>>>>>> Stashed changes
         // Try to get token one more time with a direct SharedPreferences instance
         final prefs = await SharedPreferences.getInstance();
         final lastResortToken = prefs.getString('accessToken');
@@ -306,16 +223,6 @@ class ChatRepository {
           print('Found token with last resort attempt, adding to headers');
           headers['Authorization'] = 'Bearer $lastResortToken';
         } else {
-<<<<<<< Updated upstream
-          throw Exception('Cannot create chat: Authentication token is missing');
-        }
-      }
-      
-      // Debug: Show authorization header (first 15 chars only)
-      String authHeader = headers['Authorization'] ?? '';
-      print('Authorization header (truncated): ${authHeader.length > 15 ? authHeader.substring(0, 15) + '...' : authHeader}');
-      
-=======
           throw Exception(
               'Cannot create chat: Authentication token is missing');
         }
@@ -326,7 +233,6 @@ class ChatRepository {
       print(
           'Authorization header (truncated): ${authHeader.length > 15 ? authHeader.substring(0, 15) + '...' : authHeader}');
 
->>>>>>> Stashed changes
       final body = jsonEncode({
         'participants': participants,
         'isGroupChat': isGroupChat,
@@ -334,25 +240,12 @@ class ChatRepository {
       });
 
       print('Sending POST request to $baseUrl/chat with body: $body');
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       final response = await _client.post(
         Uri.parse('$baseUrl/chat'),
         headers: headers,
         body: body,
       );
-<<<<<<< Updated upstream
-      
-      print('Create chat response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      
-      if (response.statusCode == 401) {
-        print('Authentication failed - token might be invalid or expired');
-        
-=======
 
       print('Create chat response status: ${response.statusCode}');
       print('Response body: ${response.body}');
@@ -360,27 +253,12 @@ class ChatRepository {
       if (response.statusCode == 401) {
         print('Authentication failed - token might be invalid or expired');
 
->>>>>>> Stashed changes
         // As a debug measure, let's print the current auth status
         final prefs = await SharedPreferences.getInstance();
         final hasAccessToken = prefs.containsKey('accessToken');
         final accessToken = prefs.getString('accessToken');
         final hasRefreshToken = prefs.containsKey('refreshToken');
         final hasUser = prefs.containsKey('user');
-<<<<<<< Updated upstream
-        
-        print('DEBUG AUTH STATUS: accessToken exists: $hasAccessToken');
-        print('accessToken value: ${accessToken != null ? accessToken.substring(0, math.min(10, accessToken.length)) + "..." : "null"}');
-        print('refreshToken exists: $hasRefreshToken, user exists: $hasUser');
-        
-        // Try to get a new token if possible
-        // This would normally involve refreshing the token with a refresh token
-        // For now, we'll just throw an error
-        
-        throw Exception('Authentication failed - please log in again');
-      }
-      
-=======
 
         print('DEBUG AUTH STATUS: accessToken exists: $hasAccessToken');
         print(
@@ -394,17 +272,12 @@ class ChatRepository {
         throw Exception('Authentication failed - please log in again');
       }
 
->>>>>>> Stashed changes
       if (response.statusCode == 201 || response.statusCode == 200) {
         final dynamic jsonData = json.decode(response.body);
         return Chat.fromJson(jsonData);
       } else {
-<<<<<<< Updated upstream
-        throw Exception('Failed to create chat: ${response.statusCode}, reason: ${response.body}');
-=======
         throw Exception(
             'Failed to create chat: ${response.statusCode}, reason: ${response.body}');
->>>>>>> Stashed changes
       }
     } catch (e) {
       print('Error creating chat: $e');
@@ -426,20 +299,12 @@ class ChatRepository {
 
       final uri = Uri.parse('$baseUrl/chat/$chatId/messages')
           .replace(queryParameters: queryParams);
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       final response = await _client.get(
         uri,
         headers: await _getHeaders(),
       );
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
         return jsonData.map((message) => Message.fromJson(message)).toList();
@@ -456,21 +321,13 @@ class ChatRepository {
   Future<Message> sendMessage(String chatId, String content) async {
     try {
       final body = jsonEncode({'content': content});
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       final response = await _client.post(
         Uri.parse('$baseUrl/chat/$chatId/messages'),
         headers: await _getHeaders(),
         body: body,
       );
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       if (response.statusCode == 201 || response.statusCode == 200) {
         final dynamic jsonData = json.decode(response.body);
         return Message.fromJson(jsonData);
@@ -490,14 +347,6 @@ class ChatRepository {
         print('ERROR: Cannot send message via socket - socket is null');
         throw Exception('Socket is not connected');
       }
-<<<<<<< Updated upstream
-      
-      if (_socket?.connected != true) {
-        print('WARNING: Socket appears to be disconnected, attempting to reconnect');
-        _socket?.connect();
-      }
-      
-=======
 
       if (_socket?.connected != true) {
         print(
@@ -505,31 +354,19 @@ class ChatRepository {
         _socket?.connect();
       }
 
->>>>>>> Stashed changes
       final messageData = {
         'chatId': chatId,
         'message': {'content': content},
       };
-<<<<<<< Updated upstream
-      
-      print('Sending message via socket: $content to chat: $chatId');
-      _socket?.emit('sendMessage', messageData);
-      
-=======
 
       print('Sending message via socket: $content to chat: $chatId');
       _socket?.emit('sendMessage', messageData);
 
->>>>>>> Stashed changes
       // Add a listener for message acknowledgement if the server supports it
       _socket?.once('messageSent', (data) {
         print('Message acknowledgement received from server: $data');
       });
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       // Add a short timeout to detect potential delivery issues
       Future.delayed(Duration(seconds: 5), () {
         // Check if the message appears in the messages list
@@ -551,16 +388,10 @@ class ChatRepository {
         headers: await _getHeaders(),
         body: '{}',
       );
-<<<<<<< Updated upstream
-      
-      if (response.statusCode != 200) {
-        throw Exception('Failed to mark messages as read: ${response.statusCode}');
-=======
 
       if (response.statusCode != 200) {
         throw Exception(
             'Failed to mark messages as read: ${response.statusCode}');
->>>>>>> Stashed changes
       }
     } catch (e) {
       print('Error marking messages as read: $e');
@@ -580,11 +411,7 @@ class ChatRepository {
         Uri.parse('$baseUrl/chat/unread'),
         headers: await _getHeaders(),
       );
-<<<<<<< Updated upstream
-      
-=======
 
->>>>>>> Stashed changes
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
@@ -605,19 +432,6 @@ class ChatRepository {
   // Manually set the token (for debugging/recovery)
   Future<bool> manuallySetToken(String token) async {
     try {
-<<<<<<< Updated upstream
-      print('Manually setting token: ${token.substring(0, math.min(10, token.length))}...');
-      
-      // Set in secure storage
-      final secureResult = await _secureStorage.setToken(token);
-      
-      // Also set directly in shared prefs for extra safety
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('accessToken', token);
-      
-      print('Manual token setting result - secure storage: $secureResult, prefs: ${prefs.containsKey('accessToken')}');
-      
-=======
       print(
           'Manually setting token: ${token.substring(0, math.min(10, token.length))}...');
 
@@ -631,19 +445,14 @@ class ChatRepository {
       print(
           'Manual token setting result - secure storage: $secureResult, prefs: ${prefs.containsKey('accessToken')}');
 
->>>>>>> Stashed changes
       // Verify token was set correctly by reading it back
       final savedToken = await _secureStorage.getToken();
       if (savedToken == token) {
         print('Token verification successful');
         return true;
       } else {
-<<<<<<< Updated upstream
-        print('WARNING: Token verification failed - saved value does not match');
-=======
         print(
             'WARNING: Token verification failed - saved value does not match');
->>>>>>> Stashed changes
         return false;
       }
     } catch (e) {
@@ -651,8 +460,4 @@ class ChatRepository {
       return false;
     }
   }
-<<<<<<< Updated upstream
-} 
-=======
 }
->>>>>>> Stashed changes

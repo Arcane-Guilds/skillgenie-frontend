@@ -2,13 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-<<<<<<< Updated upstream
-
-import '../../../core/constants/api_constants.dart'; // Import for Timer
-
-class ChallengesScreen extends StatefulWidget {
-  final String partyCode; // Accept partyCode as a parameter
-=======
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:lottie/lottie.dart';
@@ -17,7 +10,6 @@ import 'package:skillGenie/core/constants/cloudinary_constants.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String partyCode;
->>>>>>> Stashed changes
 
   const ChallengesScreen({super.key, required this.partyCode});
 
@@ -25,29 +17,13 @@ class ChallengesScreen extends StatefulWidget {
   _ChallengesScreenState createState() => _ChallengesScreenState();
 }
 
-<<<<<<< Updated upstream
-class _ChallengesScreenState extends State<ChallengesScreen> {
-  bool isLoading = true; // To show loading indicator
-=======
 class _ChallengesScreenState extends State<ChallengesScreen>
     with SingleTickerProviderStateMixin {
   bool isLoading = true;
->>>>>>> Stashed changes
   String? challengeTitle;
   String? challengeDescription;
   String? challengeDifficulty;
   String? challengeLanguage;
-<<<<<<< Updated upstream
-  String _resultMessage = ''; // To show if the answer is correct or not
-
-  bool _isTimeUp = false; // To check if time is up
-  int _remainingTime = 60; // 60 seconds countdown
-  late Timer _timer; // Timer to manage countdown
-
-  final TextEditingController _solutionController = TextEditingController();
-
-  // 🟢 Method to fetch the challenge data based on partyCode
-=======
   String _resultMessage = '';
   bool _isTimeUp = false;
   int _remainingTime = 60;
@@ -89,7 +65,6 @@ class _ChallengesScreenState extends State<ChallengesScreen>
     super.dispose();
   }
 
->>>>>>> Stashed changes
   Future<void> _fetchChallengeData() async {
     final String apiUrl =
         '${ApiConstants.baseUrl}/challenges/get-by-party/${widget.partyCode}';
@@ -100,20 +75,11 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-<<<<<<< Updated upstream
-          challengeTitle = data[0]['title']; // Assuming the first challenge
-          challengeDescription = data[0]['description'];
-          challengeDifficulty = data[0]['difficulty'];
-          challengeLanguage =
-          data[0]['languages'][0]; // Taking the first language
-          isLoading = false; // Stop loading after data is fetched
-=======
           challengeTitle = data[0]['title'];
           challengeDescription = data[0]['description'];
           challengeDifficulty = data[0]['difficulty'];
           challengeLanguage = data[0]['languages'][0];
           isLoading = false;
->>>>>>> Stashed changes
         });
       } else {
         setState(() {
@@ -129,10 +95,6 @@ class _ChallengesScreenState extends State<ChallengesScreen>
     }
   }
 
-<<<<<<< Updated upstream
-  // 🟢 Method to check the user's answer using the API
-=======
->>>>>>> Stashed changes
   Future<void> _checkAnswer() async {
     final userAnswer = _solutionController.text.trim();
 
@@ -143,23 +105,12 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       return;
     }
 
-<<<<<<< Updated upstream
-    // ✅ Use partyCode in the API request
-    final String apiUrl =
-        '${ApiConstants.baseUrl}/challenges/check-answers/${widget.partyCode}';
-
-    // Create the request body
-    final Map<String, dynamic> requestBody = {
-      "language": challengeLanguage ?? "Python", // Default to Python if null
-      "answer": userAnswer, // Send raw answer instead of adding markdown
-=======
     final String apiUrl =
         '${ApiConstants.baseUrl}/challenges/check-answers/${widget.partyCode}';
 
     final Map<String, dynamic> requestBody = {
       "language": challengeLanguage ?? "Python",
       "answer": userAnswer,
->>>>>>> Stashed changes
     };
 
     try {
@@ -175,22 +126,15 @@ class _ChallengesScreenState extends State<ChallengesScreen>
           _resultMessage = data['correct']
               ? '✅ Réponse correcte !'
               : '❌ Mauvaise réponse, essayez encore.';
-<<<<<<< Updated upstream
-=======
           if (data['correct']) {
             _coinBalance += 10;
             _showWinAlert();
           }
->>>>>>> Stashed changes
         });
       } else {
         setState(() {
           _resultMessage =
-<<<<<<< Updated upstream
-          '⚠️ Erreur lors de la vérification. Veuillez réessayer.';
-=======
               '⚠️ Erreur lors de la vérification. Veuillez réessayer.';
->>>>>>> Stashed changes
         });
       }
     } catch (e) {
@@ -200,10 +144,6 @@ class _ChallengesScreenState extends State<ChallengesScreen>
     }
   }
 
-<<<<<<< Updated upstream
-  // 🟢 Start the timer countdown when the page loads
-=======
->>>>>>> Stashed changes
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingTime > 0) {
@@ -213,30 +153,12 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       } else {
         _timer.cancel();
         setState(() {
-<<<<<<< Updated upstream
-          _isTimeUp = true; // Time is up
-=======
           _isTimeUp = true;
->>>>>>> Stashed changes
         });
       }
     });
   }
 
-<<<<<<< Updated upstream
-  @override
-  void initState() {
-    super.initState();
-    _fetchChallengeData(); // Fetch the challenge data when the page loads
-    _startTimer(); // Start the timer countdown
-  }
-
-  @override
-  void dispose() {
-    _solutionController.dispose();
-    _timer.cancel(); // Cancel timer when leaving the page
-    super.dispose();
-=======
   void _showWinAlert() {
     Alert(
       context: context,
@@ -267,106 +189,11 @@ class _ChallengesScreenState extends State<ChallengesScreen>
         ),
       ],
     ).show();
->>>>>>> Stashed changes
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< Updated upstream
-      appBar: AppBar(title: const Text("Challenge")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Display a loading spinner while fetching data
-            if (isLoading)
-              const CircularProgressIndicator()
-            else if (challengeTitle != null && challengeDescription != null)
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Titre : $challengeTitle',
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        challengeDescription!,
-                        textAlign: TextAlign.justify,
-                      ),
-                      const SizedBox(height: 10),
-                      Text('Difficulté : $challengeDifficulty',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Langage : $challengeLanguage',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
-            const SizedBox(height: 20),
-            // Display the remaining time countdown
-            Text(
-              "Temps restant : $_remainingTime secondes",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Votre solution en Python :",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _solutionController,
-              maxLines: 6,
-              decoration: const InputDecoration(
-                labelText: 'Écrivez votre solution ici...',
-                border: OutlineInputBorder(),
-              ),
-              enabled: !_isTimeUp, // Disable the input field after time is up
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isTimeUp
-                  ? null
-                  : _checkAnswer, // Disable the button after time is up
-              child: const Text('Soumettre la solution'),
-            ),
-            const SizedBox(height: 20),
-            // Display the result message (if any)
-            if (_resultMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  _resultMessage,
-                  style: TextStyle(
-                    color: _resultMessage.contains('✅')
-                        ? Colors.green
-                        : Colors.red,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-=======
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         title: const Text("💡 Challenge"),
@@ -625,4 +452,3 @@ class TrianglePainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
->>>>>>> Stashed changes

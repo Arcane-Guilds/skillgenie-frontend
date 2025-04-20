@@ -6,7 +6,8 @@ import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:lottie/lottie.dart';
 import 'package:skillGenie/core/constants/api_constants.dart';
-import 'package:skillGenie/core/constants/cloudinary_constants.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String partyCode;
@@ -32,7 +33,6 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   int _coinBalance = 0;
   final TextEditingController _solutionController = TextEditingController();
   final CountDownController _timerController = CountDownController();
-  bool _coinAnimationTriggered = false;
 
   late AnimationController _animationController;
   late Animation<Offset> _genieOffset;
@@ -41,6 +41,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   void initState() {
     super.initState();
     _fetchChallengeData();
+    _fetchCoinBalance();
     _startTimer();
 
     _animationController = AnimationController(
@@ -91,6 +92,40 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       setState(() {
         _resultMessage = '🚨 Erreur : ${e.toString()}';
         isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchCoinBalance() async {
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final userId = authViewModel.currentUser?.id;
+    
+    if (userId == null) {
+      setState(() {
+        _resultMessage = '⚠️ User not authenticated';
+      });
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/user/$userId/coins'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _coinBalance = data['coins'] ?? 0;
+        });
+      } else {
+        setState(() {
+          _resultMessage = '⚠️ Error fetching coin balance';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _resultMessage = '🚨 Error: ${e.toString()}';
       });
     }
   }

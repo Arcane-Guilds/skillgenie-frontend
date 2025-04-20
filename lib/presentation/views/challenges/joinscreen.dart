@@ -28,6 +28,9 @@ class _JoinScreenState extends State<JoinScreen>
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
+
+
+//test
   @override
   void dispose() {
     _controller.dispose();

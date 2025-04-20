@@ -1,12 +1,8 @@
 import 'package:dio/dio.dart';
-<<<<<<< Updated upstream
-import 'package:logging/logging.dart';
-=======
 import 'package:dio/io.dart';
 import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
->>>>>>> Stashed changes
 import '../models/api_exception.dart';
 import '../../core/constants/api_constants.dart';
 
@@ -25,14 +21,6 @@ class ApiClient {
             return true;
           },
         )) {
-<<<<<<< Updated upstream
-    // Add interceptors for logging
-    _dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      logPrint: (object) => _logger.fine(object.toString()),
-    ));
-=======
     // Add pretty logger interceptor for better request/response logging
     _dio.interceptors.add(PrettyDioLogger(
       requestHeader: true,
@@ -56,7 +44,6 @@ class ApiClient {
       };
       _logger.warning('SSL certificate validation disabled for development');
     }
->>>>>>> Stashed changes
   }
 
   /// Fetches data from the API using a GET request.
@@ -175,11 +162,7 @@ class ApiClient {
   ApiException _handleDioError(DioException error) {
     int statusCode = error.response?.statusCode ?? 500;
     String message;
-<<<<<<< Updated upstream
-    
-=======
 
->>>>>>> Stashed changes
     switch (statusCode) {
       case 400:
         message = 'Bad request';
@@ -200,17 +183,9 @@ class ApiClient {
         message = 'Network error occurred';
     }
 
-<<<<<<< Updated upstream
-    String details = error.response?.data?.toString() ?? error.message ?? 'Unknown error';
-    
-    return ApiException(message, statusCode, details);
-  }
-}
-=======
     String details =
         error.response?.data?.toString() ?? error.message ?? 'Unknown error';
 
     return ApiException(message, statusCode, details);
   }
 }
->>>>>>> Stashed changes

@@ -50,152 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
           });
         }*/
         context.go('/home');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       }
     } catch (e) {
       setState(() {
@@ -209,7 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +122,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your email';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value)) {
                             return 'Please enter a valid email address';
                           }
                           return null;
@@ -315,7 +169,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : () => _handleLogin(context),
+                          onPressed:
+                              _isLoading ? null : () => _handleLogin(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -325,21 +180,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: _isLoading
                               ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor:
+                                        AlwaysStoppedAnimation(Colors.white),
+                                  ),
+                                )
                               : const Text(
-                            'LOG IN',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                                  'LOG IN',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 24),

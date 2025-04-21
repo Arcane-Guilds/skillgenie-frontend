@@ -10,13 +10,12 @@ import 'package:gal/gal.dart';
 import 'dart:ui' as ui;
 import 'package:permission_handler/permission_handler.dart';
 
-
 class LessonViewModel extends ChangeNotifier {
   final FlutterTts flutterTts = FlutterTts();
   String lessonContent = "";
   bool isProcessing = false;
+  String? generatedVideoPath;
 
-  // Request storage permission
   Future<void> requestStoragePermission() async {
     final status = await Permission.storage.request();
     if (!status.isGranted) {
@@ -102,7 +101,7 @@ class LessonViewModel extends ChangeNotifier {
     await file.writeAsBytes(buffer);
 
     try {
-      await Gal.putImage(imagePath);  // Add image to gallery
+      await Gal.putImage(imagePath);
     } catch (e) {
       print("Erreur lors de l'enregistrement de l'image dans la galerie : $e");
     }
@@ -112,13 +111,30 @@ class LessonViewModel extends ChangeNotifier {
 
   Future<void> generateMultipleImagesFromText() async {
     List<String> imagePaths = [];
-    List<String> textPages = lessonContent.split("\n\n");
+    List<String> textPages = _splitTextIntoPages(lessonContent);
 
     for (int i = 0; i < textPages.length; i++) {
       String path = await generateImageFromText(textPages[i], i);
       imagePaths.add(path);
     }
+
     notifyListeners();
+  }
+
+  List<String> _splitTextIntoPages(String text) {
+    // You can split your content more intelligently here based on the PDF structure.
+    // For example, splitting by paragraphs or chunks of text, etc.
+    List<String> pages = [];
+    const int maxLength = 800; // Max characters per page
+    int start = 0;
+
+    while (start < text.length) {
+      int end = (start + maxLength) < text.length ? start + maxLength : text.length;
+      pages.add(text.substring(start, end));
+      start = end;
+    }
+
+    return pages;
   }
 
   Future<void> generateVideoFromImages() async {
@@ -129,41 +145,33 @@ class LessonViewModel extends ChangeNotifier {
       await generateMultipleImagesFromText();
 
       final directory = await getApplicationDocumentsDirectory();
-      final originalPath = "${directory.path}/page_00.png";
+      List<String> generatedImages = [];
 
-      if (File(originalPath).existsSync()) {
-        for (int i = 1; i < 5; i++) {
-          String newPath = "${directory.path}/page_${i.toString().padLeft(2, '0')}.png";
-          File(originalPath).copySync(newPath);
-          await Gal.putImage(newPath);  // Add copied image to gallery
+      for (int i = 0; i < 4; i++) {
+        String imagePath = "${directory.path}/page_${i.toString().padLeft(2, '0')}.png";
+        if (File(imagePath).existsSync()) {
+          generatedImages.add(imagePath);
         }
-      } else {
-        print("❌ L'image source n'existe pas !");
       }
 
-      final videoPath = "${directory.path}/output_video.mp4";
+      if (generatedImages.length == 4) {
+        final videoPath = "${directory.path}/output_video.mp4";
+        String ffmpegCommand =
+            "-framerate 1/3 -start_number 1 -i '${directory.path}/page_%02d.png' -c:v mpeg4 -r 30 -pix_fmt yuv420p -y '$videoPath'";
 
-      // FFmpeg command to create video from images
-      String ffmpegCommand =
-          "-framerate 1 -start_number 1 -i '${directory.path}/page_%02d.png' -c:v mpeg4 -r 30 -pix_fmt yuv420p -y '$videoPath'";
+        await FFmpegKit.execute(ffmpegCommand).then((session) async {
+          final returnCode = await session.getReturnCode();
 
-      await FFmpegKit.execute(ffmpegCommand).then((session) async {
-        final returnCode = await session.getReturnCode();
-        final logs = await session.getAllLogs();
-        logs.forEach((log) => print("📋 LOG: ${log.getMessage()}"));
-
-        if (ReturnCode.isSuccess(returnCode)) {
-          print("✅ Vidéo générée avec succès !");
-          // Add video to gallery
-  await Gal.putVideo(videoPath);  // 👉 Ajouter cette ligne
-        } else {
-          print("❌ Échec de la génération de la vidéo.");
-        }
-      });
-
-      // Check if video was successfully created
-      if (!File(videoPath).existsSync()) {
-        throw Exception("La vidéo n'a pas été générée correctement.");
+          if (ReturnCode.isSuccess(returnCode)) {
+            print("✅ Vidéo générée avec succès !");
+            await Gal.putVideo(videoPath);
+            generatedVideoPath = videoPath;
+          } else {
+            print("❌ Échec de la génération de la vidéo.");
+          }
+        });
+      } else {
+        print("❌ Moins de 4 images générées, vidéo non créée.");
       }
 
     } catch (e) {
@@ -174,37 +182,4 @@ class LessonViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // Add the video to the gallery
-Future<void> addVideoToGallery(String videoPath) async {
-if (await Permission.storage.request().isGranted) {
-    // Permissions granted, proceed with the media scan.
-  } else {
-    // Handle permission denial.
-    print('Storage permission is required.');
-  }
-}
-
-Future<void> requestStoragePermissions() async {
-  // Check if permission is already granted
-  PermissionStatus status = await Permission.storage.status;
-  
-  if (!status.isGranted) {
-    // If permission is not granted, request permission
-    PermissionStatus result = await Permission.storage.request();
-    
-    if (result.isGranted) {
-      // Permission granted, continue with your operation
-      print("Storage permission granted");
-    } else {
-      // Handle the case where permission is denied
-      print("Storage permission denied");
-    }
-  } else {
-    // If permission is already granted, proceed
-    print("Storage permission already granted");
-  }
-}
-
-
 }

@@ -122,6 +122,13 @@ class MyApp extends StatelessWidget {
         // Add restorationScopeId to help with state restoration
         restorationScopeId: 'app',
         builder: (context, child) {
+          // Initialize socket connection when app is built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+            // Try to initialize socket connection
+            chatViewModel.refreshCurrentChat();
+          });
+          
           // Add error handling for widget errors
           ErrorWidget.builder = (FlutterErrorDetails details) {
             return Scaffold(

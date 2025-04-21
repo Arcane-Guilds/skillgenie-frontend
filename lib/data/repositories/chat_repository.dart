@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../core/constants/api_constants.dart';
@@ -13,43 +14,28 @@ class ChatRepository {
   final SecureStorage _secureStorage;
   io.Socket? _socket;
   String? _currentUserId;
+  bool _socketInitializing = false;
+  
+  // Socket reconnection
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 10;
   
   final String baseUrl = ApiConstants.baseUrl;
 
-  // Callback properties - changed from final to regular properties
-  void Function(Chat chat)? _onNewChat;
-  void Function(Message message)? _onNewMessage;
-  void Function(String chatId, String userId)? _onMessagesRead;
+  // Callback functions for socket events
+  Function(Map<String, dynamic>)? onNewChat;
+  Function(Map<String, dynamic>)? onNewMessage;
+  Function(Map<String, dynamic>)? onMessagesRead;
   
-  // Getters and setters for callbacks
-  void Function(Chat chat)? get onNewChat => _onNewChat;
-  set onNewChat(void Function(Chat chat)? callback) {
-    _onNewChat = callback;
-  }
-  
-  void Function(Message message)? get onNewMessage => _onNewMessage;
-  set onNewMessage(void Function(Message message)? callback) {
-    _onNewMessage = callback;
-  }
-  
-  void Function(String chatId, String userId)? get onMessagesRead => _onMessagesRead;
-  set onMessagesRead(void Function(String chatId, String userId)? callback) {
-    _onMessagesRead = callback;
-  }
+  // Socket connection status
+  bool get isSocketConnected => _socket?.connected ?? false;
 
   ChatRepository({
     required http.Client client,
     required SecureStorage secureStorage,
-    void Function(Chat chat)? onNewChat,
-    void Function(Message message)? onNewMessage,
-    void Function(String chatId, String userId)? onMessagesRead,
-  })  : _client = client,
-        _secureStorage = secureStorage {
-    // Set initial values for callbacks
-    _onNewChat = onNewChat;
-    _onNewMessage = onNewMessage;
-    _onMessagesRead = onMessagesRead;
-  }
+  }) : _client = client,
+      _secureStorage = secureStorage;
 
   // Get headers with authentication
   Future<Map<String, String>> _getHeaders() async {
@@ -79,8 +65,6 @@ class ChatRepository {
         throw Exception('Authentication token is missing');
       }
       
-      print('Adding auth token to headers: Bearer ${token.length > 10 ? token.substring(0, 10) + "..." : token}');
-      
       return {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -94,51 +78,177 @@ class ChatRepository {
     }
   }
 
-  // Initialize socket connection
-  Future<void> initializeSocket() async {
-    final token = await _secureStorage.getToken();
-    if (token == null) return;
+  // Initialize socket connection with improved error handling and reconnection
+  Future<bool> initializeSocket() async {
+    // Prevent multiple simultaneous initialization attempts
+    if (_socketInitializing) {
+      print('Socket initialization already in progress, skipping');
+      return false;
+    }
+    
+    _socketInitializing = true;
+    
+    try {
+      final token = await _secureStorage.getToken();
+      if (token == null) {
+        print('Cannot initialize socket: token is null');
+        _socketInitializing = false;
+        return false;
+      }
 
-    _currentUserId = await _secureStorage.getUserId();
-    if (_currentUserId == null) return;
+      _currentUserId = await _secureStorage.getUserId();
+      if (_currentUserId == null) {
+        print('Cannot initialize socket: user ID is null');
+        _socketInitializing = false;
+        return false;
+      }
 
-    // Close existing socket if any
-    _socket?.disconnect();
+      // Close existing socket if any
+      _socket?.disconnect();
+      _socket?.close();
+      _socket = null;
 
-    // Create new socket connection
-    _socket = io.io('$baseUrl/chat', <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-      'auth': {'token': token},
-    });
+      print('Initializing socket connection to $baseUrl/chat');
+      
+      // Create new socket connection with proper options
+      _socket = io.io('$baseUrl/chat', <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': true,
+        'auth': {'token': token},
+        'forceNew': true,
+        'reconnection': true,
+        'reconnectionAttempts': 5,
+        'reconnectionDelay': 1000,
+        'timeout': 20000,
+      });
 
-    // Set up event listeners
-    _socket?.onConnect((_) {
-      print('Socket connected');
-    });
+      // Set up event listeners
+      _socket?.onConnect((_) {
+        print('Socket connected successfully');
+        _reconnectAttempts = 0; // Reset reconnect counter on successful connection
+        _cancelReconnectTimer(); // Cancel any existing reconnect timer
+      });
 
-    _socket?.onDisconnect((_) {
-      print('Socket disconnected');
-    });
+      _socket?.onConnectError((error) {
+        print('Socket connection error: $error');
+        _scheduleReconnect();
+      });
 
+      _socket?.onError((error) {
+        print('Socket error: $error');
+      });
+
+      _socket?.onDisconnect((_) {
+        print('Socket disconnected');
+        _scheduleReconnect();
+      });
+
+      // Socket event handlers
+      _setupSocketEventHandlers();
+      
+      // Connect to socket
+      _socket?.connect();
+      
+      // Wait for connection to be established
+      bool connected = false;
+      final completer = Completer<bool>();
+      
+      // Listen for connection established
+      _socket?.onConnect((_) {
+        if (!completer.isCompleted) {
+          connected = true;
+          completer.complete(true);
+        }
+      });
+      
+      // Set timeout for connection
+      Future.delayed(const Duration(seconds: 5), () {
+        if (!completer.isCompleted) {
+          completer.complete(_socket?.connected ?? false);
+        }
+      });
+      
+      // Wait for connection or timeout
+      final success = await completer.future;
+      
+      _socketInitializing = false;
+      return success;
+    } catch (e) {
+      print('Error initializing socket: $e');
+      _socketInitializing = false;
+      return false;
+    }
+  }
+  
+  void _setupSocketEventHandlers() {
     _socket?.on('newChat', (data) {
-      final chat = Chat.fromJson(data);
-      _onNewChat?.call(chat);
+      print('Received newChat event: $data');
+      try {
+        if (onNewChat != null) {
+          onNewChat!(data);
+        }
+      } catch (e) {
+        print('Error processing newChat event: $e');
+      }
     });
 
     _socket?.on('newMessage', (data) {
-      final message = Message.fromJson(data);
-      _onNewMessage?.call(message);
+      print('Received newMessage event: $data');
+      try {
+        if (onNewMessage != null) {
+          onNewMessage!(data);
+        }
+      } catch (e) {
+        print('Error processing newMessage event: $e');
+      }
     });
 
     _socket?.on('messagesRead', (data) {
-      final chatId = data['chatId'];
-      final userId = data['userId'];
-      _onMessagesRead?.call(chatId, userId);
+      print('Received messagesRead event: $data');
+      try {
+        if (onMessagesRead != null) {
+          onMessagesRead!(data);
+        }
+      } catch (e) {
+        print('Error processing messagesRead event: $e');
+      }
     });
-
-    // Connect to socket
-    _socket?.connect();
+  }
+  
+  // Schedule socket reconnection
+  void _scheduleReconnect() {
+    // Cancel any existing timer
+    _cancelReconnectTimer();
+    
+    // Only attempt reconnection if we haven't exceeded the max attempts
+    if (_reconnectAttempts < _maxReconnectAttempts) {
+      _reconnectAttempts++;
+      
+      // Exponential backoff with a cap at 30 seconds
+      final delay = Duration(
+        milliseconds: math.min(
+          1000 * math.pow(1.5, _reconnectAttempts).toInt(),
+          const Duration(seconds: 30).inMilliseconds,
+        ),
+      );
+      
+      print('Scheduling socket reconnection attempt $_reconnectAttempts in ${delay.inSeconds} seconds');
+      
+      _reconnectTimer = Timer(delay, () {
+        print('Attempting socket reconnection (attempt $_reconnectAttempts)');
+        initializeSocket();
+      });
+    } else {
+      print('Maximum reconnection attempts reached, giving up automatic reconnection');
+    }
+  }
+  
+  // Cancel reconnection timer
+  void _cancelReconnectTimer() {
+    if (_reconnectTimer != null && _reconnectTimer!.isActive) {
+      _reconnectTimer!.cancel();
+      _reconnectTimer = null;
+    }
   }
 
   // Get chats for current user
@@ -188,43 +298,7 @@ class ChatRepository {
     String? name,
   }) async {
     try {
-      print('Creating chat with participants: $participants, isGroupChat: $isGroupChat');
-      
-      // Get current user ID first for validation
-      final currentUserId = await _secureStorage.getUserId();
-      if (currentUserId == null) {
-        print('WARNING: Current user ID is null, authentication might be incomplete');
-      } else {
-        print('Current user ID: $currentUserId');
-      }
-      
-      // Debug: Get token directly and verify it's not null
-      final directToken = await _secureStorage.getToken();
-      print('Direct token check before creating headers: ${directToken != null ? "Token exists" : "TOKEN IS NULL!"}');
-      
-      // First ensure we have a valid token before proceeding
       final headers = await _getHeaders();
-      
-      // Print all headers for debugging
-      print('All request headers: $headers');
-      
-      if (!headers.containsKey('Authorization')) {
-        print('ERROR: Authorization header is missing');
-        
-        // Try to get token one more time with a direct SharedPreferences instance
-        final prefs = await SharedPreferences.getInstance();
-        final lastResortToken = prefs.getString('accessToken');
-        if (lastResortToken != null && lastResortToken.isNotEmpty) {
-          print('Found token with last resort attempt, adding to headers');
-          headers['Authorization'] = 'Bearer $lastResortToken';
-        } else {
-          throw Exception('Cannot create chat: Authentication token is missing');
-        }
-      }
-      
-      // Debug: Show authorization header (first 15 chars only)
-      String authHeader = headers['Authorization'] ?? '';
-      print('Authorization header (truncated): ${authHeader.length > 15 ? authHeader.substring(0, 15) + '...' : authHeader}');
       
       final body = jsonEncode({
         'participants': participants,
@@ -232,37 +306,11 @@ class ChatRepository {
         if (name != null) 'name': name,
       });
 
-      print('Sending POST request to $baseUrl/chat with body: $body');
-      
       final response = await _client.post(
         Uri.parse('$baseUrl/chat'),
         headers: headers,
         body: body,
       );
-      
-      print('Create chat response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      
-      if (response.statusCode == 401) {
-        print('Authentication failed - token might be invalid or expired');
-        
-        // As a debug measure, let's print the current auth status
-        final prefs = await SharedPreferences.getInstance();
-        final hasAccessToken = prefs.containsKey('accessToken');
-        final accessToken = prefs.getString('accessToken');
-        final hasRefreshToken = prefs.containsKey('refreshToken');
-        final hasUser = prefs.containsKey('user');
-        
-        print('DEBUG AUTH STATUS: accessToken exists: $hasAccessToken');
-        print('accessToken value: ${accessToken != null ? accessToken.substring(0, math.min(10, accessToken.length)) + "..." : "null"}');
-        print('refreshToken exists: $hasRefreshToken, user exists: $hasUser');
-        
-        // Try to get a new token if possible
-        // This would normally involve refreshing the token with a refresh token
-        // For now, we'll just throw an error
-        
-        throw Exception('Authentication failed - please log in again');
-      }
       
       if (response.statusCode == 201 || response.statusCode == 200) {
         final dynamic jsonData = json.decode(response.body);
@@ -331,42 +379,83 @@ class ChatRepository {
     }
   }
 
-  // Send a message using socket
-  void sendMessageViaSocket(String chatId, String content) {
+  // Send a message using socket with improved acknowledgment handling
+  Future<bool> sendMessageViaSocket(
+    String chatId, 
+    String content, 
+    {Duration timeout = const Duration(seconds: 5)}
+  ) async {
+    // Create a completer for tracking acknowledgment
+    final completer = Completer<bool>();
+    
     try {
-      if (_socket == null) {
-        print('ERROR: Cannot send message via socket - socket is null');
-        throw Exception('Socket is not connected');
+      // First check if socket is connected
+      if (_socket == null || !isSocketConnected) {
+        print('Socket not connected, attempting to reconnect');
+        
+        // Try to initialize socket
+        final reconnected = await initializeSocket();
+        
+        if (!reconnected) {
+          print('FALLBACK: Unable to reconnect socket, falling back to REST API');
+          await sendMessage(chatId, content);
+          return true;
+        }
       }
       
-      if (_socket?.connected != true) {
-        print('WARNING: Socket appears to be disconnected, attempting to reconnect');
-        _socket?.connect();
-      }
-      
+      // Prepare message data
       final messageData = {
         'chatId': chatId,
         'message': {'content': content},
       };
       
-      print('Sending message via socket: $content to chat: $chatId');
-      _socket?.emit('sendMessage', messageData);
+      print('Sending message via socket: "$content" to chat: $chatId');
       
-      // Add a listener for message acknowledgement if the server supports it
+      // Set up a one-time listener for message acknowledgment
       _socket?.once('messageSent', (data) {
         print('Message acknowledgement received from server: $data');
+        if (!completer.isCompleted) {
+          completer.complete(true);
+        }
       });
       
-      // Add a short timeout to detect potential delivery issues
-      Future.delayed(Duration(seconds: 5), () {
-        // Check if the message appears in the messages list
-        // This is a simplified approach - in a real app you would track message IDs
-        print('Message delivery verification timeout reached');
+      // Set up a timeout for the acknowledgment
+      Future.delayed(timeout, () {
+        if (!completer.isCompleted) {
+          print('WARNING: Message acknowledgment timed out after ${timeout.inSeconds}s, falling back to REST API');
+          
+          // Fall back to REST API if socket acknowledgment times out
+          sendMessage(chatId, content).then((_) {
+            completer.complete(true);
+          }).catchError((error) {
+            print('REST fallback also failed: $error');
+            completer.complete(false);
+          });
+        }
       });
+      
+      // Actually send the message
+      _socket?.emit('sendMessage', messageData);
+      
+      // Wait for acknowledgment or timeout+fallback
+      return await completer.future;
+      
     } catch (e) {
       print('Error sending message via socket: $e');
-      // We can't throw here since void methods can't propagate exceptions
-      // but we can at least log it for debugging
+      
+      // Only try REST fallback if completer hasn't completed yet
+      if (!completer.isCompleted) {
+        try {
+          print('FALLBACK: Using REST API after socket failure');
+          await sendMessage(chatId, content);
+          completer.complete(true);
+        } catch (restError) {
+          print('REST API fallback also failed: $restError');
+          completer.complete(false);
+        }
+      }
+      
+      return await completer.future;
     }
   }
 
@@ -388,9 +477,18 @@ class ChatRepository {
     }
   }
 
-  // Mark messages as read using socket
-  void markMessagesAsReadViaSocket(String chatId) {
-    _socket?.emit('markAsRead', chatId);
+  // Mark messages as read using socket with fallback
+  Future<void> markMessagesAsReadViaSocket(String chatId) async {
+    if (isSocketConnected) {
+      _socket?.emit('markAsRead', chatId);
+    } else {
+      print('Socket not connected, using REST API to mark messages as read');
+      try {
+        await markMessagesAsRead(chatId);
+      } catch (e) {
+        print('Error marking messages as read via REST fallback: $e');
+      }
+    }
   }
 
   // Get unread message count
@@ -408,13 +506,27 @@ class ChatRepository {
       }
     } catch (e) {
       print('Error fetching unread message count: $e');
-      rethrow;
+      return {'total': 0, 'byChatId': <String, int>{}};
     }
+  }
+
+  // Manually force reconnection of socket
+  Future<bool> forceSocketReconnection() async {
+    // Reset reconnect counter
+    _reconnectAttempts = 0;
+    
+    // Cancel any pending reconnect timer
+    _cancelReconnectTimer();
+    
+    // Reinitialize socket
+    return await initializeSocket();
   }
 
   // Dispose socket connection
   void dispose() {
+    _cancelReconnectTimer();
     _socket?.disconnect();
+    _socket?.close();
     _socket = null;
   }
 
@@ -430,17 +542,7 @@ class ChatRepository {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('accessToken', token);
       
-      print('Manual token setting result - secure storage: $secureResult, prefs: ${prefs.containsKey('accessToken')}');
-      
-      // Verify token was set correctly by reading it back
-      final savedToken = await _secureStorage.getToken();
-      if (savedToken == token) {
-        print('Token verification successful');
-        return true;
-      } else {
-        print('WARNING: Token verification failed - saved value does not match');
-        return false;
-      }
+      return secureResult;
     } catch (e) {
       print('Error manually setting token: $e');
       return false;

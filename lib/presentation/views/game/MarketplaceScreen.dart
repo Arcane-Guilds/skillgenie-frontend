@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'buy_coins_screen.dart'; // <--- Make sure you import it
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -42,6 +43,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BuyCoinsScreen()),
+                );
+              },
+              icon: const Icon(Icons.add_shopping_cart),
+              label: const Text('Buy Coins'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 30),
             const Text(
               'Pets',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
@@ -98,7 +116,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  Widget _buildItem({required String name, required int cost, required bool bought, required String imagePath, required VoidCallback onBuy}) {
+  Widget _buildItem({
+    required String name,
+    required int cost,
+    required bool bought,
+    required String imagePath,
+    required VoidCallback onBuy,
+  }) {
     return Card(
       color: Colors.white.withOpacity(0.8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -107,7 +131,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         title: Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         subtitle: Text('$cost coins'),
         trailing: bought
-            ? const Text('Bought', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
+            ? const Text(
+          'Bought',
+          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+        )
             : ElevatedButton(
           onPressed: onBuy,
           child: const Text('Buy'),

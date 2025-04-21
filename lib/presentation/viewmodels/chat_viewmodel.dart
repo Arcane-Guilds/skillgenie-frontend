@@ -18,7 +18,7 @@ enum MessageStatus {
 class ChatViewModel with ChangeNotifier {
   final ChatRepository _chatRepository;
   final SecureStorage _secureStorage;
-  
+
   // State variables
   List<Chat> _chats = [];
   List<Message> _messages = [];
@@ -33,10 +33,10 @@ class ChatViewModel with ChangeNotifier {
   String? _currentUserId;
   int _totalUnreadCount = 0;
   Map<String, int> _unreadCountByChat = {};
-  
+
   // Track message status (key: message ID, value: status)
   final Map<String, MessageStatus> _messageStatus = {};
-  
+
   // Controllers for real-time events
   final StreamController<Message> _newMessageController = StreamController<Message>.broadcast();
   final StreamController<Chat> _newChatController = StreamController<Chat>.broadcast();
@@ -60,12 +60,12 @@ class ChatViewModel with ChangeNotifier {
     required ChatRepository chatRepository,
     required SecureStorage secureStorage,
   }) : _chatRepository = chatRepository,
-       _secureStorage = secureStorage {
+        _secureStorage = secureStorage {
     _initialize();
   }
-  
+
   Future<void> _initialize() async {
-    _chatRepository.onNewChat = _handleNewChat;
+    _chatRepository.onNewChat = (chat) => _handleNewChat(chat.toJson());
     _chatRepository.onNewMessage = _handleNewMessage;
     _chatRepository.onMessagesRead = _handleMessagesRead;
 
@@ -79,16 +79,16 @@ class ChatViewModel with ChangeNotifier {
 
     _setupMessageRefreshTimer();
   }
-  
+
   Future<void> _initializeSocket() async {
     if (_socketInitialized) return;
-    
+
     try {
       // Initialize socket connection
       await _chatRepository.initializeSocket();
       _socketInitialized = true;
       notifyListeners();
-      
+
       // Check connection status periodically and reconnect if needed
       Timer.periodic(Duration(seconds: 15), (timer) {
         if (!_chatRepository.isSocketConnected) {
@@ -100,7 +100,7 @@ class ChatViewModel with ChangeNotifier {
       print('ChatViewModel: Error initializing socket: $e');
       _errorMessage = 'Failed to initialize real-time connection';
       notifyListeners();
-      
+
       // Retry after delay if initialization fails
       Future.delayed(const Duration(seconds: 5), () {
         if (!_socketInitialized) {
@@ -109,7 +109,7 @@ class ChatViewModel with ChangeNotifier {
       });
     }
   }
-  
+
   void _setupMessageRefreshTimer() {
     _messageRefreshTimer?.cancel();
 
@@ -134,7 +134,7 @@ class ChatViewModel with ChangeNotifier {
       }
     });
   }
-  
+
   Future<void> loadChats() async {
     _setLoading(true);
     try {
@@ -146,7 +146,7 @@ class ChatViewModel with ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   Future<void> loadMessages({bool refresh = false}) async {
     if (_currentChat == null) return;
 
@@ -176,10 +176,10 @@ class ChatViewModel with ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   Future<void> refreshCurrentChat() async {
     if (_currentChat == null) return;
-    
+
     try {
       final chatId = _currentChat!.id;
       final existingIds = _messages.map((m) => m.id).toSet();
@@ -196,14 +196,14 @@ class ChatViewModel with ChangeNotifier {
       print('Error refreshing current chat: $e');
     }
   }
-  
+
   Future<void> selectChat(String chatId) async {
     _setLoading(true);
     try {
       _currentChat = null;
       _messages = [];
       notifyListeners();
-      
+
       _currentChat = await _chatRepository.getChat(chatId);
       notifyListeners();
 
@@ -216,7 +216,7 @@ class ChatViewModel with ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   Future<void> createChat({
     required List<String> participants,
     bool isGroupChat = false,
@@ -232,13 +232,13 @@ class ChatViewModel with ChangeNotifier {
         _setLoading(false);
         return;
       }
-      
+
       final newChat = await _chatRepository.createChat(
         participants: participants,
         isGroupChat: isGroupChat,
         name: name,
       );
-      
+
       final existingIndex = _chats.indexWhere((chat) => chat.id == newChat.id);
       if (existingIndex >= 0) {
         _chats[existingIndex] = newChat;
@@ -255,7 +255,7 @@ class ChatViewModel with ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   Future<Chat?> _findExistingChat(List<String> participants, bool isGroupChat) async {
     try {
       await loadChats();
@@ -279,7 +279,7 @@ class ChatViewModel with ChangeNotifier {
       return null;
     }
   }
-  
+
   Future<String?> findOrCreateDirectChat(String userId) async {
     try {
       final existingChat = await _findExistingChat([userId], false);
@@ -294,10 +294,10 @@ class ChatViewModel with ChangeNotifier {
       return null;
     }
   }
-  
+
   Future<void> sendMessage(String content) async {
     if (_currentChat == null || content.trim().isEmpty) return;
-    
+
     try {
       // Create temporary message with local ID
       final tempMessage = Message(
@@ -313,20 +313,20 @@ class ChatViewModel with ChangeNotifier {
         isSystemMessage: false,
         createdAt: DateTime.now(),
       );
-      
+
       // Add temporary message to UI for immediate feedback
       _messages.insert(0, tempMessage);
       _messageStatus[tempMessage.id] = MessageStatus.sending;
       notifyListeners();
-      
+
       // Send message through socket
       try {
         final success = await _chatRepository.sendMessageViaSocket(
-          _currentChat!.id, 
+          _currentChat!.id,
           content,
           timeout: Duration(seconds: 3),
         );
-        
+
         if (success) {
           _messageStatus[tempMessage.id] = MessageStatus.sent;
           notifyListeners();
@@ -336,28 +336,28 @@ class ChatViewModel with ChangeNotifier {
         }
       } catch (socketError) {
         print('Socket send failed, using REST API: $socketError');
-        
+
         // Fall back to REST API if socket fails
         await _chatRepository.sendMessage(_currentChat!.id, content);
         _messageStatus[tempMessage.id] = MessageStatus.sent;
         notifyListeners();
       }
-      
+
       // The message will appear in the next refresh or socket event
     } catch (e) {
       print('Error sending message: $e');
-      
+
       // Mark the temporary message as failed
       final tempMessageIndex = _messages.indexWhere((m) => m.id.startsWith('temp_') && m.content == content);
       if (tempMessageIndex >= 0) {
         _messageStatus[_messages[tempMessageIndex].id] = MessageStatus.failed;
         notifyListeners();
       }
-      
+
       _setError('Failed to send message: $e');
     }
   }
-  
+
   Future<void> markMessagesAsRead(String chatId) async {
     try {
       await _chatRepository.markMessagesAsReadViaSocket(chatId);
@@ -390,7 +390,7 @@ class ChatViewModel with ChangeNotifier {
           );
         }
       }
-      
+
       notifyListeners();
     } catch (e) {
       print('Error refreshing unread counts: $e');
@@ -401,7 +401,7 @@ class ChatViewModel with ChangeNotifier {
     try {
       print('New chat received: $data');
       final chat = Chat.fromJson(data);
-      
+
       final existingIndex = _chats.indexWhere((c) => c.id == chat.id);
       if (existingIndex >= 0) {
         _chats[existingIndex] = chat;
@@ -409,7 +409,7 @@ class ChatViewModel with ChangeNotifier {
         _chats.insert(0, chat);
       }
       notifyListeners();
-      
+
       // Push to stream for more specific listeners
       _newChatController.add(chat);
     } catch (e) {
@@ -421,27 +421,27 @@ class ChatViewModel with ChangeNotifier {
     try {
       print('New message received: $data');
       final message = Message.fromJson(data);
-      
+
       // Add to stream for UI components that are listening specifically for new messages
       _newMessageController.add(message);
-      
+
       // If this message belongs to the currently selected chat, add it to the messages list
       if (_currentChat?.id == message.chatId) {
         // Check if the message already exists in our list
         final existingIndex = _messages.indexWhere((m) => m.id == message.id);
-        
+
         if (existingIndex == -1) {
           // First, try to remove any temporary messages with the same content
           _removeTempMessage(message.content);
-          
+
           // Add new message to the list
           _messages.insert(0, message);
-          
+
           // Mark the new message as read if it's from someone else
           if (message.sender.id != _currentUserId) {
             markMessagesAsRead(message.chatId);
           }
-          
+
           // Notify listeners to update UI
           notifyListeners();
         }
@@ -451,7 +451,7 @@ class ChatViewModel with ChangeNotifier {
         final currentCount = _unreadCountByChat[chatId] ?? 0;
         _updateUnreadCount(chatId, currentCount + 1);
       }
-      
+
       // Update the chat's last message
       final chatIndex = _chats.indexWhere((chat) => chat.id == message.chatId);
       if (chatIndex >= 0) {
@@ -464,22 +464,22 @@ class ChatViewModel with ChangeNotifier {
           admin: chat.admin,
           lastActivity: DateTime.now(),
           lastMessage: message,
-          unreadCount: _currentChat?.id == message.chatId 
-            ? 0 
-            : (_unreadCountByChat[message.chatId] ?? 0) + 1,
+          unreadCount: _currentChat?.id == message.chatId
+              ? 0
+              : (_unreadCountByChat[message.chatId] ?? 0) + 1,
         );
-        
+
         // Remove from current position
         _chats.removeAt(chatIndex);
-        
+
         // Add back at the beginning (most recent)
         _chats.insert(0, updatedChat);
-        
+
         // If this is the current chat, update the reference
         if (_currentChat?.id == updatedChat.id) {
           _currentChat = updatedChat;
         }
-        
+
         // Notify UI of change
         notifyListeners();
       }
@@ -493,18 +493,18 @@ class ChatViewModel with ChangeNotifier {
       final chatId = data['chatId'];
       final userId = data['userId'];
       final messageIds = List<String>.from(data['messageIds'] ?? []);
-      
+
       if (_currentUserId != null && userId != _currentUserId) {
         if (_currentChat?.id == chatId) {
           bool updated = false;
-          
+
           for (int i = 0; i < _messages.length; i++) {
             final message = _messages[i];
-            
-            if (message.sender.id == _currentUserId && 
-                (messageIds.isEmpty || messageIds.contains(message.id)) && 
+
+            if (message.sender.id == _currentUserId &&
+                (messageIds.isEmpty || messageIds.contains(message.id)) &&
                 !message.readBy.contains(userId)) {
-              
+
               final updatedReadBy = List<String>.from(message.readBy)..add(userId);
               _messages[i] = Message(
                 id: message.id,
@@ -515,11 +515,11 @@ class ChatViewModel with ChangeNotifier {
                 readBy: updatedReadBy,
                 isSystemMessage: message.isSystemMessage,
               );
-              
+
               updated = true;
             }
           }
-          
+
           if (updated) {
             notifyListeners();
           }
@@ -595,14 +595,14 @@ class ChatViewModel with ChangeNotifier {
   void _removeTempMessage(String content) {
     // Find ALL temp messages with the same content (not just the first one)
     final tempIndices = <int>[];
-    
+
     for (int i = 0; i < _messages.length; i++) {
       if (_messages[i].id.startsWith('temp_') && _messages[i].content == content) {
         tempIndices.add(i);
         print('  Found temporary message at index $i with content: $content');
       }
     }
-    
+
     // Remove from last to first to avoid index shifting problems
     for (int i = tempIndices.length - 1; i >= 0; i--) {
       print('  Removing temporary message at index ${tempIndices[i]}');

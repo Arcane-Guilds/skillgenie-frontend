@@ -8,6 +8,7 @@ import 'package:lottie/lottie.dart';
 import 'package:skillGenie/core/constants/api_constants.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String partyCode;
@@ -36,6 +37,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
 
   late AnimationController _animationController;
   late Animation<Offset> _genieOffset;
+  late FlutterTts flutterTts;
 
   @override
   void initState() {
@@ -43,6 +45,8 @@ class _ChallengesScreenState extends State<ChallengesScreen>
     _fetchChallengeData();
     _fetchCoinBalance();
     _startTimer();
+    //text to sound
+    flutterTts = FlutterTts();
 
     _animationController = AnimationController(
       vsync: this,
@@ -64,6 +68,8 @@ class _ChallengesScreenState extends State<ChallengesScreen>
     _timer.cancel();
     _animationController.dispose();
     super.dispose();
+    // Stop the TTS when the widget is disposed
+    flutterTts.stop();
   }
 
   Future<void> _fetchChallengeData() async {
@@ -99,7 +105,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   Future<void> _fetchCoinBalance() async {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     final userId = authViewModel.currentUser?.id;
-    
+
     if (userId == null) {
       setState(() {
         _resultMessage = '⚠️ User not authenticated';
@@ -224,6 +230,28 @@ class _ChallengesScreenState extends State<ChallengesScreen>
         ),
       ],
     ).show();
+  }
+
+// Function to speak the challenge title and description
+  /*
+ Future<void> _speakChallenge() async {
+    String textToSpeak =
+        "${challengeTitle ?? ''}. ${challengeDescription ?? ''}";
+    await flutterTts.setLanguage("fr-FR");
+    await flutterTts.setPitch(1.0);
+    await flutterTts.speak(textToSpeak);
+  }*/
+  Future<void> _speakChallenge() async {
+    String textToSpeak =
+        "${challengeTitle ?? ''}. ${challengeDescription ?? ''}";
+    print("🔊 Speech content: $textToSpeak");
+
+    await flutterTts.setLanguage("fr-FR");
+    await flutterTts.setPitch(1.0);
+    await flutterTts.setSpeechRate(0.5); // Ajoute un débit plus lent
+    var result = await flutterTts.speak(textToSpeak);
+
+    print("🔊 Speak result: $result");
   }
 
   @override
@@ -377,6 +405,22 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                                                     Colors.blue[100],
                                               ),
                                             ],
+                                          ),
+                                          const SizedBox(height: 16),
+                                          ElevatedButton.icon(
+                                            onPressed: _speakChallenge,
+                                            icon: const Icon(Icons.volume_up),
+                                            label: const Text(
+                                                "Lire le challenge à voix haute"),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Colors.deepPurple,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),

@@ -4,9 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import 'package:go_router/go_router.dart';
-import 'package:skillGenie/data/models/community/post.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/models/user_model.dart';
+import '../../../data/models/community/post.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../../core/constants/cloudinary_constants.dart';
 import '../../viewmodels/community_viewmodel.dart';
@@ -14,6 +15,14 @@ import '../community/post_detail_screen.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../community/update_post_screen.dart';
 import '../community/create_post_screen.dart';
+import '../../widgets/common_widgets.dart';
+
+extension UserStats on User {
+  int get streakDays => 0; // TODO: Implement streak days calculation
+  int get coins => 0; // TODO: Implement coins calculation
+  List<String> get earnedBadges => []; // TODO: Implement badges
+  String? get selectedSkill => null; // TODO: Implement selected skill
+}
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -54,57 +63,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserPosts(String userId) async {
-  if (!mounted) return;
-  
-  final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
-  try {
-    await communityViewModel.loadUserPosts(userId);
-  } catch (e) {
-    print('Error loading user posts: $e');
-    if (mounted) {
-      // Show error message in UI instead of just logging
-      _showErrorSnackBar('Failed to load posts: ${e.toString()}');
-    }
-  }
-}
-
-  Future<void> _loadInitialData() async {
-  if (!mounted) return;
-
-  final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-  final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-
-  try {
-    setState(() => _isLoading = true);
-
-    // Check authentication
-    if (!authViewModel.isAuthenticated) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (!mounted) return;
-      if (!authViewModel.isAuthenticated) {
-        context.go('/login');
-        return;
+    if (!mounted) return;
+    
+    final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+    try {
+      await communityViewModel.loadUserPosts(userId);
+    } catch (e) {
+      print('Error loading user posts: $e');
+      if (mounted) {
+        _showErrorSnackBar('Failed to load posts: ${e.toString()}');
       }
     }
+  }
 
-    // Load profile
-    final profile = await profileViewModel.getUserProfile(forceRefresh: true);
+  Future<void> _loadInitialData() async {
     if (!mounted) return;
 
-    if (profile == null) {
-      _showErrorSnackBar('Could not load profile data');
-      return;
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+
+    try {
+      setState(() => _isLoading = true);
+
+      if (!authViewModel.isAuthenticated) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (!mounted) return;
+        if (!authViewModel.isAuthenticated) {
+          context.go('/login');
+          return;
+        }
+      }
+
+      final profile = await profileViewModel.getUserProfile(forceRefresh: true);
+      if (!mounted) return;
+
+      if (profile == null) {
+        _showErrorSnackBar('Could not load profile data');
+        return;
+      }
+
+      await _loadUserPosts(profile.id);
+
+    } catch (e) {
+      if (mounted) _showErrorSnackBar(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    // Load posts immediately after profile
-    await _loadUserPosts(profile.id); // Ensure this is awaited
-
-  } catch (e) {
-    if (mounted) _showErrorSnackBar(e.toString());
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
   }
-}
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
@@ -249,16 +254,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future _saveBio() async {
-    if (_bioController.text
-        .trim()
-        .isEmpty) {
+    if (_bioController.text.trim().isEmpty) {
       _showErrorSnackBar('Bio cannot be empty');
       return;
     }
 
     try {
-      final profileViewModel = Provider.of<ProfileViewModel>(
-          context, listen: false);
+      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
       await profileViewModel.updateBio(_bioController.text.trim());
 
       if (mounted) {
@@ -297,41 +299,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
 
-        // Show "Create First Post" button if user has no posts
         if (communityViewModel.userPosts.isEmpty) {
-          return Center(
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.post_add,
-                  size: 64,
-                  color: Colors.grey,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'You haven\'t created any posts yet',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
+                Text(
+                  'No posts yet',
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
+                const SizedBox(height: 8),
+                Text(
+                  'Share your learning journey with the community!',
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FloatingActionButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const CreatePostScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      _loadUserPosts(profileViewModel.currentProfile!.id);
+                    });
                   },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create Your First Post'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                ),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: const Icon(Icons.add),
+                ).animate()
+                  .fadeIn(duration: 500.ms)
+                  .slideY(begin: 0.3, end: 0),
               ],
             ),
           );
@@ -343,192 +360,259 @@ class _ProfileScreenState extends State<ProfileScreen> {
           itemCount: communityViewModel.userPosts.length,
           itemBuilder: (context, index) {
             final post = communityViewModel.userPosts[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: InkWell(
-                onTap: () => _navigateToPostDetail(post.id),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+            return _buildPostCard(post);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPostCard(Post post) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundImage: post.author.avatar != null
+                      ? NetworkImage(post.author.avatar!)
+                      : null,
+                  child: post.author.avatar == null
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundImage: post.author.avatar != null
-                                ? NetworkImage(post.author.avatar!)
-                                : null,
-                            child: post.author.avatar == null
-                                ? const Icon(Icons.person)
-                                : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  post.author.username,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  _formatDate(post.createdAt),
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Add 3-dots menu for post actions
-                          if (post.author.id == Provider.of<AuthViewModel>(context, listen: false).user?.id)
-                            PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              onSelected: (value) {
-                                if (value == 'edit') {
-                                  _navigateToUpdatePost(post);
-                                } else if (value == 'delete') {
-                                  _showDeleteConfirmation(post.id);
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.edit, size: 20),
-                                      SizedBox(width: 8),
-                                      Text('Edit Post'),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.delete, size: 20),
-                                      SizedBox(width: 8),
-                                      Text('Delete Post'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
                       Text(
-                        post.content,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (post.images != null && post.images.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 200,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: post.images!.length,
-                            itemBuilder: (context, imageIndex) {
-                              // Transform the image URL using Cloudinary
-                              final transformedUrl = CloudinaryConstants.getPostImageUrl(post.images![imageIndex]);
-                              
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: CachedNetworkImage(
-                                    imageUrl: transformedUrl,
-                                    width: 200,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: Colors.grey[300],
-                                      child: const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) => Container(
-                                      color: Colors.grey[300],
-                                      child: const Icon(
-                                        Icons.error_outline,
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                        post.author.username,
+                        style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
-                              communityViewModel.togglePostLike(post.id);
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    post.isLiked ? Icons.favorite : Icons.favorite_border,
-                                    color: post.isLiked ? Theme.of(context).colorScheme.error : Colors.grey,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    post.likeCount.toString(),
-                                    style: TextStyle(
-                                      color: post.isLiked ? Theme.of(context).colorScheme.error : Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          InkWell(
-                            onTap: () => _navigateToPostDetail(post.id),
-                            borderRadius: BorderRadius.circular(20),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.comment_outlined,
-                                    color: Colors.grey[600],
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    post.commentCount.toString(),
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                      ),
+                      Text(
+                        _formatDate(post.createdAt),
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        ),
                       ),
                     ],
                   ),
                 ),
+                if (post.author.id == Provider.of<AuthViewModel>(context, listen: false).user?.id)
+                  PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_vert,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _navigateToUpdatePost(post);
+                      } else if (value == 'delete') {
+                        _showDeleteConfirmation(post.id);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 20),
+                            SizedBox(width: 8),
+                            Text('Edit Post'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 20),
+                            SizedBox(width: 8),
+                            Text('Delete Post'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(
+              post.title ?? '',
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-            );
-          },
-        );
-      },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              post.content,
+              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              ),
+            ),
+          ),
+          if (post.images != null && post.images.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: post.images!.length,
+                  itemBuilder: (context, imageIndex) {
+                    final transformedUrl = CloudinaryConstants.getPostImageUrl(post.images![imageIndex]);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: CachedNetworkImage(
+                          imageUrl: transformedUrl,
+                          width: 200,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+          Container(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: Row(
+              children: [
+                _buildActionButton(
+                  icon: post.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                  label: post.likeCount.toString(),
+                  onTap: () {
+                    final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+                    communityViewModel.togglePostLike(post.id);
+                  },
+                ),
+                _buildActionButton(
+                  icon: Icons.comment_outlined,
+                  label: post.commentCount.toString(),
+                  onTap: () => _navigateToPostDetail(post.id),
+                ),
+                const Spacer(),
+                _buildActionButton(
+                  icon: Icons.bookmark_border,
+                  label: 'Save',
+                  onTap: () {
+                    // TODO: Implement save post functionality
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate()
+     .fadeIn(duration: 600.ms)
+     .moveY(begin: 20, end: 0, duration: 600.ms, curve: Curves.easeOutQuad);
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(
+        icon,
+        size: 20,
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+      ),
+      label: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        ),
+      ),
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: Theme.of(context).colorScheme.primary,
+            size: 32,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -577,9 +661,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 await communityViewModel.deletePost(postId);
                 
                 if (mounted) {
-                  // Remove the post from the UI immediately
                   setState(() {
-                    // Remove from user posts list
                     communityViewModel.userPosts.removeWhere((post) => post.id == postId);
                   });
                   
@@ -611,17 +693,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Profile'),
+        title: Text(
+          'Profile',
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: Icon(
+              Icons.settings,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             onPressed: _navigateToSettings,
           ),
         ],
       ),
       body: Consumer2<AuthViewModel, ProfileViewModel>(
         builder: (context, authViewModel, profileViewModel, _) {
-          // Show loading while checking auth or loading profile
           if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -643,163 +735,136 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           }
 
-
           return RefreshIndicator(
             onRefresh: () async {
-              // Load both profile and posts on refresh
               await _loadInitialData();
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildProfileHeader(user),
                   const SizedBox(height: 24),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'My Posts',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                  // Profile picture
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Hero(
+                        tag: 'profile_image',
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: Container(
+                            height: 120,
+                            width: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(60),
+                              child: _buildProfileImage(user),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
-                  _buildUserPosts(),
+                  // User name
+                  Text(
+                    user.username,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // User email
+                  Text(
+                    user.email ?? 'email@example.com',
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Stats
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
+                      _buildStatCard(context, 'Coins', '${user.coins ?? 0}', Icons.monetization_on),
+                      _buildStatCard(context, 'Badges', '${user.earnedBadges?.length ?? 0}', Icons.emoji_events),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Learning progress
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Learning Progress',
+                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        AnimatedProgressIndicator(
+                          progress: 0.7, // TODO: Calculate actual progress
+                          label: user.selectedSkill ?? 'No skill selected',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // User's Posts
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your Posts',
+                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildUserPosts(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  GeniePrimaryButton(
+                    text: 'Edit Profile',
+                    icon: Icons.edit,
+                    onPressed: () {
+                      // TODO: Implement edit profile functionality
+                    },
+                    width: 200,
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader(User? profile) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            Theme.of(context).primaryColor.withOpacity(0.1),
-          ],
-        ),
-      ),
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Hero(
-                tag: 'profile_image',
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 120,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(60),
-                      child: _buildProfileImage(profile),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Theme
-                        .of(context)
-                        .colorScheme
-                        .secondary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            profile?.username ?? 'User Name',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          InkWell(
-            onTap: () => setState(() => _isEditingBio = true),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: _isEditingBio
-                  ? Column(
-                children: [
-                  TextFormField(
-                    controller: _bioController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Write something about yourself...',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => setState(() => _isEditingBio = false),
-                        child: const Text('Cancel'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _saveBio,
-                        child: const Text('Save'),
-                      ),
-                    ],
-                  ),
-                ],
-              )
-                  : Row(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        profile?.bio?.isNotEmpty == true
-                            ? profile!.bio!
-                            : 'Tap to add bio...',
-                        style: TextStyle(
-                          color: profile?.bio?.isNotEmpty == true
-                              ? Colors.grey[100]
-                              : Colors.grey[100],
-                        ),
-                      ),
-                    ),
-                  ),
-                  //const Icon(Icons.edit, size: 16),
-                ],
-              ),
-            ),
-          )
-        ],
       ),
     );
   }
@@ -813,9 +878,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (profile?.avatar != null && profile!.avatar!.isNotEmpty) {
-      // Check if the avatar is a Cloudinary URL
       if (profile.avatar!.startsWith('http')) {
-        // Apply Cloudinary transformations for optimized delivery
         final transformedUrl = CloudinaryConstants.getProfileImageUrl(profile.avatar!);
 
         return CachedNetworkImage(
@@ -830,7 +893,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           errorWidget: (context, url, error) => _buildDefaultAvatar(),
         );
       } else {
-        // Fallback to local asset if not a URL
         return Image.asset(
           'assets/images/${profile.avatar}.png',
           fit: BoxFit.cover,

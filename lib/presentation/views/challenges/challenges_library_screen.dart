@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/api_constants.dart';
 import 'step1_screen.dart';
 
@@ -364,6 +365,20 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const Step1Screen(name: 'New Challenge'),
+            ),
+          );
+        },
+        backgroundColor: Theme.of(context).primaryColor,
+        child: const Icon(Icons.add),
+      ).animate()
+        .fadeIn(duration: 500.ms)
+        .slideY(begin: 0.3, end: 0),
     );
   }
 } 

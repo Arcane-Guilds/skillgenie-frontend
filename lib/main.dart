@@ -126,7 +126,7 @@ class MyApp extends StatelessWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
             // Try to initialize socket connection
-            chatViewModel.refreshCurrentChat();
+            //chatViewModel.refreshCurrentChat();
           });
           
           // Add error handling for widget errors

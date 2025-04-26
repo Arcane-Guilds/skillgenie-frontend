@@ -6,6 +6,9 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/ai_service.dart';
 
+// App-wide primary color - changing from purple to blue
+const Color kPrimaryBlue = Color(0xFF29B6F6); // Matching the blue in the app
+
 class GenieAvatar extends StatefulWidget {
   final AvatarState state;
   final String? message;
@@ -111,7 +114,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
           shape: BoxShape.circle,
           gradient: RadialGradient(
             colors: [
-              Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              kPrimaryBlue.withOpacity(0.3), // Changed to blue
               Colors.transparent,
             ],
             radius: 0.8,
@@ -119,7 +122,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
         ),
         child: _buildGenieCharacter(),
       ).animate(onPlay: (controller) => controller.repeat())
-       .shimmer(duration: 2.seconds, color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
+       .shimmer(duration: 2.seconds, color: kPrimaryBlue.withOpacity(0.3)), // Changed to blue
     );
   }
 
@@ -134,7 +137,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
           height: widget.size * 0.7,
           width: widget.size * 0.7,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
+            color: kPrimaryBlue, // Changed to blue
             shape: BoxShape.circle,
           ),
         ),
@@ -146,7 +149,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
             height: widget.size * 0.3,
             width: widget.size * 0.4,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onPrimary,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(widget.size * 0.15),
             ),
             child: Row(
@@ -157,7 +160,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
                   height: widget.size * 0.1,
                   width: widget.size * 0.1,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: Colors.black87,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -166,7 +169,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
                   height: widget.size * 0.1,
                   width: widget.size * 0.1,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: Colors.black87,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -182,7 +185,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
             height: widget.size * 0.1,
             width: widget.size * 0.3,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Colors.black87,
               borderRadius: BorderRadius.circular(widget.size * 0.05),
             ),
             child: Center(
@@ -190,7 +193,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
                 height: widget.size * 0.05,
                 width: widget.size * 0.25,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: Colors.grey[600],
                   borderRadius: BorderRadius.circular(widget.size * 0.025),
                 ),
               ),
@@ -207,7 +210,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+                  kPrimaryBlue.withOpacity(0.7), // Changed to blue
                   Colors.transparent,
                 ],
                 radius: 0.5,
@@ -240,7 +243,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
         ShimmerEffect(
           duration: 1.seconds,
           delay: 300.ms,
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
         ),
       ],
       child: Container(
@@ -255,13 +258,13 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              color: kPrimaryBlue.withOpacity(0.2), // Changed to blue
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
           border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            color: kPrimaryBlue.withOpacity(0.5), // Changed to blue
             width: 2,
           ),
         ),
@@ -340,7 +343,7 @@ class AvatarWithMessage extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: kPrimaryBlue.withOpacity(0.1), // Changed to blue
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -352,7 +355,7 @@ class AvatarWithMessage extends StatelessWidget {
                   Text(
                     'Genie',
                     style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: kPrimaryBlue, // Changed to blue
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -471,7 +474,7 @@ class _AskGenieWidgetState extends State<AskGenieWidget> {
                 curve: Curves.easeInOut,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: kPrimaryBlue, // Changed to blue
                 ),
                 child: IconButton(
                   icon: _isLoading 
@@ -480,12 +483,12 @@ class _AskGenieWidgetState extends State<AskGenieWidget> {
                         height: 24, 
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          color: Colors.white,
                         ),
                       )
                     : Icon(
                         Icons.send_rounded,
-                        color: Theme.of(context).colorScheme.onPrimary,
+                        color: Colors.white,
                       ),
                   onPressed: _isLoading ? null : _askQuestion,
                 ),

@@ -17,6 +17,9 @@ import '../community/update_post_screen.dart';
 import '../community/create_post_screen.dart';
 import '../../widgets/common_widgets.dart';
 
+// App-wide primary blue color
+const Color kPrimaryBlue = Color(0xFF29B6F6);
+
 extension UserStats on User {
   int get streakDays => 0; // TODO: Implement streak days calculation
   int get coins => 0; // TODO: Implement coins calculation
@@ -181,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     value: _uploadProgress,
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.primary,
+                      kPrimaryBlue,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -200,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   setState(() => _imageFile = null);
                   Navigator.pop(context);
                 },
-                child: const Text('Cancel'),
+                child: Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
               ),
               ElevatedButton(
                 onPressed: _isUploadingImage
@@ -244,6 +247,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     }
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryBlue,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Save'),
               ),
             ],
@@ -284,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
         
         if (communityViewModel.userPostsStatus == CommunityStatus.loading) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue)));
         }
         
         if (communityViewModel.userPostsStatus == CommunityStatus.error) {
@@ -293,6 +300,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(communityViewModel.errorMessage ?? 'Error loading posts'),
               ElevatedButton(
                 onPressed: () => _loadUserPosts(profileViewModel.currentProfile!.id),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryBlue,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Retry'),
               ),
             ],
@@ -306,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                color: kPrimaryBlue.withOpacity(0.2),
               ),
             ),
             child: Column(
@@ -315,7 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Icon(
                   Icons.post_add,
                   size: 48,
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  color: kPrimaryBlue.withOpacity(0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -344,7 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _loadUserPosts(profileViewModel.currentProfile!.id);
                     });
                   },
-                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor: kPrimaryBlue,
                   child: const Icon(Icons.add),
                 ).animate()
                   .fadeIn(duration: 500.ms)
@@ -375,7 +386,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: kPrimaryBlue.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -391,11 +402,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 20,
+                  backgroundColor: kPrimaryBlue.withOpacity(0.1),
                   backgroundImage: post.author.avatar != null
                       ? NetworkImage(post.author.avatar!)
                       : null,
                   child: post.author.avatar == null
-                      ? const Icon(Icons.person)
+                      ? Icon(Icons.person, color: kPrimaryBlue)
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -422,7 +434,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   PopupMenuButton<String>(
                     icon: Icon(
                       Icons.more_vert,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: kPrimaryBlue.withOpacity(0.6),
                     ),
                     onSelected: (value) {
                       if (value == 'edit') {
@@ -432,23 +444,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Edit Post'),
+                            Icon(Icons.edit, size: 20, color: kPrimaryBlue),
+                            const SizedBox(width: 8),
+                            const Text('Edit Post'),
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete, size: 20),
-                            SizedBox(width: 8),
-                            Text('Delete Post'),
+                            Icon(Icons.delete, size: 20, color: Colors.red),
+                            const SizedBox(width: 8),
+                            const Text('Delete Post'),
                           ],
                         ),
                       ),
@@ -521,6 +533,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildActionButton(
                   icon: post.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
                   label: post.likeCount.toString(),
+                  color: post.isLiked ? kPrimaryBlue : null,
                   onTap: () {
                     final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
                     communityViewModel.togglePostLike(post.id);
@@ -552,6 +565,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildActionButton({
     required IconData icon,
     required String label,
+    Color? color,
     required VoidCallback onTap,
   }) {
     return TextButton.icon(
@@ -559,16 +573,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       icon: Icon(
         icon,
         size: 20,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: color ?? kPrimaryBlue.withOpacity(0.7),
       ),
       label: Text(
         label,
         style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+          color: color ?? kPrimaryBlue.withOpacity(0.7),
         ),
       ),
       style: TextButton.styleFrom(
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        foregroundColor: kPrimaryBlue,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -585,7 +599,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: kPrimaryBlue.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -595,7 +609,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Icon(
             icon,
-            color: Theme.of(context).colorScheme.primary,
+            color: kPrimaryBlue,
             size: 32,
           ),
           const SizedBox(height: 8),
@@ -651,7 +665,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
           ),
           TextButton(
             onPressed: () async {
@@ -673,6 +687,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
               }
             },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -706,7 +723,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             icon: Icon(
               Icons.settings,
-              color: Theme.of(context).colorScheme.primary,
+              color: kPrimaryBlue,
             ),
             onPressed: _navigateToSettings,
           ),
@@ -715,7 +732,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: Consumer2<AuthViewModel, ProfileViewModel>(
         builder: (context, authViewModel, profileViewModel, _) {
           if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
+              ),
+            );
           }
 
           final user = profileViewModel.currentProfile;
@@ -728,6 +749,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadInitialData,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryBlue,
+                      foregroundColor: Colors.white,
+                    ),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -739,6 +764,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onRefresh: () async {
               await _loadInitialData();
             },
+            color: kPrimaryBlue,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
@@ -758,7 +784,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             width: 120,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
+                              border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(60),
@@ -773,7 +799,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
+                            color: kPrimaryBlue,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -828,6 +854,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         AnimatedProgressIndicator(
                           progress: 0.7, // TODO: Calculate actual progress
                           label: user.selectedSkill ?? 'No skill selected',
+                          progressColor: kPrimaryBlue,
                         ),
                       ],
                     ),
@@ -851,14 +878,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  GeniePrimaryButton(
-                    text: 'Edit Profile',
-                    icon: Icons.edit,
-                    onPressed: () {
-                      // TODO: Implement edit profile functionality
-                    },
-                    width: 200,
-                  ),
+                  
                   const SizedBox(height: 24),
                 ],
               ),

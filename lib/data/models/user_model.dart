@@ -7,6 +7,9 @@ class User {
   final String? role;
   final String? avatar;
   final String? bio;
+  final int streak;
+  final int totalXP;
+  final double dailyProgress;
 
   User({
     required this.id,
@@ -15,6 +18,9 @@ class User {
     this.role,
     this.avatar,
     this.bio,
+    this.streak = 0,
+    this.totalXP = 0,
+    this.dailyProgress = 0.0,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -25,6 +31,9 @@ class User {
       role: json['role'],
       avatar: json['avatar'],
       bio: json['bio'],
+      streak: json['streak'] ?? 0,
+      totalXP: json['totalXP'] ?? 0,
+      dailyProgress: (json['dailyProgress'] ?? 0.0).toDouble(),
     );
   }
 
@@ -36,6 +45,9 @@ class User {
       'role': role,
       'avatar': avatar,
       'bio': bio,
+      'streak': streak,
+      'totalXP': totalXP,
+      'dailyProgress': dailyProgress,
     };
   }
 
@@ -59,6 +71,9 @@ class User {
     String? role,
     String? avatar,
     String? bio,
+    int? streak,
+    int? totalXP,
+    double? dailyProgress,
   }) {
     return User(
       id: id ?? this.id,
@@ -67,6 +82,9 @@ class User {
       role: role ?? this.role,
       avatar: avatar ?? this.avatar,
       bio: bio ?? this.bio,
+      streak: streak ?? this.streak,
+      totalXP: totalXP ?? this.totalXP,
+      dailyProgress: dailyProgress ?? this.dailyProgress,
     );
   }
 }

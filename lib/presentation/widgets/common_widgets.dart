@@ -642,7 +642,7 @@ class AnimatedProgressIndicator extends StatelessWidget {
     Key? key,
     required this.progress,
     required this.label,
-    this.height = 10,
+    this.height = 10, required Color progressColor,
   }) : super(key: key);
 
   @override

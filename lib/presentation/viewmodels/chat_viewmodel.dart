@@ -65,7 +65,7 @@ class ChatViewModel with ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    _chatRepository.onNewChat = (chat) => _handleNewChat(chat.toJson());
+    _chatRepository.onNewChat = (chat) => _handleNewChat(chat);
     _chatRepository.onNewMessage = _handleNewMessage;
     _chatRepository.onMessagesRead = _handleMessagesRead;
 

@@ -9,7 +9,7 @@ import 'package:skillGenie/presentation/viewmodels/chat_viewmodel.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/service_locator.dart';
 import 'core/storage/secure_storage.dart';
-import 'data/datasources/api_client.dart';
+import 'data/datasources/api_client.dart';  
 
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';

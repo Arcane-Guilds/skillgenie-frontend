@@ -253,11 +253,12 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+  // Register ChatViewModel
   serviceLocator.registerFactory<ChatViewModel>(() =>
-    ChatViewModel(
-      chatRepository: serviceLocator<ChatRepository>(),
-      secureStorage: serviceLocator<SecureStorage>(),
-    ),
+      ChatViewModel(
+        chatRepository: serviceLocator<ChatRepository>(),
+        secureStorage: serviceLocator<SecureStorage>(),
+      ),
   );
 }
 

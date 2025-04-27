@@ -30,6 +30,7 @@ import '../../presentation/views/course/course_detail_screen.dart';
 import '../../presentation/views/course/course_roadmap_screen.dart';
 import '../../presentation/views/course/lab_screen.dart';
 import '../../presentation/views/chat/chat_detail_screen.dart';
+import '../../presentation/views/chat/socket_test_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 
@@ -332,6 +333,10 @@ return LabScreen(chapterId: chapterId);
       return ChatDetailScreen(chatId: chatId);
     },
   ),
+GoRoute(
+path: '/socket-test',
+builder: (context, state) => const SocketTestScreen(),
+),
 ShellRoute(
 builder: (context, state, child) {
 int index = _getTabIndex(state.fullPath ?? '/home');

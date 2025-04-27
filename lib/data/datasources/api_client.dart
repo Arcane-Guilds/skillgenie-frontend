@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'dart:io';
 import 'package:logging/logging.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../models/api_exception.dart';
 import '../../core/constants/api_constants.dart';
 
@@ -18,12 +21,29 @@ class ApiClient {
             return true;
           },
         )) {
-    // Add interceptors for logging
-    _dio.interceptors.add(LogInterceptor(
+    // Add pretty logger interceptor for better request/response logging
+    _dio.interceptors.add(PrettyDioLogger(
+      requestHeader: true,
       requestBody: true,
+      responseHeader: true,
       responseBody: true,
-      logPrint: (object) => _logger.fine(object.toString()),
+      error: true,
+      compact: true,
+      maxWidth: 90,
     ));
+
+    // Configure SSL bypass for development
+    if (_dio.httpClientAdapter is IOHttpClientAdapter) {
+      (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        final client = HttpClient();
+        // ⚠️ WARNING: This bypasses SSL certificate validation
+        // TODO: Remove in production
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+        return client;
+      };
+      _logger.warning('SSL certificate validation disabled for development');
+    }
   }
 
   /// Fetches data from the API using a GET request.
@@ -142,7 +162,7 @@ class ApiClient {
   ApiException _handleDioError(DioException error) {
     int statusCode = error.response?.statusCode ?? 500;
     String message;
-    
+
     switch (statusCode) {
       case 400:
         message = 'Bad request';
@@ -163,8 +183,9 @@ class ApiClient {
         message = 'Network error occurred';
     }
 
-    String details = error.response?.data?.toString() ?? error.message ?? 'Unknown error';
-    
+    String details =
+        error.response?.data?.toString() ?? error.message ?? 'Unknown error';
+
     return ApiException(message, statusCode, details);
   }
 }

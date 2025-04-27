@@ -7,9 +7,11 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import 'package:provider/provider.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'challenges_screen.dart';
+import '../../widgets/avatar_widget.dart';
 
 class PartyCodeScreen extends StatefulWidget {
   const PartyCodeScreen({super.key});
@@ -186,77 +188,155 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF111827),
-      body: Center(
-        child: Container(
-          margin: const EdgeInsets.all(16),
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Card(
-            color: const Color(0xFF1F2937),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Invite by Party Code',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600),
+      backgroundColor: AppTheme.backgroundColor,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GenieAvatar(
+                  state: AvatarState.idle,
+                  size: 120,
+                  message: "Invite your friends by sharing or joining a party code!",
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  color: AppTheme.surfaceColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _partyCodeController,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: "Generated Party Code",
-                      labelStyle: TextStyle(color: Colors.white),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Invite by Party Code',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                color: AppTheme.textPrimaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _partyCodeController,
+                          readOnly: true,
+                          style: TextStyle(color: AppTheme.textPrimaryColor),
+                          decoration: InputDecoration(
+                            labelText: "Generated Party Code",
+                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
+                            filled: true,
+                            fillColor: AppTheme.backgroundColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _copyCode,
+                                icon: const Icon(Icons.copy),
+                                label: const Text('Copy'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: isLoading ? null : _generateParty,
+                                icon: isLoading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.refresh),
+                                label: const Text('Generate'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _joinCodeController,
+                          style: TextStyle(color: AppTheme.textPrimaryColor),
+                          decoration: InputDecoration(
+                            labelText: "Enter Party Code",
+                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
+                            filled: true,
+                            fillColor: AppTheme.backgroundColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _pasteCode,
+                                icon: const Icon(Icons.paste),
+                                label: const Text('Paste'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _joinParty,
+                                icon: const Icon(Icons.login),
+                                label: const Text('Join'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _goToChallengeScreen(_partyCodeController.text),
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Go to Challenge'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                          onPressed: _copyCode, child: const Text('Copy')),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: isLoading ? null : _generateParty,
-                        child: isLoading
-                            ? const CircularProgressIndicator()
-                            : const Text('Generate'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _joinCodeController,
-                    decoration: const InputDecoration(
-                      labelText: "Enter Party Code",
-                      labelStyle: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                          onPressed: _pasteCode, child: const Text('Paste')),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                          onPressed: _joinParty, child: const Text('Join')),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () =>
-                        _goToChallengeScreen(_partyCodeController.text),
-                    child: const Text('Go to Challenge'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

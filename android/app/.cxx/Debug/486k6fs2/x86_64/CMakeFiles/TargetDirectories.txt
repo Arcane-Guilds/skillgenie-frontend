@@ -1,0 +1,2 @@
+C:/Users/hazem/Downloads/frontend-backup-master/frontend-backup-master/android/app/.cxx/Debug/486k6fs2/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/hazem/Downloads/frontend-backup-master/frontend-backup-master/android/app/.cxx/Debug/486k6fs2/x86_64/CMakeFiles/rebuild_cache.dir

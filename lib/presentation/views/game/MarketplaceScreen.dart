@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'buy_coins_screen.dart'; // <--- Make sure you import it
+import 'buy_coins_screen.dart'; // <--- Make sure this file exists
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -25,7 +25,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Center(
               child: Text(
-                '\u{1FA99} $coins', // coin emoji
+                '\u{1FA99} $coins', // 🪙
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -43,23 +43,33 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // 🔥 BIG Buy Coins Button
             ElevatedButton.icon(
               onPressed: () async {
-                await Navigator.push(
+                final boughtCoins = await Navigator.push<int>(
                   context,
                   MaterialPageRoute(builder: (context) => const BuyCoinsScreen()),
                 );
+                if (boughtCoins != null) {
+                  setState(() {
+                    coins += boughtCoins;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('You bought $boughtCoins coins!')),
+                  );
+                }
               },
-              icon: const Icon(Icons.add_shopping_cart),
-              label: const Text('Buy Coins'),
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text('Buy More Coins'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 30),
+
             const Text(
               'Pets',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
@@ -69,7 +79,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               name: 'Cute Cat',
               cost: 50,
               bought: petBought,
-              imagePath: 'assets/images/cat_pet.png', // make sure this asset exists
+              imagePath: 'assets/images/cat_pet.png',
               onBuy: () {
                 if (coins >= 50 && !petBought) {
                   setState(() {

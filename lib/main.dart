@@ -25,6 +25,7 @@ import 'presentation/viewmodels/community_viewmodel.dart';
 import 'presentation/viewmodels/friend_viewmodel.dart';
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
 
 class AppErrorHandler {
@@ -65,6 +66,11 @@ void main() async {
   runZonedGuarded(() async {
     // Ensure Flutter is initialized
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Configure for web - use path URL strategy for cleaner URLs
+    if (kIsWeb) {
+      setUrlStrategy(PathUrlStrategy());
+    }
 
     // Load environment variables first
     await dotenv.load(fileName: ".env");

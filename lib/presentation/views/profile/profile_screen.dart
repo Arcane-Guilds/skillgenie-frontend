@@ -722,6 +722,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.group,color: kPrimaryBlue),
+            onPressed: () {
+              GoRouter.of(context).go('/friends');
+            },
+          ),
+          IconButton(
             icon: Icon(
               Icons.settings,
               color: kPrimaryBlue,

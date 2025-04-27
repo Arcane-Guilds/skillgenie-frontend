@@ -36,15 +36,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void initState() {
     super.initState();
     _loadCurrentUserId();
-    
+
     // Load chat data when the screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = Provider.of<ChatViewModel>(context, listen: false);
       viewModel.selectChat(widget.chatId);
-      
+
       // Set up auto-refresh timer
       _setupAutoRefreshTimer();
-      
+
       // Listen for new messages
       _listenForNewMessages();
     });
@@ -60,12 +60,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         // Force refresh when we receive a new message
         print('New message received via stream for current chat: ${message.content}');
         setState(() {});
-        
+
         // If the new message is not from the current user, mark it as read
         if (message.sender.id != _currentUserId) {
           viewModel.markMessagesAsRead(widget.chatId);
         }
-        
+
         // Scroll to bottom to show new message if we're near the bottom
         _scrollToBottomIfNeeded();
       }
@@ -74,11 +74,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   void _scrollToBottomIfNeeded() {
     if (!_scrollController.hasClients) return;
-    
+
     // Only auto-scroll if user is already near the bottom
     final currentPosition = _scrollController.position.pixels;
     final maxExtent = _scrollController.position.maxScrollExtent;
-    
+
     // If we're within 300 pixels of the bottom, auto-scroll
     if (maxExtent - currentPosition < 300) {
       _scrollController.animateTo(
@@ -92,7 +92,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void _setupAutoRefreshTimer() {
     // Cancel any existing timer
     _autoRefreshTimer?.cancel();
-    
+
     // Create a new timer that refreshes messages every 5 seconds
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted) {
@@ -104,10 +104,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _silentRefresh() async {
     try {
       if (!mounted) return;
-      
+
       final viewModel = Provider.of<ChatViewModel>(context, listen: false);
       await viewModel.refreshCurrentChat();
-      
+
       // Check if there are any pending messages and update UI
       if (mounted) {
         setState(() {});
@@ -148,7 +148,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> _refreshMessages() async {
     final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
-    
+
     // Show loading indicator
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -156,9 +156,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         duration: Duration(seconds: 1),
       ),
     );
-    
+
     await chatViewModel.refreshCurrentChat();
-    
+
     // Scroll to bottom after messages are refreshed
     if (_scrollController.hasClients && chatViewModel.messages.isNotEmpty) {
       _scrollController.animateTo(
@@ -172,32 +172,32 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void _handleSendMessage() {
     final message = _messageController.text.trim();
     if (message.isEmpty) return;
-    
+
     final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
-    
+
     try {
       // Check if user is authenticated
       final currentUserId = Provider.of<AuthViewModel>(context, listen: false).currentUser?.id;
       final currentUser = Provider.of<AuthViewModel>(context, listen: false).currentUser;
-      
+
       if (currentUserId == null || currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cannot send message: User not authenticated')),
         );
         return;
       }
-      
+
       // Update UI state
       setState(() {
         _isComposing = false;
       });
-      
+
       // Clear input field immediately for better UX
       _messageController.clear();
-      
+
       // Send the message
       chatViewModel.sendMessage(message);
-      
+
       // Scroll to bottom to show the temporary message
       _scrollToBottom();
     } catch (e) {
@@ -242,20 +242,20 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final chat = chatViewModel.currentChat;
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     final currentUserId = _currentUserId ?? authViewModel.currentUser?.id;
-    
+
     // Mark messages as read if we're viewing the chat
     _markMessagesAsRead(chatViewModel);
-    
+
     // Get chat recipient for direct chats
     User? chatRecipient;
     if (chat != null && !chat.isGroupChat && currentUserId != null) {
       // Find the other user in the chat
       chatRecipient = chat.participants.firstWhere(
-        (user) => user.id != currentUserId,
+            (user) => user.id != currentUserId,
         orElse: () => chat.participants.first,
       );
     }
-    
+
     // Choose the display name based on chat type
     String displayName = '';
     if (chat != null) {
@@ -265,7 +265,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         displayName = chatRecipient.username;
       }
     }
-    
+
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -285,10 +285,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       : null,
                   child: (chatRecipient?.avatar == null || chatRecipient!.avatar!.isEmpty)
                       ? Text(
-                          chatRecipient?.username.isNotEmpty == true
-                              ? chatRecipient!.username[0].toUpperCase()
-                              : '?',
-                        )
+                    chatRecipient?.username.isNotEmpty == true
+                        ? chatRecipient!.username[0].toUpperCase()
+                        : '?',
+                  )
                       : null,
                 ),
               ),
@@ -387,7 +387,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
 
     final messages = chatViewModel.messages;
-    
+
     if (messages.isEmpty) {
       return Center(
         child: Text(
@@ -421,7 +421,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               final message = messages[index];
               final isCurrentUser = message.sender.id == _currentUserId;
               final messageStatus = chatViewModel.getMessageStatus(message.id);
-              
+
               return _buildMessageItem(message, isCurrentUser, messageStatus, chatViewModel);
             },
           ),
@@ -552,12 +552,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     // If chat isn't loaded, or if there's no current user, disable input
     final authViewModel = Provider.of<AuthViewModel>(context);
     final chatViewModel = Provider.of<ChatViewModel>(context);
-    
-    final canSendMessages = 
-        chatViewModel.currentChat != null && 
-        authViewModel.isAuthenticated && 
-        !chatViewModel.isLoading;
-    
+
+    final canSendMessages =
+        chatViewModel.currentChat != null &&
+            authViewModel.isAuthenticated &&
+            !chatViewModel.isLoading;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(

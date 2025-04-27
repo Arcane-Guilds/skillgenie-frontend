@@ -4,26 +4,32 @@ import 'package:skillGenie/presentation/views/game/game_page.dart';
 import 'package:skillGenie/presentation/views/hangman/homegame_screen.dart';
 import 'package:skillGenie/crosswordgame/search.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_theme.dart';
+
 class GamesScreen extends StatefulWidget {
   const GamesScreen({super.key});
 
   static final List<Map<String, dynamic>> gamesList = [
     {
       'title': 'Hangman',
-      'description': 'Guess the word letter by letter!',
+      'description': 'Guess the programming term before the man is hanged!',
       'color': Colors.orange,
+      'icon': Icons.games,
       'page': HomeGameScreen(),
     },
     {
       'title': 'Word Jumble',
-      'description': 'Unscramble the letters to form a word.',
+      'description': 'Unscramble programming terms to test your knowledge!',
       'color': Colors.green,
+      'icon': Icons.text_fields,
       'page': const Game(),
     },
     {
       'title': 'WikiCross',
-      'description': 'Solve clues based on Wikipedia hints.',
-      'color': Colors.red,
+      'description': 'Solve programming-related crossword puzzles!',
+      'color': Colors.blue,
+      'icon': Icons.grid_on,
       'page': SearchRoute(),
     },
   ];
@@ -39,16 +45,22 @@ class _GamesScreenState extends State<GamesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Games',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            color: AppTheme.textPrimaryColor,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        backgroundColor: Colors.deepPurple,
         centerTitle: true,
+        backgroundColor: AppTheme.surfaceColor,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.brightness_6),
+            icon: Icon(Icons.brightness_6, color: AppTheme.textPrimaryColor),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Dark mode toggle coming soon!")),
@@ -56,7 +68,7 @@ class _GamesScreenState extends State<GamesScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.store),
+            icon: Icon(Icons.store, color: AppTheme.textPrimaryColor),
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -73,70 +85,92 @@ class _GamesScreenState extends State<GamesScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blueAccent, Colors.purpleAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppTheme.backgroundColor,
+              AppTheme.backgroundColor.withOpacity(0.8),
+            ],
           ),
         ),
-        child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
-              TweenAnimationBuilder(
-                tween: Tween<double>(begin: 0, end: 1),
-                duration: const Duration(seconds: 2),
-                builder: (context, double opacity, child) => Opacity(opacity: opacity, child: child),
-                child: const Text(
-                  "Welcome, Player!",
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+              Text(
+                'Choose a Game',
+                style: TextStyle(
+                  color: AppTheme.textPrimaryColor,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
-              TweenAnimationBuilder(
-                tween: Tween<double>(begin: 0, end: 1),
-                duration: const Duration(seconds: 2),
-                builder: (context, double opacity, child) => Opacity(opacity: opacity, child: child),
-                child: const Text(
-                  "Choose Your Puzzle",
-                  style: TextStyle(fontSize: 18, color: Colors.white70),
+              const SizedBox(height: 8),
+              Text(
+                'Test your knowledge while having fun!',
+                style: TextStyle(
+                  color: AppTheme.textSecondaryColor,
+                  fontSize: 16,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 16),
               if (petEquipped)
                 SizedBox(
-                  height: 120,
+                  height: 80,
                   child: Stack(
-                    alignment: Alignment.topCenter,
+                    alignment: Alignment.center,
                     children: [
-                      const Icon(Icons.pets, size: 80, color: Colors.white),
+                      Icon(Icons.pets, 
+                        size: 60, 
+                        color: AppTheme.textPrimaryColor
+                      ),
                       if (hatEquipped)
                         const Positioned(
                           top: 0,
-                          child: FaIcon(FontAwesomeIcons.hatWizard, size: 30, color: Colors.yellow),
+                          child: FaIcon(
+                            FontAwesomeIcons.hatWizard, 
+                            size: 24, 
+                            color: Colors.yellow
+                          ),
                         ),
                     ],
                   ),
                 ),
-              _buildGameButton(context, GamesScreen.gamesList[0]),
-              const SizedBox(height: 20),
-              _buildGameButton(context, GamesScreen.gamesList[1]),
-              const SizedBox(height: 20),
-              _buildGameButton(context, GamesScreen.gamesList[2]),
-              const SizedBox(height: 20),
-              _buildSurpriseButton(context),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Column(
+              Expanded(
+                child: ListView(
                   children: [
-                    TextButton(
-                      onPressed: () => _showExitDialog(context),
-                      child: const Text("Exit", style: TextStyle(color: Colors.white70)),
+                    ...GamesScreen.gamesList.map((game) =>
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: _buildGameCard(
+                          context,
+                          game['title'],
+                          game['description'],
+                          game['icon'],
+                          game['color'],
+                          game['page'],
+                        ).animate()
+                          .fadeIn(duration: 500.ms)
+                          .slideY(begin: 0.3, end: 0),
+                      ),
                     ),
-                    const Text("v1.0.0", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    _buildSurpriseCard(context)
+                        .animate()
+                        .fadeIn(duration: 500.ms)
+                        .slideY(begin: 0.3, end: 0),
                   ],
+                ),
+              ),
+              Center(
+                child: TextButton(
+                  onPressed: () => _showExitDialog(context),
+                  child: Text(
+                    "Exit",
+                    style: TextStyle(color: AppTheme.textSecondaryColor),
+                  ),
                 ),
               ),
             ],
@@ -146,58 +180,170 @@ class _GamesScreenState extends State<GamesScreen> {
     );
   }
 
-  Widget _buildGameButton(BuildContext context, Map<String, dynamic> game) {
-    return Column(
-      children: [
-        ElevatedButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text("Opening ${game['title']}...")));
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => game['page'] as Widget),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: game['color'] as Color,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            elevation: 10,
+  Widget _buildGameCard(
+    BuildContext context,
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+    Widget page,
+  ) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        onTap: () {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Opening $title...")));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => page),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.05),
+              ],
+            ),
           ),
-          child: Text(
-            game['title'] as String,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: AppTheme.textPrimaryColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: AppTheme.textSecondaryColor,
+                size: 20,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 5),
-        Text(
-          game['description'] as String,
-          style: const TextStyle(fontSize: 12, color: Colors.white70),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildSurpriseButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        final randomGame = GamesScreen.gamesList[Random().nextInt(GamesScreen.gamesList.length)];
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Surprise! Opening ${randomGame['title']}...")));
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => randomGame['page'] as Widget),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.teal,
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        elevation: 10,
+  Widget _buildSurpriseCard(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: const Text(
-        "Surprise Me!",
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+      child: InkWell(
+        onTap: () {
+          final randomGame = GamesScreen.gamesList[Random().nextInt(GamesScreen.gamesList.length)];
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Surprise! Opening ${randomGame['title']}...")));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => randomGame['page'] as Widget),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.teal.withOpacity(0.1),
+                Colors.teal.withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.casino,
+                  color: Colors.teal,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Surprise Me!",
+                      style: TextStyle(
+                        color: AppTheme.textPrimaryColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Try a random game for fun!",
+                      style: TextStyle(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: AppTheme.textSecondaryColor,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

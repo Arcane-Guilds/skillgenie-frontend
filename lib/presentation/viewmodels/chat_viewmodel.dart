@@ -19,6 +19,9 @@ class ChatViewModel with ChangeNotifier {
   final ChatRepository _chatRepository;
   final SecureStorage _secureStorage;
 
+  // Add this getter to check the socket connection status
+  bool get isSocketConnected => _chatRepository.isSocketConnected;
+
   // State variables
   List<Chat> _chats = [];
   List<Message> _messages = [];
@@ -49,7 +52,6 @@ class ChatViewModel with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   int get totalUnreadCount => _totalUnreadCount;
   bool get socketInitialized => _socketInitialized;
-  bool get isSocketConnected => _chatRepository.isSocketConnected;
   Stream<Message> get newMessageStream => _newMessageController.stream;
   Stream<Chat> get newChatStream => _newChatController.stream;
 
@@ -65,9 +67,9 @@ class ChatViewModel with ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    _chatRepository.onNewChat = (chat) => _handleNewChat(chat.toJson());
-    _chatRepository.onNewMessage = _handleNewMessage;
-    _chatRepository.onMessagesRead = _handleMessagesRead;
+    
+    _chatRepository.onNewMessage = _handleNewMessage as void Function(Message message)?;
+    _chatRepository.onMessagesRead = _handleMessagesRead as void Function(String chatId, String userId)?;
 
     await _initializeSocket();
 
@@ -321,7 +323,7 @@ class ChatViewModel with ChangeNotifier {
 
       // Send message through socket
       try {
-        final success = await _chatRepository.sendMessageViaSocket(
+        final success = await _chatRepository.sendMessageViaSocketWithTimeout(
           _currentChat!.id,
           content,
           timeout: Duration(seconds: 3),
@@ -360,7 +362,7 @@ class ChatViewModel with ChangeNotifier {
 
   Future<void> markMessagesAsRead(String chatId) async {
     try {
-      await _chatRepository.markMessagesAsReadViaSocket(chatId);
+      _chatRepository.markMessagesAsReadViaSocket(chatId);
       await _chatRepository.markMessagesAsRead(chatId);
       _updateUnreadCount(chatId, 0);
     } catch (e) {

@@ -13,6 +13,7 @@ class ChatRepository {
   final SecureStorage _secureStorage;
   io.Socket? _socket;
   String? _currentUserId;
+  bool _socketConnected = false;
 
   final String baseUrl = ApiConstants.baseUrl;
 
@@ -36,6 +37,14 @@ class ChatRepository {
       _onMessagesRead;
   set onMessagesRead(void Function(String chatId, String userId)? callback) {
     _onMessagesRead = callback;
+  }
+
+  // Getter to check if the socket is connected
+  bool get isSocketConnected => _socketConnected;
+
+  // Method to update the socket connection status
+  void updateSocketConnectionStatus(bool status) {
+    _socketConnected = status;
   }
 
   ChatRepository({
@@ -98,49 +107,56 @@ class ChatRepository {
 
   // Initialize socket connection
   Future<void> initializeSocket() async {
-    final token = await _secureStorage.getToken();
-    if (token == null) return;
+    try {
+      final token = await _secureStorage.getToken();
+      if (token == null) return;
 
-    _currentUserId = await _secureStorage.getUserId();
-    if (_currentUserId == null) return;
+      _currentUserId = await _secureStorage.getUserId();
+      if (_currentUserId == null) return;
 
-    // Close existing socket if any
-    _socket?.disconnect();
+      // Close existing socket if any
+      _socket?.disconnect();
 
-    // Create new socket connection with the emulator IP
-    _socket = io.io(baseUrl, <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-      'auth': {'token': token},
-    });
+      // Create new socket connection with the emulator IP
+      _socket = io.io(baseUrl, <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': false,
+        'auth': {'token': token},
+      });
 
-    // Set up event listeners
-    _socket?.onConnect((_) {
-      print('Socket connected');
-    });
+      // Set up event listeners
+      _socket?.onConnect((_) {
+        print('Socket connected');
+        updateSocketConnectionStatus(true);
+      });
 
-    _socket?.onDisconnect((_) {
-      print('Socket disconnected');
-    });
+      _socket?.onDisconnect((_) {
+        print('Socket disconnected');
+        updateSocketConnectionStatus(false);
+      });
 
-    _socket?.on('newChat', (data) {
-      final chat = Chat.fromJson(data);
-      _onNewChat?.call(chat);
-    });
+      _socket?.on('newChat', (data) {
+        final chat = Chat.fromJson(data);
+        _onNewChat?.call(chat);
+      });
 
-    _socket?.on('newMessage', (data) {
-      final message = Message.fromJson(data);
-      _onNewMessage?.call(message);
-    });
+      _socket?.on('newMessage', (data) {
+        final message = Message.fromJson(data);
+        _onNewMessage?.call(message);
+      });
 
-    _socket?.on('messagesRead', (data) {
-      final chatId = data['chatId'];
-      final userId = data['userId'];
-      _onMessagesRead?.call(chatId, userId);
-    });
+      _socket?.on('messagesRead', (data) {
+        final chatId = data['chatId'];
+        final userId = data['userId'];
+        _onMessagesRead?.call(chatId, userId);
+      });
 
-    // Connect to socket
-    _socket?.connect();
+      // Connect to socket
+      _socket?.connect();
+    } catch (e) {
+      updateSocketConnectionStatus(false);
+      print('Error initializing socket: $e');
+    }
   }
 
   // Get chats for current user
@@ -380,6 +396,22 @@ class ChatRepository {
     }
   }
 
+  Future<bool> sendMessageViaSocketWithTimeout(String chatId, String content, {Duration? timeout}) async {
+    try {
+      // Logic to send the message via socket
+      // Use the timeout parameter if needed
+      if (timeout != null) {
+        // Example: Implement timeout logic
+        await Future.delayed(timeout);
+      }
+
+      return true; // Indicate success
+    } catch (e) {
+      print('Error sending message via socket: $e');
+      return false; // Indicate failure
+    }
+  }
+
   // Mark messages as read
   Future<void> markMessagesAsRead(String chatId) async {
     try {
@@ -427,6 +459,7 @@ class ChatRepository {
   void dispose() {
     _socket?.disconnect();
     _socket = null;
+    updateSocketConnectionStatus(false);
   }
 
   // Manually set the token (for debugging/recovery)

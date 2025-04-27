@@ -25,7 +25,7 @@ import 'presentation/viewmodels/community_viewmodel.dart';
 import 'presentation/viewmodels/friend_viewmodel.dart';
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'presentation/viewmodels/reclamation_viewmodel.dart';
 
 class AppErrorHandler {
   static void handleError(Object error, StackTrace stackTrace) {
@@ -113,6 +113,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => serviceLocator<ChatViewModel>(),
         ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              ReclamationViewModel(context.read<AuthViewModel>()),
+        ),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
@@ -145,7 +149,9 @@ class MyApp extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      kDebugMode ? details.exception.toString() : 'An error occurred',
+                      kDebugMode
+                          ? details.exception.toString()
+                          : 'An error occurred',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 16),

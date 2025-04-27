@@ -107,7 +107,6 @@ class ProfileViewModel extends ChangeNotifier {
       
       // Get fresh data from API
       final profile = await _profileRepository.getUserProfile(forceRefresh: true);
-      
       _currentProfile = profile;
       _lastFetchTime = DateTime.now();
       _isCacheValid = true;

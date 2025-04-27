@@ -47,7 +47,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadUserProfile() async {
-    final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+    final profileViewModel =
+        Provider.of<ProfileViewModel>(context, listen: false);
     try {
       final profile = await profileViewModel.getUserProfile();
       if (mounted) {
@@ -87,10 +88,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
   // ================== Daily Reminder Section ==================
   void _showReminderTimePicker(BuildContext context) async {
     final reminderVM = Provider.of<ReminderViewModel>(context, listen: false);
-    final initialTime = reminderVM.reminderTime ?? const TimeOfDay(hour: 20, minute: 0);
+    final initialTime =
+        reminderVM.reminderTime ?? const TimeOfDay(hour: 20, minute: 0);
 
     final pickedTime = await showTimePicker(
       context: context,
@@ -110,7 +113,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (pickedTime != null) {
       await reminderVM.setReminderTime(pickedTime, true);
       if (mounted) {
-        _showSuccessSnackBar('Daily reminder set for ${pickedTime.format(context)}');
+        _showSuccessSnackBar(
+            'Daily reminder set for ${pickedTime.format(context)}');
       }
     }
   }
@@ -133,7 +137,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -221,7 +226,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 hasLowercase = RegExp(r'[a-z]').hasMatch(password);
                 hasNumber = RegExp(r'[0-9]').hasMatch(password);
                 // Updated regex to include = and ? as special characters
-                hasSpecialChar = RegExp(r'[!@#$%^&*(),.?":{}|<>=+\-_]').hasMatch(password);
+                hasSpecialChar =
+                    RegExp(r'[!@#$%^&*(),.?":{}|<>=+\-_]').hasMatch(password);
 
                 // Check if passwords match
                 if (confirmPasswordController.text.isNotEmpty) {
@@ -265,11 +271,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
+                                obscureCurrentPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
                               onPressed: () {
                                 setState(() {
-                                  obscureCurrentPassword = !obscureCurrentPassword;
+                                  obscureCurrentPassword =
+                                      !obscureCurrentPassword;
                                 });
                               },
                             ),
@@ -295,7 +304,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             helperMaxLines: 2,
                             suffixIcon: IconButton(
                               icon: Icon(
-                                obscureNewPassword ? Icons.visibility_off : Icons.visibility,
+                                obscureNewPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -338,25 +349,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildRequirementRow(
-                                  hasMinLength,
-                                  'At least 8 characters'
-                              ),
+                                  hasMinLength, 'At least 8 characters'),
+                              _buildRequirementRow(hasUppercase,
+                                  'At least one uppercase letter'),
+                              _buildRequirementRow(hasLowercase,
+                                  'At least one lowercase letter'),
                               _buildRequirementRow(
-                                  hasUppercase,
-                                  'At least one uppercase letter'
-                              ),
-                              _buildRequirementRow(
-                                  hasLowercase,
-                                  'At least one lowercase letter'
-                              ),
-                              _buildRequirementRow(
-                                  hasNumber,
-                                  'At least one number'
-                              ),
-                              _buildRequirementRow(
-                                  hasSpecialChar,
-                                  'At least one special character'
-                              ),
+                                  hasNumber, 'At least one number'),
+                              _buildRequirementRow(hasSpecialChar,
+                                  'At least one special character'),
                             ],
                           ),
                         ),
@@ -370,16 +371,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            errorText: confirmPasswordController.text.isNotEmpty && !passwordsMatch
-                                ? 'Passwords do not match'
-                                : null,
+                            errorText:
+                                confirmPasswordController.text.isNotEmpty &&
+                                        !passwordsMatch
+                                    ? 'Passwords do not match'
+                                    : null,
                             suffixIcon: IconButton(
                               icon: Icon(
-                                obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                                obscureConfirmPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
                               onPressed: () {
                                 setState(() {
-                                  obscureConfirmPassword = !obscureConfirmPassword;
+                                  obscureConfirmPassword =
+                                      !obscureConfirmPassword;
                                 });
                               },
                             ),
@@ -402,9 +408,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: _buildRequirementRow(
-                                passwordsMatch,
-                                'Passwords match'
-                            ),
+                                passwordsMatch, 'Passwords match'),
                           ),
                       ],
                     ),
@@ -425,17 +429,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // Show loading
                       setState(() => _isLoading = true);
                       try {
-                        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                        final profileViewModel = Provider.of<ProfileViewModel>(
+                            context,
+                            listen: false);
                         await profileViewModel.updatePassword(
                           currentPasswordController.text,
                           newPasswordController.text,
                         );
                         if (mounted) {
-                          _showSuccessSnackBar('Password updated successfully!');
+                          _showSuccessSnackBar(
+                              'Password updated successfully!');
                         }
                       } catch (e) {
                         if (mounted) {
-                          _showErrorSnackBar('Failed to update password: ${e.toString()}');
+                          _showErrorSnackBar(
+                              'Failed to update password: ${e.toString()}');
                         }
                       } finally {
                         if (mounted) {
@@ -449,7 +457,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                   ),
                 ),
               ],
@@ -457,7 +466,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(16),
               ),
               contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
-              actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              actionsPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             );
           },
         );
@@ -513,7 +523,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               try {
                 setState(() => _isLoading = true);
-                final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                final profileViewModel =
+                    Provider.of<ProfileViewModel>(context, listen: false);
                 await profileViewModel.logout();
                 if (mounted) {
                   context.go('/login');
@@ -527,7 +538,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             icon: const Icon(Icons.logout),
             label: const Text('Logout'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange, foregroundColor: Colors.white),
           ),
         ],
         shape: RoundedRectangleBorder(
@@ -581,7 +593,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               try {
                 setState(() => _isLoading = true);
-                final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                final profileViewModel =
+                    Provider.of<ProfileViewModel>(context, listen: false);
                 await profileViewModel.deleteAccount();
                 if (mounted) {
                   context.go('/login');
@@ -589,13 +602,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               } catch (e) {
                 if (mounted) {
                   setState(() => _isLoading = false);
-                  _showErrorSnackBar('Failed to delete account. Please try again.');
+                  _showErrorSnackBar(
+                      'Failed to delete account. Please try again.');
                 }
               }
             },
             icon: const Icon(Icons.delete_forever),
             label: const Text('Delete Account'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
           ),
         ],
         shape: RoundedRectangleBorder(
@@ -668,53 +683,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: _isUploadingImage
                     ? null
                     : () {
-                  setState(() => _imageFile = null);
-                  Navigator.pop(context);
-                },
+                        setState(() => _imageFile = null);
+                        Navigator.pop(context);
+                      },
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: _isUploadingImage
                     ? null
                     : () async {
-                  setDialogState(() {
-                    _isUploadingImage = true;
-                  });
-
-                  try {
-                    final profileViewModel = Provider.of<ProfileViewModel>(
-                        context,
-                        listen: false
-                    );
-
-                    await profileViewModel.updateProfileImage(
-                      _imageFile!,
-                      onProgress: (progress) {
                         setDialogState(() {
-                          _uploadProgress = progress;
+                          _isUploadingImage = true;
                         });
-                      },
-                    );
 
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _showSuccessSnackBar('Profile picture updated successfully!');
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _showErrorSnackBar('Failed to update profile picture: ${e.toString()}');
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() {
-                        _isUploadingImage = false;
-                        _uploadProgress = 0;
-                        _imageFile = null;
-                      });
-                    }
-                  }
-                },
+                        try {
+                          final profileViewModel =
+                              Provider.of<ProfileViewModel>(context,
+                                  listen: false);
+
+                          await profileViewModel.updateProfileImage(
+                            _imageFile!,
+                            onProgress: (progress) {
+                              setDialogState(() {
+                                _uploadProgress = progress;
+                              });
+                            },
+                          );
+
+                          if (mounted) {
+                            Navigator.pop(context);
+                            _showSuccessSnackBar(
+                                'Profile picture updated successfully!');
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            Navigator.pop(context);
+                            _showErrorSnackBar(
+                                'Failed to update profile picture: ${e.toString()}');
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isUploadingImage = false;
+                              _uploadProgress = 0;
+                              _imageFile = null;
+                            });
+                          }
+                        }
+                      },
                 child: const Text('Save'),
               ),
             ],
@@ -775,14 +791,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 try {
                   setState(() => _isLoading = true);
-                  final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-                  await profileViewModel.updateUsername(_usernameController.text.trim());
+                  final profileViewModel =
+                      Provider.of<ProfileViewModel>(context, listen: false);
+                  await profileViewModel
+                      .updateUsername(_usernameController.text.trim());
                   if (mounted) {
                     _showSuccessSnackBar('Username updated successfully!');
                   }
                 } catch (e) {
                   if (mounted) {
-                    _showErrorSnackBar('Failed to update username: ${e.toString()}');
+                    _showErrorSnackBar(
+                        'Failed to update username: ${e.toString()}');
                   }
                 } finally {
                   if (mounted) {
@@ -852,7 +871,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 try {
                   setState(() => _isLoading = true);
-                  final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                  final profileViewModel =
+                      Provider.of<ProfileViewModel>(context, listen: false);
                   await profileViewModel.updateBio(_bioController.text.trim());
                   if (mounted) {
                     _showSuccessSnackBar('Bio updated successfully!');
@@ -884,8 +904,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showEditProfileDialog() {
-    final TextEditingController usernameController = TextEditingController(text: _usernameController.text);
-    final TextEditingController bioController = TextEditingController(text: _bioController.text);
+    final TextEditingController usernameController =
+        TextEditingController(text: _usernameController.text);
+    final TextEditingController bioController =
+        TextEditingController(text: _bioController.text);
     File? tempImageFile = _imageFile;
     bool isUploading = false;
     double progress = 0;
@@ -908,7 +930,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // Header
                     Row(
                       children: [
-                        Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
+                        Icon(Icons.edit,
+                            color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 10),
                         const Text(
                           'Edit Profile',
@@ -950,7 +973,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     });
                                   }
                                 } catch (e) {
-                                  _showErrorSnackBar('Failed to pick image. Please try again.');
+                                  _showErrorSnackBar(
+                                      'Failed to pick image. Please try again.');
                                 }
                               },
                               child: Stack(
@@ -961,7 +985,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.5),
                                         width: 3,
                                       ),
                                     ),
@@ -969,9 +996,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       borderRadius: BorderRadius.circular(60),
                                       child: tempImageFile != null
                                           ? Image.file(
-                                        tempImageFile!,
-                                        fit: BoxFit.cover,
-                                      )
+                                              tempImageFile!,
+                                              fit: BoxFit.cover,
+                                            )
                                           : _buildProfileImage(user),
                                     ),
                                   ),
@@ -981,7 +1008,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -994,7 +1023,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ],
                               ),
                             ),
-
                             if (isUploading) ...[
                               const SizedBox(height: 16),
                               LinearProgressIndicator(
@@ -1007,7 +1035,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 '${(progress * 100).toStringAsFixed(0)}%',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                             ],
                           ],
@@ -1042,7 +1071,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        helperText: 'Tell us about yourself (max 150 characters)',
+                        helperText:
+                            'Tell us about yourself (max 150 characters)',
                       ),
                     ),
 
@@ -1055,60 +1085,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: isUploading
                             ? null
                             : () async {
-                          Navigator.pop(context);
+                                Navigator.pop(context);
 
-                          setState(() => _isLoading = true);
-                          final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                                setState(() => _isLoading = true);
+                                final profileViewModel =
+                                    Provider.of<ProfileViewModel>(context,
+                                        listen: false);
 
-                          try {
-                            // Update profile image if changed
-                            if (tempImageFile != null) {
-                              setDialogState(() {
-                                isUploading = true;
-                              });
+                                try {
+                                  // Update profile image if changed
+                                  if (tempImageFile != null) {
+                                    setDialogState(() {
+                                      isUploading = true;
+                                    });
 
-                              await profileViewModel.updateProfileImage(
-                                tempImageFile!,
-                                onProgress: (p) {
-                                  setDialogState(() {
-                                    progress = p;
-                                  });
-                                },
-                              );
-                            }
+                                    await profileViewModel.updateProfileImage(
+                                      tempImageFile!,
+                                      onProgress: (p) {
+                                        setDialogState(() {
+                                          progress = p;
+                                        });
+                                      },
+                                    );
+                                  }
 
-                            // Update username if changed
-                            if (usernameController.text != _usernameController.text) {
-                              await profileViewModel.updateUsername(usernameController.text.trim());
-                              _usernameController.text = usernameController.text.trim();
-                            }
+                                  // Update username if changed
+                                  if (usernameController.text !=
+                                      _usernameController.text) {
+                                    await profileViewModel.updateUsername(
+                                        usernameController.text.trim());
+                                    _usernameController.text =
+                                        usernameController.text.trim();
+                                  }
 
-                            // Update bio if changed
-                            if (bioController.text != _bioController.text) {
-                              await profileViewModel.updateBio(bioController.text.trim());
-                              _bioController.text = bioController.text.trim();
-                            }
+                                  // Update bio if changed
+                                  if (bioController.text !=
+                                      _bioController.text) {
+                                    await profileViewModel
+                                        .updateBio(bioController.text.trim());
+                                    _bioController.text =
+                                        bioController.text.trim();
+                                  }
 
-                            if (mounted) {
-                              _showSuccessSnackBar('Profile updated successfully!');
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              _showErrorSnackBar('Failed to update profile: ${e.toString()}');
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() {
-                                _isLoading = false;
-                                _imageFile = null;
-                              });
-                            }
-                          }
-                        },
+                                  if (mounted) {
+                                    _showSuccessSnackBar(
+                                        'Profile updated successfully!');
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    _showErrorSnackBar(
+                                        'Failed to update profile: ${e.toString()}');
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() {
+                                      _isLoading = false;
+                                      _imageFile = null;
+                                    });
+                                  }
+                                }
+                              },
                         icon: const Icon(Icons.save),
                         label: const Text('Save Changes'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
@@ -1145,349 +1186,413 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Section
-            const Padding(
-              padding: EdgeInsets.only(left: 8, bottom: 8),
-              child: Text(
-                'Profile',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-            // Edit Profile Card (New)
-            Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-
-              ),
-              child: InkWell(
-                onTap: _showEditProfileDialog,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.edit,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 28,
-                        ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Profile Section
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, bottom: 8),
+                    child: Text(
+                      'Profile',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Edit Profile',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Update your profile picture, username, and bio',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
 
-            const SizedBox(height: 24),
-
-            // Security Section
-            const Padding(
-              padding: EdgeInsets.only(left: 8, bottom: 8),
-              child: Text(
-                'Security',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-            // Password Card - Clickable to change password
-            Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                onTap: _showChangePasswordDialog,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.password,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  // Edit Profile Card (New)
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: _showEditProfileDialog,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
                           children: [
-                            const Text(
-                              'Change Password',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 28,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Update your account password',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Add a new reminder card in the main settings screen after the "Change Password" card
-            Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                onTap: () => _showReminderTimePicker(context),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.notifications,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Consumer<ReminderViewModel>(
-                          builder: (context, reminderVM, _) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Daily Reminder',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Edit Profile',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  reminderVM.remindersEnabled
-                                      ? 'Reminder set for ${reminderVM.formattedTime}'
-                                      : 'Set a daily learning reminder',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Update your profile picture, username, and bio',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                      Consumer<ReminderViewModel>(
-                        builder: (context, reminderVM, _) {
-                          return Switch(
-                            value: reminderVM.remindersEnabled,
-                            onChanged: (value) async {
-                              if (value && reminderVM.reminderTime == null) {
-                                _showReminderTimePicker(context);
-                                return;
-                              }
-                              await reminderVM.toggleReminders(value);
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Account Actions Section
-            const Padding(
-              padding: EdgeInsets.only(left: 8, bottom: 8),
-              child: Text(
-                'Account Actions',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-            // Logout Button
-            Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                onTap: _showLogoutConfirmation,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.logout,
-                          color: Colors.orange,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Logout',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Sign out from your account',
-                              style: TextStyle(
-                                color: Colors.grey[600],
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Security Section
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, bottom: 8),
+                    child: Text(
+                      'Security',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  // Password Card - Clickable to change password
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: _showChangePasswordDialog,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
                               ),
+                              child: Icon(
+                                Icons.password,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Change Password',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Update your account password',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Add a new reminder card in the main settings screen after the "Change Password" card
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: () => _showReminderTimePicker(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.notifications,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Consumer<ReminderViewModel>(
+                                builder: (context, reminderVM, _) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Daily Reminder',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        reminderVM.remindersEnabled
+                                            ? 'Reminder set for ${reminderVM.formattedTime}'
+                                            : 'Set a daily learning reminder',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            Consumer<ReminderViewModel>(
+                              builder: (context, reminderVM, _) {
+                                return Switch(
+                                  value: reminderVM.remindersEnabled,
+                                  onChanged: (value) async {
+                                    if (value &&
+                                        reminderVM.reminderTime == null) {
+                                      _showReminderTimePicker(context);
+                                      return;
+                                    }
+                                    await reminderVM.toggleReminders(value);
+                                  },
+                                );
+                              },
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
 
-            // Delete Account Button
-            Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                onTap: _showDeleteAccountConfirmation,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.delete_forever,
-                          color: Colors.red,
-                          size: 28,
+                  const SizedBox(height: 24),
+
+                  // Add Reclamation Button
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: () => context.go('/reclamation'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.report_problem_outlined,
+                                color: Colors.blue,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Submit Reclamation',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Report issues or submit feedback',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  ),
+
+                  // Account Actions Section header
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, bottom: 8),
+                    child: Text(
+                      'Account Actions',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  // Logout Button
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: _showLogoutConfirmation,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
                           children: [
-                            const Text(
-                              'Delete Account',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Sign out from your account',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Delete Account Button
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: _showDeleteAccountConfirmation,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.delete_forever,
                                 color: Colors.red,
+                                size: 28,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Permanently delete your account and all data',
-                              style: TextStyle(
-                                color: Colors.red[300],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Delete Account',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Permanently delete your account and all data',
+                                    style: TextStyle(
+                                      color: Colors.red[300],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            const Icon(Icons.arrow_forward_ios, size: 16),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1503,7 +1608,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // Check if the avatar is a Cloudinary URL
       if (user.avatar!.startsWith('http')) {
         // Apply Cloudinary transformations for optimized delivery
-        final transformedUrl = CloudinaryConstants.getThumbnailUrl(user.avatar!);
+        final transformedUrl =
+            CloudinaryConstants.getThumbnailUrl(user.avatar!);
 
         return CachedNetworkImage(
           imageUrl: transformedUrl,
@@ -1540,4 +1646,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-

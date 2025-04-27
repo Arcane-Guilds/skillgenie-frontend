@@ -16,6 +16,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../community/update_post_screen.dart';
 import '../community/create_post_screen.dart';
 import '../../widgets/common_widgets.dart';
+import '../analytics/analytics_screen.dart';
 
 // App-wide primary blue color
 const Color kPrimaryBlue = Color(0xFF29B6F6);
@@ -101,11 +102,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
 
       if (profile == null) {
-        _showErrorSnackBar('Could not load profile data');
-        return;
+        // _showErrorSnackBar('Could not load profile data');
+        // return;
       }
 
-      await _loadUserPosts(profile.id);
+      await _loadUserPosts(profile!.id);
 
     } catch (e) {
       if (mounted) _showErrorSnackBar(e.toString());
@@ -837,26 +838,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildStatCard(context, 'Badges', '${user.earnedBadges?.length ?? 0}', Icons.emoji_events),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  // Learning progress
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Learning Progress',
-                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AnalyticsScreen(userId: user.id),
                         ),
-                        const SizedBox(height: 16),
-                        AnimatedProgressIndicator(
-                          progress: 0.7, // TODO: Calculate actual progress
-                          label: user.selectedSkill ?? 'No skill selected',
-                          progressColor: kPrimaryBlue,
-                        ),
-                      ],
+                      );
+                    },
+                    icon: Icon(Icons.insights, color: kPrimaryBlue),
+                    label: Text('View Analytics'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: 24),

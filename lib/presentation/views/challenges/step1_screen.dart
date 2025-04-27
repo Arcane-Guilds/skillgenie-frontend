@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:skillGenie/core/theme/app_theme.dart';
+import '../../widgets/avatar_widget.dart';
 import 'step2_screen.dart';
 
 class Step1Screen extends StatefulWidget {
@@ -37,75 +39,43 @@ class _Step1ScreenState extends State<Step1Screen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Align(
-              alignment: Alignment.center,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
-                margin: const EdgeInsets.only(left: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '“Let’s get this party started with ${widget.name}!”',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.deepPurple,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+          
+              GenieAvatar(
+                state: AvatarState.celebrating,
+                size: 200,
+                message: 'Let’s get this party started with ${widget.name}!',
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => Step2Screen(name: widget.name)),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+                  minimumSize: const Size(140, 50),
+                ),
+                child: const Text(
+                  'CONTINUE',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            SlideTransition(
-              position: _animation,
-              child: Image.asset(
-                'assets/images/genie.png',
-                height: 400,
-                width: 400,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Step2Screen(name: widget.name)),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple[500],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
-                minimumSize: const Size(140, 50),
-              ),
-              child: const Text(
-                'CONTINUE',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

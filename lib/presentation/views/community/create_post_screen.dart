@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../viewmodels/community_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -13,12 +15,14 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
+  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   final List<String> _selectedImages = [];
   bool _isLoading = false;
 
   @override
   void dispose() {
+    _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
@@ -43,7 +47,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error picking image: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -55,7 +59,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please write something in your post'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
@@ -65,26 +69,32 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     try {
       final viewModel = Provider.of<CommunityViewModel>(context, listen: false);
-      final post = await viewModel.createPost(_contentController.text.trim(), _selectedImages);
+      final post = await viewModel.createPost(
+        _contentController.text.trim(),
+        _selectedImages,
+        title: _titleController.text.trim(),
+      );
 
       if (mounted) {
-        // Refresh posts to get updated data with author info
         await viewModel.loadPosts();
         
-        Navigator.pop(context);
+        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Post created successfully!'),
             backgroundColor: Colors.green,
           ),
         );
+        
+        // Navigate back to community screen
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error creating post: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -104,40 +114,90 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surfaceColor.withOpacity(0.97),
       appBar: AppBar(
-        title: const Text('Create Post'),
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _createPost,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text('Post'),
+        title: Text(
+          'Create Post',
+          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimaryColor,
           ),
-        ],
+        ),
+        centerTitle: false,
+        backgroundColor: AppTheme.surfaceColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _contentController,
-              decoration: const InputDecoration(
-                hintText: 'What\'s on your mind?',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.all(16),
+            // Title field
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              maxLines: 5,
-              maxLength: 1000,
+              child: TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: 'Post title (optional)',
+                  hintStyle: TextStyle(
+                    color: AppTheme.textSecondaryColor.withOpacity(0.5),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                maxLength: 100,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
+            
             const SizedBox(height: 16),
+            
+            // Content field
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _contentController,
+                decoration: InputDecoration(
+                  hintText: 'What\'s on your mind?',
+                  hintStyle: TextStyle(
+                    color: AppTheme.textSecondaryColor.withOpacity(0.5),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                maxLines: 5,
+                maxLength: 1000,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Image preview
             if (_selectedImages.isNotEmpty) ...[
               SizedBox(
                 height: 120,
@@ -145,61 +205,105 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   scrollDirection: Axis.horizontal,
                   itemCount: _selectedImages.length,
                   itemBuilder: (context, index) {
-                    return Stack(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: FileImage(File(_selectedImages[index])),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 4,
-                          right: 12,
-                          child: GestureDetector(
-                            onTap: () => _removeImage(index),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                size: 16,
-                                color: Colors.white,
+                    return Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              image: DecorationImage(
+                                image: FileImage(File(_selectedImages[index])),
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () => _removeImage(index),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
               ),
               const SizedBox(height: 16),
             ],
-            ElevatedButton.icon(
-              onPressed: _selectedImages.length >= 5 ? null : _pickImage,
-              icon: const Icon(Icons.add_photo_alternate),
-              label: Text(
-                _selectedImages.isEmpty
-                    ? 'Add Photos'
-                    : 'Add More Photos (${_selectedImages.length}/5)',
+            
+            // Add photo button
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              child: TextButton.icon(
+                onPressed: _selectedImages.length >= 5 ? null : _pickImage,
+                icon: Icon(
+                  Icons.add_photo_alternate,
+                  color: AppTheme.primaryColor,
+                ),
+                label: Text(
+                  _selectedImages.isEmpty
+                      ? 'Add Photos'
+                      : 'Add More Photos (${_selectedImages.length}/5)',
+                  style: TextStyle(
+                    color: AppTheme.textPrimaryColor,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isLoading ? null : _createPost,
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        icon: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(Icons.add),
+        label: Text(_isLoading ? 'Posting...' : 'Post'),
+      ).animate()
+        .fadeIn(duration: 500.ms)
+        .slideY(begin: 0.3, end: 0),
     );
   }
 } 

@@ -9,7 +9,7 @@ import 'package:skillGenie/presentation/viewmodels/chat_viewmodel.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/service_locator.dart';
 import 'core/storage/secure_storage.dart';
-import 'data/datasources/api_client.dart';
+import 'data/datasources/api_client.dart';  
 
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
@@ -126,6 +126,13 @@ class MyApp extends StatelessWidget {
         // Add restorationScopeId to help with state restoration
         restorationScopeId: 'app',
         builder: (context, child) {
+          // Initialize socket connection when app is built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+            // Try to initialize socket connection
+            //chatViewModel.refreshCurrentChat();
+          });
+          
           // Add error handling for widget errors
           ErrorWidget.builder = (FlutterErrorDetails details) {
             return Scaffold(

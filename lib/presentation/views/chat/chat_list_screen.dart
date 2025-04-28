@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +9,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/chat_viewmodel.dart';
 import 'chat_detail_screen.dart';
 import 'create_chat_screen.dart';
-
+import 'socket_test_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({Key? key}) : super(key: key);
@@ -18,13 +19,68 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
+  StreamSubscription? _newChatSubscription;
+  StreamSubscription? _newMessageSubscription;
+  bool _refreshing = false;
+
   @override
   void initState() {
     super.initState();
     // Load chats when the screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ChatViewModel>(context, listen: false).loadChats();
+      final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+      chatViewModel.loadChats();
+      
+      // Set up listeners for realtime updates
+      _setupRealtimeListeners();
     });
+  }
+  
+  void _setupRealtimeListeners() {
+    final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+    
+    // Listen for new chats
+    _newChatSubscription = chatViewModel.newChatStream.listen((chat) {
+      if (mounted && !_refreshing) {
+        _refreshChats();
+      }
+    });
+    
+    // Listen for new messages
+    _newMessageSubscription = chatViewModel.newMessageStream.listen((message) {
+      if (mounted && !_refreshing) {
+        _refreshChats();
+      }
+    });
+  }
+  
+  Future<void> _refreshChats() async {
+    if (_refreshing) return;
+    
+    setState(() {
+      _refreshing = true;
+    });
+    
+    try {
+      final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+      await chatViewModel.loadChats();
+      await chatViewModel.refreshUnreadCounts();
+    } catch (e) {
+      print('Error refreshing chats: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _refreshing = false;
+        });
+      }
+    }
+  }
+  
+  @override
+  void dispose() {
+    _newChatSubscription?.cancel();
+    _newMessageSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -39,7 +95,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => chatViewModel.loadChats(),
+            onPressed: _refreshChats,
+          ),
+          IconButton(
+            tooltip: 'Socket Test',
+            icon: Icon(
+              chatViewModel.isSocketConnected ? Icons.cloud_done : Icons.cloud_off,
+              color: chatViewModel.isSocketConnected ? Colors.green : Colors.red,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SocketTestScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -66,7 +137,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             Text(viewModel.errorMessage!, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => viewModel.loadChats(),
+              onPressed: _refreshChats,
               child: const Text('Try Again'),
             ),
           ],
@@ -102,7 +173,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: viewModel.loadChats,
+      onRefresh: _refreshChats,
       child: ListView.builder(
         itemCount: viewModel.chats.length,
         itemBuilder: (context, index) {
@@ -209,12 +280,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   void _navigateToChatDetail(BuildContext context, String chatId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatDetailScreen(chatId: chatId),
+    // Show a loading indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Opening chat...'),
+        duration: Duration(seconds: 1),
       ),
     );
+    
+    final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+    
+    // First select the chat to preload its messages
+    chatViewModel.selectChat(chatId).then((_) {
+      // Then navigate to the chat detail screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatDetailScreen(chatId: chatId),
+        ),
+      );
+    });
   }
 
   void _navigateToCreateChat(BuildContext context) {

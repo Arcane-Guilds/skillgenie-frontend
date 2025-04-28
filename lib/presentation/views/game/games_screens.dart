@@ -158,15 +158,7 @@ class _GamesScreenState extends State<GamesScreen> {
                   ],
                 ),
               ),
-              Center(
-                child: TextButton(
-                  onPressed: () => _showExitDialog(context),
-                  child: Text(
-                    "Exit",
-                    style: TextStyle(color: AppTheme.textSecondaryColor),
-                  ),
-                ),
-              ),
+            
             ],
           ),
         ),

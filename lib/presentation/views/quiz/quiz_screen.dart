@@ -78,7 +78,7 @@ class QuizPage extends StatelessWidget {
     );
   }
 
-  // Loading Screen with Lottie Animation
+  // Loading Screen with GenieAvatar Animation
   Widget _buildLoadingScreen() {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -86,12 +86,9 @@ class QuizPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Lottie.asset(
-              'assets/images/loading.json',
-              width: 200,
-              height: 200,
-              fit: BoxFit.contain,
-              repeat: true,
+            GenieAvatar(
+              state: AvatarState.thinking,
+              size: 120,
             ),
             const SizedBox(height: 24),
             Text(
@@ -114,12 +111,9 @@ class QuizPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Lottie.asset(
-              'assets/images/loading.json',
-              width: 200,
-              height: 200,
-              fit: BoxFit.contain,
-              repeat: true,
+            GenieAvatar(
+              state: AvatarState.thinking,
+              size: 120,
             ),
             const SizedBox(height: 24),
             Text(

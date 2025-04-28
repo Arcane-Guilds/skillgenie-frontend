@@ -11,6 +11,7 @@ import 'package:highlight/highlight.dart' show Mode;
 import '../../../data/models/evaluation_question.dart';
 import '../../viewmodels/quiz_viewmodel.dart';
 import '../../viewmodels/course_viewmodel.dart';
+import '../../widgets/avatar_widget.dart';
 
 class EvaluationScreen extends StatefulWidget {
   final List<EvaluationQuestion> questions;
@@ -308,13 +309,16 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
           showDialog(
             context: context,
             barrierDismissible: false,
-            builder: (context) => const AlertDialog(
+            builder: (context) => AlertDialog(
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Generating your personalized learning path...'),
+                  GenieAvatar(
+                    state: AvatarState.thinking,
+                    size: 100,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Generating your personalized learning path...'),
                 ],
               ),
             ),
@@ -333,42 +337,8 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             }
             
             if (course != null && mounted) {
-              // Navigate to home screen
+              // Navigate to home immediately after generation
               context.go('/home');
-              
-              // Show success dialog with score and course info
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Evaluation Complete'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Your score: ${(quizVM.evaluationScore! * 100).toStringAsFixed(1)}%',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'We\'ve created a personalized learning path for you!',
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Course: ${course.title}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Start Learning'),
-                    ),
-                  ],
-                ),
-              );
             }
           } catch (e) {
             // Close the generating course dialog

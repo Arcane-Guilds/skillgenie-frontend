@@ -31,38 +31,42 @@ class QuizRepository {
   }
 
   /// Submit quiz answers to the API
-  Future<String> submitQuiz(String userId, Map<int, String> answers) async {
-    try {
-      _logger.info('Submitting quiz for user: $userId');
-      final payload = {
-        'userId': userId,
-        'learningStyle': answers[1] ?? '',
-        'skill': answers[2] ?? '',
-        'learningPreference': answers[3] ?? '',
-        'skillLevel': answers[4] ?? '',
-        'motivation': answers[5] ?? '',
-        'projectInspiration': answers[6] ?? '',
-        'learningPace': answers[7] ?? '',
-      };
+Future<String> submitQuiz(String userId, Map<int, dynamic> answers) async {
+  try {
+    _logger.info('Submitting quiz for user: $userId');
+    final payload = {
+      'userId': userId,
+      'topic': answers[1] ?? '', // Q1
+      'experienceLevel': answers[2] ?? '', // Q2
+      'learningGoal': answers[3] ?? '', // Q3
+      'subtopics': answers[4] is List<String> 
+          ? answers[4] 
+          : (answers[4] != null ? answers[4].toString().split(',').map((s) => s.trim()).toList() : []), // Q4
+      'learningPreference': answers[5] ?? '', // Q5
+      'motivation': answers[6] ?? '', // Q6
+      'weeklyTime': answers[7] ?? '', // Q7
+      'priorExperience': answers[8] ?? '', // Q8
+      'projectType': answers[9] ?? '', // Q9
+      'specificProblem': answers[10] ?? '', // Q10 (optional)
+    };
 
-      final response = await _client.post(
-        Uri.parse(QuizConstants.submitQuiz),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(payload),
-      );
+    final response = await _client.post(
+      Uri.parse(QuizConstants.submitQuiz),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(payload),
+    );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = json.decode(response.body);
-        return responseData['_id'];
-      } else {
-        throw Exception('Failed to submit quiz: ${response.statusCode} - ${response.body}');
-      }
-    } catch (e) {
-      _logger.severe('Error submitting quiz: $e');
-      rethrow;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = json.decode(response.body);
+      return responseData['_id'];
+    } else {
+      throw Exception('Failed to submit quiz: ${response.statusCode} - ${response.body}');
     }
+  } catch (e) {
+    _logger.severe('Error submitting quiz: $e');
+    rethrow;
   }
-
+}
   /// Generate evaluation test based on quiz results
   Future<List<EvaluationQuestion>> generateEvaluationTest(String quizResultId) async {
     try {

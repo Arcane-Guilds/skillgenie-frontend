@@ -530,7 +530,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                         child: LinearProgressIndicator(
                       value: progress,
                       backgroundColor: theme.colorScheme.surfaceVariant,
-                          valueColor: AlwaysStoppedAnimation<Color>(courseColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(progress == 1.0 ? Colors.green : courseColor),
                       minHeight: 8,
                         ),
                       ),
@@ -647,7 +647,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
       const Color(0xFF1CB0F6), // Blue
       const Color(0xFF58CC02), // Green
       const Color(0xFFFF9600), // Orange
-      const Color(0xFFFF4B4B), // Red
+      const Color.fromARGB(255, 85, 196, 221), // Red
       const Color(0xFFA560E8), // Purple
     ];
     

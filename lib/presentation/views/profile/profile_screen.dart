@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../data/models/user_model.dart';
 import '../../../data/models/community/post.dart';
@@ -593,6 +594,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatCard(BuildContext context, String title, String value, IconData icon) {
+    final isWeb = kIsWeb;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -628,6 +631,147 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // For wider screens - stats in a row with better spacing and larger elements
+  Widget _buildWideStatsLayout(BuildContext context, User user) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildWebStatCard(
+          context, 
+          'Streak', 
+          '${user.streakDays} days', 
+          Icons.local_fire_department,
+          Colors.orange.shade700,
+          screenWidth
+        ),
+        const SizedBox(width: 24),
+        _buildWebStatCard(
+          context, 
+          'Coins', 
+          '${user.coins}', 
+          Icons.monetization_on,
+          Colors.amber.shade700,
+          screenWidth
+        ),
+        const SizedBox(width: 24),
+        _buildWebStatCard(
+          context, 
+          'Badges', 
+          '${user.earnedBadges?.length ?? 0}', 
+          Icons.emoji_events,
+          Colors.amber.shade400,
+          screenWidth
+        ),
+      ],
+    );
+  }
+
+  // Enhanced web stat card with larger elements
+  Widget _buildWebStatCard(BuildContext context, String title, String value, IconData icon, Color iconColor, double screenWidth) {
+    // Dynamic sizing based on screen width
+    final cardWidth = screenWidth > 1600 ? 220.0 :
+                     screenWidth > 1200 ? 180.0 :
+                     screenWidth > 992 ? 160.0 : 140.0;
+    
+    final iconSize = screenWidth > 1600 ? 60.0 :
+                    screenWidth > 1200 ? 50.0 :
+                    screenWidth > 992 ? 45.0 : 40.0;
+                    
+    final valueFontSize = screenWidth > 1600 ? 36.0 :
+                         screenWidth > 1200 ? 32.0 :
+                         screenWidth > 992 ? 28.0 : 24.0;
+                         
+    final titleFontSize = screenWidth > 1600 ? 18.0 :
+                         screenWidth > 1200 ? 16.0 :
+                         screenWidth > 992 ? 15.0 : 14.0;
+    
+    return Container(
+      width: cardWidth,
+      padding: EdgeInsets.all(screenWidth > 1200 ? 24 : 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: Colors.grey.shade100,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: iconColor,
+            size: iconSize,
+          ),
+          SizedBox(height: screenWidth > 1200 ? 16 : 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: valueFontSize,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: screenWidth > 1200 ? 8 : 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: titleFontSize,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // For normal stats layout in a column with enhanced styling
+  Widget _buildNormalStatsLayout(BuildContext context, User user) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildWebStatCard(
+          context, 
+          'Streak', 
+          '${user.streakDays} days', 
+          Icons.local_fire_department,
+          Colors.orange.shade700,
+          screenWidth
+        ),
+        _buildWebStatCard(
+          context, 
+          'Coins', 
+          '${user.coins}', 
+          Icons.monetization_on,
+          Colors.amber.shade700,
+          screenWidth
+        ),
+        _buildWebStatCard(
+          context, 
+          'Badges', 
+          '${user.earnedBadges?.length ?? 0}', 
+          Icons.emoji_events,
+          Colors.amber.shade400,
+          screenWidth
+        ),
+      ],
     );
   }
 
@@ -935,6 +1079,745 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Icons.person,
         size: 60,
         color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildFacebookStyleWebLayout(BuildContext context, User user) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Dynamic content width based on screen size with limits for very large screens
+    final contentWidth = screenWidth > 1800 ? 1600.0 :
+                        screenWidth > 1600 ? 1400.0 :
+                        screenWidth > 1200 ? 1100.0 : 
+                        screenWidth > 992 ? screenWidth * 0.85 : 
+                        screenWidth * 0.95;
+    
+    // Adjust cover height for a better experience on smaller screens
+    final coverHeight = screenWidth > 1600 ? 400.0 :
+                       screenWidth > 1200 ? 350.0 :
+                       screenWidth > 992 ? 300.0 : 250.0;
+    
+    // Larger profile image on web                   
+    final profileImageSize = screenWidth > 1600 ? 200.0 :
+                           screenWidth > 1200 ? 180.0 :
+                           screenWidth > 992 ? 160.0 : 140.0;
+    
+    // Responsive column layout ratio that changes with screen size                    
+    final leftColumnRatio = screenWidth > 1600 ? 0.28 :
+                          screenWidth > 1200 ? 0.3 :
+                          screenWidth > 992 ? 0.35 : 0.4;
+    
+    // Font size adjustments based on screen size
+    final headlineFontSize = screenWidth > 1600 ? 34.0 :
+                           screenWidth > 1200 ? 30.0 :
+                           screenWidth > 992 ? 28.0 : 24.0;
+                           
+    final subtitleFontSize = screenWidth > 1600 ? 20.0 :
+                           screenWidth > 1200 ? 18.0 :
+                           screenWidth > 992 ? 16.0 : 14.0;
+    
+    // Card padding based on screen size
+    final cardPadding = screenWidth > 1200 ? 30.0 :
+                       screenWidth > 992 ? 24.0 : 16.0;
+    
+    return Column(
+      children: [
+        // Facebook-style cover image
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            // Cover photo
+            Container(
+              width: double.infinity,
+              height: coverHeight,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    kPrimaryBlue.withOpacity(0.5),
+                    kPrimaryBlue.withOpacity(0.2),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  Positioned(
+                    right: 24,
+                    bottom: 24,
+                    child: IconButton.filled(
+                      onPressed: () {
+                        // TODO: Add cover photo changing functionality
+                      },
+                      icon: Icon(Icons.camera_alt, color: Colors.white, size: screenWidth > 992 ? 24 : 20),
+                      style: IconButton.styleFrom(
+                        backgroundColor: kPrimaryBlue.withOpacity(0.8),
+                        padding: EdgeInsets.all(screenWidth > 992 ? 16 : 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Profile info bar that overlaps cover photo at bottom
+            Container(
+              width: contentWidth,
+              margin: EdgeInsets.only(bottom: screenWidth > 992 ? -70 : -60),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Profile picture - positioned to overlap
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        children: [
+                          Hero(
+                            tag: 'profile_image',
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(profileImageSize / 2),
+                              child: SizedBox(
+                                width: profileImageSize,
+                                height: profileImageSize,
+                                child: _buildProfileImage(user),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 10,
+                            right: 10,
+                            child: Container(
+                              padding: EdgeInsets.all(screenWidth > 992 ? 8 : 6),
+                              decoration: BoxDecoration(
+                                color: kPrimaryBlue,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: screenWidth > 992 ? 20 : 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  SizedBox(width: screenWidth > 992 ? 30 : 24),
+                  
+                  // User name and basic info
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: screenWidth > 992 ? 80 : 70),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            user.username,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: headlineFontSize,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            user.email ?? 'email@example.com',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: subtitleFontSize,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  // Action buttons aligned with name
+                  Padding(
+                    padding: EdgeInsets.only(bottom: screenWidth > 992 ? 80 : 70),
+                    child: Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AnalyticsScreen(userId: user.id),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.insights),
+                          label: Text(screenWidth > 768 ? 'Analytics' : ''),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryBlue,
+                            foregroundColor: Colors.white,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth > 992 ? 20 : 16, 
+                              vertical: screenWidth > 992 ? 14 : 12
+                            ),
+                            textStyle: TextStyle(
+                              fontSize: screenWidth > 992 ? 16 : 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: screenWidth > 992 ? 12 : 8),
+                        IconButton(
+                          onPressed: () {
+                            // TODO: Implement edit profile functionality
+                          },
+                          icon: const Icon(Icons.edit, color: kPrimaryBlue),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: EdgeInsets.all(screenWidth > 992 ? 14 : 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        
+        SizedBox(height: screenWidth > 992 ? 80 : 70),
+        
+        // Main content area
+        Container(
+          width: contentWidth,
+          padding: EdgeInsets.symmetric(horizontal: screenWidth > 992 ? 0 : 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left sidebar - Info cards
+              SizedBox(
+                width: contentWidth * leftColumnRatio,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoCard(context, user),
+                    SizedBox(height: screenWidth > 992 ? 24 : 20),
+                    _buildStatsCard(context, user),
+                    SizedBox(height: screenWidth > 992 ? 24 : 20),
+                    _buildFriendsCard(context),
+                  ],
+                ),
+              ),
+              
+              SizedBox(width: screenWidth > 992 ? 30 : 20),
+              
+              // Right area - Posts
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildCreatePostCard(context),
+                    SizedBox(height: screenWidth > 992 ? 24 : 20),
+                    _buildUserPosts(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(BuildContext context, User user) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    // Card padding based on screen size
+    final cardPadding = screenWidth > 1200 ? 30.0 :
+                       screenWidth > 992 ? 24.0 : 16.0;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'About',
+                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isWideScreen ? 24 : 20,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    // TODO: Implement edit bio functionality
+                  },
+                  icon: Icon(Icons.edit, size: isWideScreen ? 22 : 18),
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  color: kPrimaryBlue,
+                ),
+              ],
+            ),
+            Divider(thickness: isWideScreen ? 1.5 : 1.2),
+            SizedBox(height: isWideScreen ? 20 : 12),
+            
+            // Bio info
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, 
+                  size: isWideScreen ? 26 : 22, 
+                  color: Colors.grey.shade600
+                ),
+                SizedBox(width: isWideScreen ? 16 : 12),
+                Expanded(
+                  child: Text(
+                    'Learning enthusiast focused on improving language skills.',
+                    style: TextStyle(
+                      fontSize: isWideScreen ? 17 : 15,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: isWideScreen ? 24 : 16),
+            
+            // Email info
+            Row(
+              children: [
+                Icon(Icons.email_outlined, 
+                  size: isWideScreen ? 26 : 22, 
+                  color: Colors.grey.shade600
+                ),
+                SizedBox(width: isWideScreen ? 16 : 12),
+                Expanded(
+                  child: Text(
+                    user.email ?? 'email@example.com',
+                    style: TextStyle(
+                      fontSize: isWideScreen ? 17 : 15,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsCard(BuildContext context, User user) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    // Card padding based on screen size
+    final cardPadding = screenWidth > 1200 ? 30.0 :
+                       screenWidth > 992 ? 24.0 : 16.0;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Stats',
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: isWideScreen ? 24 : 20,
+              ),
+            ),
+            Divider(thickness: isWideScreen ? 1.5 : 1.2),
+            SizedBox(height: isWideScreen ? 20 : 12),
+            
+            // Responsive layout for stats based on screen width
+            screenWidth > 1400 
+                ? _buildWideStatsLayout(context, user)
+                : _buildNormalStatsLayout(context, user),
+            
+            SizedBox(height: isWideScreen ? 30 : 20),
+            // View analytics button
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AnalyticsScreen(userId: user.id),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.analytics, size: isWideScreen ? 22 : 18),
+                label: Text(
+                  'View Detailed Analytics',
+                  style: TextStyle(
+                    fontSize: isWideScreen ? 16 : 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: kPrimaryBlue,
+                  side: BorderSide(color: kPrimaryBlue, width: 1.5),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWideScreen ? 24 : 20,
+                    vertical: isWideScreen ? 16 : 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(isWideScreen ? 10 : 8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFriendsCard(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    // Card padding based on screen size
+    final cardPadding = screenWidth > 1200 ? 30.0 :
+                       screenWidth > 992 ? 24.0 : 16.0;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Friends',
+                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isWideScreen ? 24 : 20,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    context.go('/friends');
+                  },
+                  child: Text(
+                    'See All',
+                    style: TextStyle(
+                      color: kPrimaryBlue,
+                      fontSize: isWideScreen ? 16 : 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Divider(thickness: isWideScreen ? 1.5 : 1.2),
+            SizedBox(height: isWideScreen ? 20 : 12),
+            
+            // PLACEHOLDER: Friends list would go here - sample placeholders
+            if (screenWidth > 1200)
+              _buildWideScreenFriendsPlaceholder()
+            else
+              _buildNormalScreenFriendsPlaceholder(),
+              
+            SizedBox(height: isWideScreen ? 30 : 20),
+            
+            // Add friend button
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  context.go('/friends');
+                },
+                icon: Icon(Icons.person_add, size: isWideScreen ? 22 : 18),
+                label: Text(
+                  'Find Friends',
+                  style: TextStyle(
+                    fontSize: isWideScreen ? 16 : 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: kPrimaryBlue,
+                  side: BorderSide(color: kPrimaryBlue, width: 1.5),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWideScreen ? 24 : 20,
+                    vertical: isWideScreen ? 16 : 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(isWideScreen ? 10 : 8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // For wider screens - friends in a grid
+  Widget _buildWideScreenFriendsPlaceholder() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 20,
+        childAspectRatio: 1.0,
+      ),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return _buildFriendPlaceholder(context);
+      },
+    );
+  }
+
+  // For normal screens - friends in a row
+  Widget _buildNormalScreenFriendsPlaceholder() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: List.generate(3, (index) => _buildFriendPlaceholder(context)),
+    );
+  }
+
+  Widget _buildFriendPlaceholder(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: isWideScreen ? 38 : 28,
+          backgroundColor: Colors.grey[200],
+          child: Icon(
+            Icons.person,
+            size: isWideScreen ? 36 : 28,
+            color: Colors.grey[400],
+          ),
+        ),
+        SizedBox(height: isWideScreen ? 12 : 8),
+        Container(
+          width: isWideScreen ? 80 : 60,
+          height: isWideScreen ? 16 : 14,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildCreatePostCard(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    // Card padding based on screen size
+    final cardPadding = screenWidth > 1200 ? 30.0 :
+                       screenWidth > 992 ? 24.0 : 16.0;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: isWideScreen ? 28 : 24,
+                  backgroundImage: Provider.of<ProfileViewModel>(context).currentProfile?.avatar != null
+                      ? NetworkImage(Provider.of<ProfileViewModel>(context).currentProfile!.avatar!)
+                      : null,
+                  child: Provider.of<ProfileViewModel>(context).currentProfile?.avatar == null
+                      ? Icon(Icons.person, size: isWideScreen ? 26 : 22)
+                      : null,
+                ),
+                SizedBox(width: isWideScreen ? 20 : 16),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CreatePostScreen(),
+                        ),
+                      ).then((_) {
+                        _loadUserPosts(Provider.of<ProfileViewModel>(context, listen: false).currentProfile!.id);
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isWideScreen ? 24 : 20, 
+                        vertical: isWideScreen ? 20 : 16
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        color: Colors.grey.shade100,
+                        border: Border.all(color: Colors.grey.shade300, width: 1),
+                      ),
+                      child: Text(
+                        "What's on your mind?",
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: isWideScreen ? 18 : 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: isWideScreen ? 20 : 16),
+            Divider(thickness: isWideScreen ? 1.2 : 1),
+            // Use responsive layout for buttons based on screen width
+            screenWidth > 768 ? _buildWidePostActions() : _buildNormalPostActions(),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // For wider screens - buttons in a row with more space
+  Widget _buildWidePostActions() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: isWideScreen ? 12 : 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(child: _buildPostActionButton(Icons.photo_library, Colors.green.shade600, 'Photo')),
+          const SizedBox(width: 8),
+          Expanded(child: _buildPostActionButton(Icons.celebration, Colors.purple.shade400, 'Achievement')),
+          const SizedBox(width: 8),
+          Expanded(child: _buildPostActionButton(Icons.article, Colors.blue.shade400, 'Article')),
+        ],
+      ),
+    );
+  }
+  
+  // For narrower screens - buttons fit to content
+  Widget _buildNormalPostActions() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: isWideScreen ? 12 : 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildPostActionButton(Icons.photo_library, Colors.green.shade600, 'Photo'),
+          _buildPostActionButton(Icons.celebration, Colors.purple.shade400, 'Achievement'),
+        ],
+      ),
+    );
+  }
+  
+  // Helper for post action buttons
+  Widget _buildPostActionButton(IconData icon, Color iconColor, String label) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 992;
+    
+    return TextButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CreatePostScreen(),
+          ),
+        ).then((_) {
+          _loadUserPosts(Provider.of<ProfileViewModel>(context, listen: false).currentProfile!.id);
+        });
+      },
+      icon: Icon(
+        icon, 
+        color: iconColor,
+        size: isWideScreen ? 26 : 22
+      ),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: isWideScreen ? 16 : 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.black87,
+        padding: EdgeInsets.symmetric(
+          horizontal: isWideScreen ? 20 : 16, 
+          vertical: isWideScreen ? 14 : 10
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isWideScreen ? 12 : 8),
+        ),
       ),
     );
   }

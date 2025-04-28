@@ -27,6 +27,10 @@ import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'presentation/viewmodels/reclamation_viewmodel.dart';
 
+// Conditionally import web plugins only on web platform
+// This prevents dart:ui_web errors on mobile platforms
+import 'web_imports.dart' if (dart.library.io) 'mobile_imports.dart';
+
 class AppErrorHandler {
   static void handleError(Object error, StackTrace stackTrace) {
     if (kDebugMode) {
@@ -65,6 +69,11 @@ void main() async {
   runZonedGuarded(() async {
     // Ensure Flutter is initialized
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Configure for web - use path URL strategy for cleaner URLs
+    if (kIsWeb) {
+      configureApp(); // This function is defined in web_imports.dart or mobile_imports.dart
+    }
 
     // Load environment variables first
     await dotenv.load(fileName: ".env");
@@ -125,6 +134,7 @@ class MyApp extends StatelessWidget {
         routerConfig: appRouter,
         // Add restorationScopeId to help with state restoration
         restorationScopeId: 'app',
+        //navigatorKey: AppLogo.globalKey, // Use AppLogo's global key for navigation
         builder: (context, child) {
           // Initialize socket connection when app is built
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -165,12 +175,14 @@ class MyApp extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {
                         try {
-                          GoRouter.of(context).go('/home');
+                          // Don't use GoRouter.of(context) here as it might not be available
+                          // Instead use a Navigator to pop back or restart
+                          Navigator.of(context, rootNavigator: true).pop();
                         } catch (e) {
-                          print('Failed to navigate to home: $e');
+                          print('Failed to navigate: $e');
                         }
                       },
-                      child: const Text('Back to Home'),
+                      child: const Text('Go Back'),
                     ),
                   ],
                 ),

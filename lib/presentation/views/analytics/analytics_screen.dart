@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/ui_utils.dart';
 import '../../viewmodels/analytics_viewmodel.dart';
 import '../../../data/models/analytics_model.dart';
 import 'package:intl/intl.dart';
@@ -36,10 +38,9 @@ class _AnalyticsScreenBody extends StatelessWidget {
     Theme.of(context);
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Your Analytics'),
+      appBar: UiUtils.responsiveAppBar(
+        title: 'Your Analytics',
         backgroundColor: AppTheme.surfaceColor,
-        elevation: 0,
         centerTitle: true,
       ),
       body: vm.isLoading
@@ -54,6 +55,18 @@ class _AnalyticsScreenBody extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (kIsWeb)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: Text(
+                              'Your Analytics',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimaryColor,
+                              ),
+                            ),
+                          ),
                         _buildProgressSection(vm.userProgress),
                         const SizedBox(height: 24),
                         _buildStrengthsWeaknessesSection(vm.strengthsWeaknesses),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AppTheme {
   static const Color secondaryColor = Color(0xFF58CC02);
@@ -10,28 +11,40 @@ class AppTheme {
   static const Color textPrimaryColor = Color(0xFF6F6F6F);
   static const Color textSecondaryColor = Color(0xFF6F6F6F);
 
+  // Web-specific colors
+  static const Color webBackgroundColor = Color(0xFFF7F9FA);
+  static const Color webSurfaceColor = Colors.white;
+  static const Color webBorderColor = Color(0xFFE0E0E0);
+
   static BoxDecoration cardDecoration = BoxDecoration(
     color: surfaceColor,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(kIsWeb ? 8 : 16),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.05),
-        blurRadius: 10,
+        color: Colors.black.withOpacity(kIsWeb ? 0.03 : 0.05),
+        blurRadius: kIsWeb ? 6 : 10,
         offset: const Offset(0, 4),
       ),
     ],
+    border: kIsWeb ? Border.all(color: webBorderColor, width: 1) : null,
   );
 
   static ThemeData get theme => ThemeData(
     primaryColor: primaryColor,
-    scaffoldBackgroundColor: backgroundColor,
-    appBarTheme: const AppBarTheme(
+    scaffoldBackgroundColor: kIsWeb ? webBackgroundColor : backgroundColor,
+    colorScheme: ColorScheme.light(
+      primary: primaryColor,
+      secondary: secondaryColor,
+      error: errorColor,
+      surface: kIsWeb ? webSurfaceColor : surfaceColor,
+    ),
+    appBarTheme: AppBarTheme(
       backgroundColor: surfaceColor,
-      elevation: 0,
-      iconTheme: IconThemeData(color: textPrimaryColor),
+      elevation: kIsWeb ? 0 : 1,
+      iconTheme: const IconThemeData(color: textPrimaryColor),
       titleTextStyle: TextStyle(
         color: textPrimaryColor,
-        fontSize: 20,
+        fontSize: kIsWeb ? 22 : 20,
         fontWeight: FontWeight.bold,
       ),
     ),
@@ -39,10 +52,60 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
+        padding: EdgeInsets.symmetric(
+          horizontal: kIsWeb ? 32 : 24, 
+          vertical: kIsWeb ? 16 : 12
         ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(kIsWeb ? 6 : 30),
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: kIsWeb ? Colors.white : Colors.grey[50],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(kIsWeb ? 8 : 12),
+        borderSide: BorderSide(
+          color: kIsWeb ? webBorderColor : Colors.grey[300]!,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(kIsWeb ? 8 : 12),
+        borderSide: BorderSide(
+          color: kIsWeb ? webBorderColor : Colors.grey[300]!,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(kIsWeb ? 8 : 12),
+        borderSide: BorderSide(
+          color: primaryColor,
+          width: kIsWeb ? 1.5 : 2.0,
+        ),
+      ),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16, 
+        vertical: kIsWeb ? 16 : 12
+      ),
+    ),
+    textTheme: TextTheme(
+      displayLarge: TextStyle(
+        fontSize: kIsWeb ? 32 : 28,
+        fontWeight: FontWeight.bold,
+        color: textPrimaryColor,
+      ),
+      displayMedium: TextStyle(
+        fontSize: kIsWeb ? 28 : 24,
+        fontWeight: FontWeight.bold,
+        color: textPrimaryColor,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: kIsWeb ? 16 : 14,
+        color: textPrimaryColor,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: kIsWeb ? 14 : 12,
+        color: textSecondaryColor,
       ),
     ),
   );

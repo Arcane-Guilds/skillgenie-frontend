@@ -8,76 +8,102 @@ class PaymentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController cardNumberController = TextEditingController();
-    final TextEditingController expiryController = TextEditingController();
-    final TextEditingController cvvController = TextEditingController();
+    TextEditingController cardNumberController = TextEditingController();
+    TextEditingController expiryController = TextEditingController();
+    TextEditingController cvvController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment Details'),
+        title: const Text('Payment'),
         backgroundColor: Colors.deepPurple,
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text(
-              'Buy $coins Coins for \$${price.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: cardNumberController,
-              decoration: const InputDecoration(
-                labelText: 'Card Number',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: expiryController,
-                    decoration: const InputDecoration(
-                      labelText: 'Expiry Date (MM/YY)',
-                      border: OutlineInputBorder(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.pinkAccent, Colors.deepPurpleAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Card(
+            elevation: 8,
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$coins Coins for \$$price',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
-                    keyboardType: TextInputType.datetime,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: cvvController,
-                    decoration: const InputDecoration(
-                      labelText: 'CVV',
-                      border: OutlineInputBorder(),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: cardNumberController,
+                      decoration: const InputDecoration(
+                        labelText: 'Card Number',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.credit_card),
+                      ),
+                      keyboardType: TextInputType.number,
                     ),
-                    obscureText: true,
-                    keyboardType: TextInputType.number,
-                  ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: expiryController,
+                      decoration: const InputDecoration(
+                        labelText: 'Expiry (MM/YY)',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.calendar_today),
+                      ),
+                      keyboardType: TextInputType.datetime,
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: cvvController,
+                      decoration: const InputDecoration(
+                        labelText: 'CVV',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      obscureText: true,
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 30),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        String cardNumber = cardNumberController.text;
+                        String expiry = expiryController.text;
+                        String cvv = cvvController.text;
+
+                        if (cardNumber.length == 16 && expiry.length == 5 && cvv.length == 3) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Payment Successful! Coins Added.')),
+                          );
+                          Navigator.pop(context, coins);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Invalid payment details. Please try again.')),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.payment),
+                      label: const Text('Confirm Payment'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        textStyle: const TextStyle(fontSize: 18),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () {
-                // Fake success payment
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment Successful! Coins Added.')),
-                );
-                Navigator.pop(context); // Back to BuyCoinsScreen
-                Navigator.pop(context); // Back to MarketplaceScreen
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
-              child: const Text('Confirm Payment', style: TextStyle(fontSize: 16)),
             ),
-          ],
+          ),
         ),
       ),
     );

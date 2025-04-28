@@ -4,6 +4,7 @@ class ApiConstants {
 
   static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'https://10.0.2.2:3000';
 
+
 }
 
 class AnalyticsConstants {

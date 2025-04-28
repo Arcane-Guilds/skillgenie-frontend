@@ -136,6 +136,8 @@ flutter:
     - assets/images/avatar6.png
     - assets/images/coin.jpeg
     - assets/coin_animation.json
+    - res/hangman_words.txt
+    - res/word_jumble.text
   fonts:
     - family: PatrickHand
       fonts:

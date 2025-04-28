@@ -14,8 +14,8 @@ class ApiClient {
   ApiClient()
       : _dio = Dio(BaseOptions(
           baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
+          connectTimeout: const Duration(seconds: 50),
+          receiveTimeout: const Duration(seconds: 50),
           validateStatus: (status) {
             return true; // Accept all status codes for manual handling
           },

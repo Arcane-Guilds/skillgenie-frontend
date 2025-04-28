@@ -78,7 +78,7 @@ dependencies:
   media_scanner: ^2.2.0
   gal: ^2.3.1
   permission_handler: ^11.4.0
-  ffmpeg_kit_flutter: ^6.0.3
+  ffmpeg_kit_flutter_new: ^1.1.0
   flutter_pdfview: ^1.4.0
   ffmpeg_cli: ^0.3.0
   flutter_tts: ^4.2.2
@@ -97,6 +97,9 @@ dependencies:
   flutter_secure_storage: ^8.0.0
   circular_countdown_timer: ^0.2.4
   json_annotation: ^4.8.1
+
+
+  
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

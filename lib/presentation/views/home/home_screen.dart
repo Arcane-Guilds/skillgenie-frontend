@@ -7,6 +7,7 @@ import 'dart:convert';
 import '../../../data/models/user_model.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../../widgets/avatar_widget.dart';
+import '../chatbot/lesson_view.dart';
 
 // App-wide primary color
 const Color kPrimaryBlue = Color(0xFF29B6F6);
@@ -151,17 +152,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navigateToChatbot(context),
-        icon: const Icon(Icons.chat_bubble_outline),
-        label: const Text("Ask Genie"),
+      floatingActionButton: FloatingActionButton( 
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.chat_bubble_outline),
+                    title: const Text("Ask Genie"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.school_outlined),
+                    title: const Text("Lesson in a video"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => LessonView()),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        child: const Icon(Icons.menu),
         backgroundColor: kPrimaryBlue,
         foregroundColor: Colors.white,
-        elevation: 4,
-      ).animate().scale(
-        duration: 300.ms,
-        curve: Curves.easeOut,
-        delay: 500.ms,
       ),
     );
   }

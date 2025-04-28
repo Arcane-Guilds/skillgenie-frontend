@@ -8,6 +8,13 @@ import '../../data/models/chat_message.dart';
 class ChatbotViewModel extends ChangeNotifier {
   final ChatbotRepository _chatbotRepository;
   final ImagePicker _imagePicker = ImagePicker();
+
+  // RegExp for coding-related topics
+  final RegExp _codingRegex = RegExp(
+    r'\b(programming|flutter|java|python|dart|code|coding|algorithm|function|variable|class|loop|AI|widget|repository|ViewModel)\b',
+    caseSensitive: false,
+  );
+
   
   List<ChatMessage> _chatHistory = [];
   bool _isLoading = false;
@@ -61,6 +68,13 @@ class ChatbotViewModel extends ChangeNotifier {
   // Send text message
   Future<void> sendTextMessage(String message) async {
     if (message.trim().isEmpty) return;
+
+        // Filter non-coding-related messages
+    if (!_codingRegex.hasMatch(message)) {
+      _errorMessage = "I'm not Trained for this topic.";
+      notifyListeners();
+      return;
+    }
 
     _setLoading(true);
     _errorMessage = null;
@@ -175,10 +189,12 @@ class ChatbotViewModel extends ChangeNotifier {
       _setError('Error clearing chat history: ${e.toString()}');
     }
   }
+  
 
   // Helper method to set loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
   }
+  
 } 

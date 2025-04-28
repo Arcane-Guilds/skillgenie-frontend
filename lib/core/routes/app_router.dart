@@ -1,4 +1,4 @@
- import 'package:skillGenie/data/models/evaluation_question.dart';
+import 'package:skillGenie/data/models/evaluation_question.dart';
 import 'package:skillGenie/presentation/views/game/games_screens.dart';
 import 'package:skillGenie/presentation/views/game/game_page.dart';
 import 'package:skillGenie/presentation/views/summary/summary_page.dart';
@@ -48,10 +48,12 @@ required this.currentIndex,
 
 @override
 Widget build(BuildContext context) {
-return Scaffold(
-body: child,
-bottomNavigationBar: CustomBottomNavBar(currentIndex: currentIndex),
-);
+  final bool isMobile = !kIsWeb;
+  
+  return Scaffold(
+    body: child,
+    bottomNavigationBar: isMobile ? CustomBottomNavBar(currentIndex: currentIndex) : null,
+  );
 }
 }
 

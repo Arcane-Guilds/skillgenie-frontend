@@ -6,6 +6,7 @@ class User {
   final String email;
   final String? role;
   final String? avatar;
+  final String? profilePicture;
   final String? bio;
   final int streak;
   final int totalXP;
@@ -17,6 +18,7 @@ class User {
     required this.email,
     this.role,
     this.avatar,
+    this.profilePicture,
     this.bio,
     this.streak = 0,
     this.totalXP = 0,
@@ -24,7 +26,6 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-
     try {
       final id = json['id'] ?? json['_id'] ?? ''; // Handle both id and _id
       if (id == '') {
@@ -35,13 +36,24 @@ class User {
       final username = json['username'] ?? 'Unknown User';
       final email = json['email'] ?? 'no-email@example.com';
 
+      // Check for profilePicture in various fields that might contain the image
+      String? profilePic = json['profilePicture'] ?? 
+                          json['profileImage'] ?? 
+                          json['avatar'] ?? 
+                          json['profilePic'] ?? 
+                          json['image'];
+
       return User(
         id: id,
         username: username,
         email: email,
         role: json['role'],
         avatar: json['avatar'],
+        profilePicture: profilePic,
         bio: json['bio'],
+        streak: json['streak'] ?? 0,
+        totalXP: json['totalXP'] ?? 0,
+        dailyProgress: (json['dailyProgress'] ?? 0.0).toDouble(),
       );
     } catch (e) {
       print('Error parsing User JSON: $e');
@@ -53,19 +65,6 @@ class User {
         email: 'error@example.com',
       );
     }
-
-    return User(
-      id: json['id'] ?? json['_id'], // Handle both id and _id
-      username: json['username'],
-      email: json['email'],
-      role: json['role'],
-      avatar: json['avatar'],
-      bio: json['bio'],
-      streak: json['streak'] ?? 0,
-      totalXP: json['totalXP'] ?? 0,
-      dailyProgress: (json['dailyProgress'] ?? 0.0).toDouble(),
-    );
-
   }
 
   Map<String, dynamic> toJson() {
@@ -75,6 +74,7 @@ class User {
       'email': email,
       'role': role,
       'avatar': avatar,
+      'profilePicture': profilePicture,
       'bio': bio,
       'streak': streak,
       'totalXP': totalXP,
@@ -101,6 +101,7 @@ class User {
     String? email,
     String? role,
     String? avatar,
+    String? profilePicture,
     String? bio,
     int? streak,
     int? totalXP,
@@ -112,6 +113,7 @@ class User {
       email: email ?? this.email,
       role: role ?? this.role,
       avatar: avatar ?? this.avatar,
+      profilePicture: profilePicture ?? this.profilePicture,
       bio: bio ?? this.bio,
       streak: streak ?? this.streak,
       totalXP: totalXP ?? this.totalXP,

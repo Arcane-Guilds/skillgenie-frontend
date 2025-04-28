@@ -2,7 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConstants {
   // Support multiple environments with a fallback to localhost
-  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'https://78cd-196-203-207-178.ngrok-free.app';
 }
 
 class AnalyticsConstants {

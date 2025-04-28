@@ -33,6 +33,7 @@ import '../../presentation/views/chat/chat_detail_screen.dart';
 import '../../presentation/views/chat/socket_test_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
+import '../widgets/responsive_navigation.dart';
 
 // ShellScaffold remains the same
 class ShellScaffold extends StatelessWidget {
@@ -47,9 +48,9 @@ required this.currentIndex,
 
 @override
 Widget build(BuildContext context) {
-return Scaffold(
-body: child,
-bottomNavigationBar: CustomBottomNavBar(currentIndex: currentIndex),
+return ResponsiveNavigation(
+  child: child,
+  currentIndex: currentIndex,
 );
 }
 }

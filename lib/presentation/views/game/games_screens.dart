@@ -1,11 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:skillGenie/presentation/views/game/game_page.dart';
 import 'package:skillGenie/presentation/views/hangman/homegame_screen.dart';
 import 'package:skillGenie/crosswordgame/search.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/ui_utils.dart';
 
 class GamesScreen extends StatefulWidget {
   const GamesScreen({super.key});
@@ -46,18 +48,10 @@ class _GamesScreenState extends State<GamesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Games',
-          style: TextStyle(
-            color: AppTheme.textPrimaryColor,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: UiUtils.responsiveAppBar(
+        title: 'Games',
         centerTitle: true,
         backgroundColor: AppTheme.surfaceColor,
-        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(Icons.brightness_6, color: AppTheme.textPrimaryColor),

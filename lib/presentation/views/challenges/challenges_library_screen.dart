@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/constants/api_constants.dart';
+import '../../../core/utils/ui_utils.dart';
 import 'step1_screen.dart';
 
 // App-wide primary color - changing from purple to blue
@@ -96,6 +98,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     Size size = MediaQuery.of(context).size;
+    final bool isWeb = kIsWeb;
 
     // Challenge categories
     List<String> challengesTypes = [
@@ -121,48 +124,49 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // App Bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
+              // App Bar - only show in mobile mode
+              if (!isWeb) 
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            color: kPrimaryBlue, // Changed to blue
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Challenges Library',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
-                          Icons.arrow_back_ios_new,
+                          Icons.info_outline,
                           color: kPrimaryBlue, // Changed to blue
                           size: 20,
                         ),
                       ),
-                    ),
-                    Text(
-                      'Challenges Library',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.info_outline,
-                        color: kPrimaryBlue, // Changed to blue
-                        size: 20,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               
               // Content
               Expanded(

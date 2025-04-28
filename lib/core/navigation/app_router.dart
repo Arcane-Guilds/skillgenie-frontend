@@ -34,17 +34,18 @@ import '../../presentation/views/chat/socket_test_screen.dart';
 import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 import '../widgets/responsive_navigation.dart';
+import '../../presentation/views/reclamation/reclamation_screen.dart';
 
 // ShellScaffold remains the same
 class ShellScaffold extends StatelessWidget {
-final Widget child;
-final int currentIndex;
+  final Widget child;
+  final int currentIndex;
 
-const ShellScaffold({
-Key? key,
-required this.child,
-required this.currentIndex,
-}) : super(key: key);
+  const ShellScaffold({
+    Key? key,
+    required this.child,
+    required this.currentIndex,
+  }) : super(key: key);
 
 @override
 Widget build(BuildContext context) {
@@ -60,9 +61,9 @@ Page<void> _buildTransitionPage(Widget child) {
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) =>
         FadeTransition(
-          opacity: animation,
-          child: child,
-        ),
+      opacity: animation,
+      child: child,
+    ),
     key: UniqueKey(),
   );
 }
@@ -91,13 +92,16 @@ class NoHeroTheme extends InheritedWidget {
 class HeroAnimationObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    print('HeroAnimationObserver: Pushed ${route.settings.name ?? 'unnamed route'}');
+    print(
+        'HeroAnimationObserver: Pushed ${route.settings.name ?? 'unnamed route'}');
     super.didPush(route, previousRoute);
   }
 
   @override
-  void didStartUserGesture(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    print('HeroAnimationObserver: Gesture on ${route.settings.name ?? 'unnamed route'}');
+  void didStartUserGesture(
+      Route<dynamic> route, Route<dynamic>? previousRoute) {
+    print(
+        'HeroAnimationObserver: Gesture on ${route.settings.name ?? 'unnamed route'}');
     super.didStartUserGesture(route, previousRoute);
   }
 }
@@ -124,12 +128,14 @@ class NavigationErrorObserver extends NavigatorObserver {
 
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    print('Navigation: Replaced ${oldRoute?.settings.name} with ${newRoute?.settings.name}');
+    print(
+        'Navigation: Replaced ${oldRoute?.settings.name} with ${newRoute?.settings.name}');
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 
   @override
-  void didStartUserGesture(Route<dynamic> route, Route<dynamic>? previousRoute) {
+  void didStartUserGesture(
+      Route<dynamic> route, Route<dynamic>? previousRoute) {
     print('Navigation: Started gesture on ${route.settings.name}');
     super.didStartUserGesture(route, previousRoute);
   }
@@ -157,7 +163,8 @@ class CustomHeroController extends HeroController {
 
   Widget createPlatformSpecificHeroFlightShuttleBuilder(Widget child) {
     // Always use basic fade transition which is less problematic
-    return FadeTransition(opacity: const AlwaysStoppedAnimation(1.0), child: child);
+    return FadeTransition(
+        opacity: const AlwaysStoppedAnimation(1.0), child: child);
   }
 }
 
@@ -166,8 +173,8 @@ final customHeroController = CustomHeroController();
 
 // Add this function to disable Hero animations during bottom tab navigation:
 final appRouter = GoRouter(
-initialLocation: '/',
-refreshListenable: serviceLocator<AuthViewModel>(),
+  initialLocation: '/',
+  refreshListenable: serviceLocator<AuthViewModel>(),
   // Add global redirect to recover from errors
   redirect: (BuildContext context, GoRouterState state) {
     // If we detect a path that doesn't exist or has an error, redirect to home
@@ -186,11 +193,7 @@ refreshListenable: serviceLocator<AuthViewModel>(),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 60
-          ),
+          const Icon(Icons.error_outline, color: Colors.red, size: 60),
           const SizedBox(height: 16),
           const Text(
             'Navigation error occurred',
@@ -209,175 +212,183 @@ refreshListenable: serviceLocator<AuthViewModel>(),
   observers: [NavigationErrorObserver(), HeroAnimationObserver()],
   // Optimize for memory and performance
   debugLogDiagnostics: kDebugMode,
-routes: [
-GoRoute(
-path: '/',
-builder: (context, state) => const SplashScreen(),
-),
-GoRoute(
-path: '/onboarding',
-builder: (context, state) => const OnboardingScreen(),
-),
-GoRoute(
-path: '/login',
-builder: (context, state) => const LoginScreen(),
-),
-GoRoute(
-path: '/signup',
-builder: (context, state) => const SignUpScreen(),
-),
-GoRoute(
-path: '/forgot-password',
-builder: (context, state) => const ForgotPasswordScreen(),
-),
-GoRoute(
-path: '/verify-otp',
-builder: (context, state) {
-final email = (state.extra as Map<String, dynamic>)['email'] as String;
-return OtpVerificationScreen(email: email);
-},
-),
-GoRoute(
-path: '/reset-password',
-builder: (context, state) {
-final email = (state.extra as Map<String, dynamic>)['email'] as String;
-return ResetPasswordScreen(email: email);
-},
-),
-GoRoute(
-path: '/settings',
-builder: (context, state) => const SettingsScreen(),
-),
-GoRoute(
-path: '/quiz/:userId',
-builder: (context, state) {
-final userId = state.pathParameters['userId']!;
-return ChangeNotifierProvider(
-create: (context) => serviceLocator.get<QuizViewModel>(param1: userId)..fetchQuizQuestions(),
-child: QuizPage(userId: userId),
-);
-},
-),
-GoRoute(
-path: '/evaluation',
-builder: (context, state) {
-final args = state.extra as Map<String, dynamic>;
-return ChangeNotifierProvider(
-create: (context) => serviceLocator.get<QuizViewModel>(param1: args['userId']),
-child: EvaluationScreen(
-questions: args['questions'] as List<EvaluationQuestion>,
-userId: args['userId'] as String,
-),
-);
-},
-),
-GoRoute(
-path: '/game',
-pageBuilder: (context, state) => _buildTransitionPage(const Game()),
-routes: [
-GoRoute(
-path: 'summary',
-pageBuilder: (context, state) {
-final bool won = state.extra as bool;
-return _buildTransitionPage(
-SummaryPage(
-won: won,
-),
-);
-},
-),
-],
-),
-GoRoute(
-path: '/chatbot',
-builder: (context, state) => const ChatbotScreen(),
-),
-GoRoute(
-path: '/course/:courseId',
-builder: (context, state) {
-final courseId = state.pathParameters['courseId']!;
-return CourseRoadmapScreen(courseId: courseId);
-},
-),
-GoRoute(
-path: '/course-detail/:courseId',
-builder: (context, state) {
-final courseId = state.pathParameters['courseId']!;
-final levelIndex = int.tryParse(state.uri.queryParameters['level'] ?? '');
-final chapterIndex = int.tryParse(state.uri.queryParameters['chapter'] ?? '');
-return CourseDetailScreen(
-courseId: courseId,
-initialLevelIndex: levelIndex,
-initialChapterIndex: chapterIndex,
-);
-},
-),
-GoRoute(
-path: '/lab/:chapterId',
-builder: (context, state) {
-final chapterId = state.pathParameters['chapterId']!;
-return LabScreen(chapterId: chapterId);
-},
-),
-  GoRoute(
-    path: '/post/:postId',
-    builder: (context, state) {
-      final postId = state.pathParameters['postId']!;
-      return PostDetailScreen(postId: postId);
-    },
-  ),
-  GoRoute(
-    path: '/chat/detail',
-    name: 'chatDetail',
-    builder: (context, state) {
-      final chatId = state.extra as String;
-      return ChatDetailScreen(chatId: chatId);
-    },
-  ),
-GoRoute(
-path: '/socket-test',
-builder: (context, state) => const SocketTestScreen(),
-),
-ShellRoute(
-builder: (context, state, child) {
-int index = _getTabIndex(state.fullPath ?? '/home');
-return ShellScaffold(
-currentIndex: index,
-child: child,
-);
-},
-routes: [
-GoRoute(
-path: '/home',
-builder: (context, state) => const HomeScreen(),
-),
-GoRoute(
-path: '/games',
-builder: (context, state) => const GamesScreen(),
-),
-GoRoute(
-path: '/library',
-builder: (context, state) => const ChallengesLibraryScreen(),
-),
-  GoRoute(
-    path: '/community',
-    builder: (context, state) => const CommunityScreen(),
-  ),
-GoRoute(
-path: '/notifications',
-builder: (context, state) => const NotificationsScreen(),
-),
-GoRoute(
-path: '/profile',
-builder: (context, state) => const ProfileScreen(),
-),
-GoRoute(
-path: '/friends',
-builder: (context, state) => const FriendsScreen(),
-),
-],
-),
-],
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/signup',
+      builder: (context, state) => const SignUpScreen(),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/verify-otp',
+      builder: (context, state) {
+        final email = (state.extra as Map<String, dynamic>)['email'] as String;
+        return OtpVerificationScreen(email: email);
+      },
+    ),
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) {
+        final email = (state.extra as Map<String, dynamic>)['email'] as String;
+        return ResetPasswordScreen(email: email);
+      },
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/reclamation',
+      builder: (context, state) => const ReclamationScreen(),
+    ),
+    GoRoute(
+      path: '/quiz/:userId',
+      builder: (context, state) {
+        final userId = state.pathParameters['userId']!;
+        return ChangeNotifierProvider(
+          create: (context) => serviceLocator.get<QuizViewModel>(param1: userId)
+            ..fetchQuizQuestions(),
+          child: QuizPage(userId: userId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/evaluation',
+      builder: (context, state) {
+        final args = state.extra as Map<String, dynamic>;
+        return ChangeNotifierProvider(
+          create: (context) =>
+              serviceLocator.get<QuizViewModel>(param1: args['userId']),
+          child: EvaluationScreen(
+            questions: args['questions'] as List<EvaluationQuestion>,
+            userId: args['userId'] as String,
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/game',
+      pageBuilder: (context, state) => _buildTransitionPage(const Game()),
+      routes: [
+        GoRoute(
+          path: 'summary',
+          pageBuilder: (context, state) {
+            final bool won = state.extra as bool;
+            return _buildTransitionPage(
+              SummaryPage(
+                won: won,
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/chatbot',
+      builder: (context, state) => const ChatbotScreen(),
+    ),
+    GoRoute(
+      path: '/course/:courseId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        return CourseRoadmapScreen(courseId: courseId);
+      },
+    ),
+    GoRoute(
+      path: '/course-detail/:courseId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final levelIndex =
+            int.tryParse(state.uri.queryParameters['level'] ?? '');
+        final chapterIndex =
+            int.tryParse(state.uri.queryParameters['chapter'] ?? '');
+        return CourseDetailScreen(
+          courseId: courseId,
+          initialLevelIndex: levelIndex,
+          initialChapterIndex: chapterIndex,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/lab/:chapterId',
+      builder: (context, state) {
+        final chapterId = state.pathParameters['chapterId']!;
+        return LabScreen(chapterId: chapterId);
+      },
+    ),
+    GoRoute(
+      path: '/post/:postId',
+      builder: (context, state) {
+        final postId = state.pathParameters['postId']!;
+        return PostDetailScreen(postId: postId);
+      },
+    ),
+    GoRoute(
+      path: '/chat/detail',
+      name: 'chatDetail',
+      builder: (context, state) {
+        final chatId = state.extra as String;
+        return ChatDetailScreen(chatId: chatId);
+      },
+    ),
+    GoRoute(
+      path: '/socket-test',
+      builder: (context, state) => const SocketTestScreen(),
+    ),
+    ShellRoute(
+      builder: (context, state, child) {
+        int index = _getTabIndex(state.fullPath ?? '/home');
+        return ShellScaffold(
+          currentIndex: index,
+          child: child,
+        );
+      },
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/games',
+          builder: (context, state) => const GamesScreen(),
+        ),
+        GoRoute(
+          path: '/library',
+          builder: (context, state) => const ChallengesLibraryScreen(),
+        ),
+        GoRoute(
+          path: '/community',
+          builder: (context, state) => const CommunityScreen(),
+        ),
+        GoRoute(
+          path: '/notifications',
+          builder: (context, state) => const NotificationsScreen(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: '/friends',
+          builder: (context, state) => const FriendsScreen(),
+        ),
+      ],
+    ),
+  ],
 );
 
 // Function to determine if it's a bottom navigation transition
@@ -385,11 +396,11 @@ bool _isBottomNavTransition(GoRouterState state) {
   try {
     final path = state.fullPath ?? '';
     return path.startsWith('/home') ||
-           path.startsWith('/games') ||
-           path.startsWith('/library') ||
-           path.startsWith('/community') ||
-           path.startsWith('/notifications') ||
-           path.startsWith('/profile');
+        path.startsWith('/games') ||
+        path.startsWith('/library') ||
+        path.startsWith('/community') ||
+        path.startsWith('/notifications') ||
+        path.startsWith('/profile');
   } catch (e) {
     print('Error in _isBottomNavTransition: $e');
     return false;
@@ -405,7 +416,8 @@ int _getTabIndex(String location) {
       index = 1;
     } else if (location.startsWith('/library')) {
       index = 2;
-    } else if (location.startsWith('/community') || location.startsWith('/notifications')) {
+    } else if (location.startsWith('/community') ||
+        location.startsWith('/notifications')) {
       index = 3;
     } else if (location.startsWith('/profile')) {
       index = 4;

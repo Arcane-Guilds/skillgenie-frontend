@@ -13,7 +13,6 @@ import 'data/datasources/api_client.dart';
 
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
-import 'core/widgets/app_logo.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/chat_repository.dart';
 import 'data/repositories/course_repository.dart';
@@ -26,6 +25,7 @@ import 'presentation/viewmodels/community_viewmodel.dart';
 import 'presentation/viewmodels/friend_viewmodel.dart';
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'presentation/viewmodels/reclamation_viewmodel.dart';
 
 // Conditionally import web plugins only on web platform
 // This prevents dart:ui_web errors on mobile platforms
@@ -122,6 +122,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => serviceLocator<ChatViewModel>(),
         ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              ReclamationViewModel(context.read<AuthViewModel>()),
+        ),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
@@ -162,7 +166,9 @@ class MyApp extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      kDebugMode ? details.exception.toString() : 'An error occurred',
+                      kDebugMode
+                          ? details.exception.toString()
+                          : 'An error occurred',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 16),

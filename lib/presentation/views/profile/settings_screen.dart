@@ -49,7 +49,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadUserProfile() async {
-    final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+    final profileViewModel =
+        Provider.of<ProfileViewModel>(context, listen: false);
     try {
       final profile = await profileViewModel.getUserProfile();
       if (mounted) {
@@ -89,10 +90,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
   // ================== Daily Reminder Section ==================
   void _showReminderTimePicker(BuildContext context) async {
     final reminderVM = Provider.of<ReminderViewModel>(context, listen: false);
-    final initialTime = reminderVM.reminderTime ?? const TimeOfDay(hour: 20, minute: 0);
+    final initialTime =
+        reminderVM.reminderTime ?? const TimeOfDay(hour: 20, minute: 0);
 
     final pickedTime = await showTimePicker(
       context: context,
@@ -112,7 +115,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (pickedTime != null) {
       await reminderVM.setReminderTime(pickedTime, true);
       if (mounted) {
-        _showSuccessSnackBar('Daily reminder set for ${pickedTime.format(context)}');
+        _showSuccessSnackBar(
+            'Daily reminder set for ${pickedTime.format(context)}');
       }
     }
   }
@@ -135,7 +139,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -229,7 +234,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }
 
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
               title: Row(
                 children: [
                   Icon(Icons.lock_reset, color: AppTheme.primaryColor),
@@ -248,14 +254,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         obscureText: obscureCurrent,
                         decoration: InputDecoration(
                           labelText: 'Current Password',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
-                            icon: Icon(obscureCurrent ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setState(() => obscureCurrent = !obscureCurrent),
+                            icon: Icon(obscureCurrent
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () => setState(
+                                () => obscureCurrent = !obscureCurrent),
                           ),
                         ),
-                        validator: (value) => value == null || value.isEmpty ? 'Enter current password' : null,
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Enter current password'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -264,20 +276,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onChanged: validatePassword,
                         decoration: InputDecoration(
                           labelText: 'New Password',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           prefixIcon: const Icon(Icons.password),
                           suffixIcon: IconButton(
-                            icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setState(() => obscureNew = !obscureNew),
+                            icon: Icon(obscureNew
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () =>
+                                setState(() => obscureNew = !obscureNew),
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Enter new password';
+                          if (value == null || value.isEmpty)
+                            return 'Enter new password';
                           if (!hasMinLength) return 'At least 8 characters';
-                          if (!hasUppercase) return 'At least one uppercase letter';
-                          if (!hasLowercase) return 'At least one lowercase letter';
+                          if (!hasUppercase)
+                            return 'At least one uppercase letter';
+                          if (!hasLowercase)
+                            return 'At least one lowercase letter';
                           if (!hasNumber) return 'At least one number';
-                          if (!hasSpecialChar) return 'At least one special character';
+                          if (!hasSpecialChar)
+                            return 'At least one special character';
                           return null;
                         },
                       ),
@@ -286,11 +306,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildRequirementRow(hasMinLength, 'At least 8 characters'),
-                            _buildRequirementRow(hasUppercase, 'At least one uppercase letter'),
-                            _buildRequirementRow(hasLowercase, 'At least one lowercase letter'),
-                            _buildRequirementRow(hasNumber, 'At least one number'),
-                            _buildRequirementRow(hasSpecialChar, 'At least one special character'),
+                            _buildRequirementRow(
+                                hasMinLength, 'At least 8 characters'),
+                            _buildRequirementRow(
+                                hasUppercase, 'At least one uppercase letter'),
+                            _buildRequirementRow(
+                                hasLowercase, 'At least one lowercase letter'),
+                            _buildRequirementRow(
+                                hasNumber, 'At least one number'),
+                            _buildRequirementRow(hasSpecialChar,
+                                'At least one special character'),
                           ],
                         ),
                       ),
@@ -301,23 +326,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onChanged: checkPasswordsMatch,
                         decoration: InputDecoration(
                           labelText: 'Confirm New Password',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           prefixIcon: const Icon(Icons.check_circle_outline),
                           suffixIcon: IconButton(
-                            icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setState(() => obscureConfirm = !obscureConfirm),
+                            icon: Icon(obscureConfirm
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () => setState(
+                                () => obscureConfirm = !obscureConfirm),
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Confirm your password';
-                          if (value != newPasswordController.text) return 'Passwords do not match';
+                          if (value == null || value.isEmpty)
+                            return 'Confirm your password';
+                          if (value != newPasswordController.text)
+                            return 'Passwords do not match';
                           return null;
                         },
                       ),
                       if (confirmPasswordController.text.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
-                          child: _buildRequirementRow(passwordsMatch, 'Passwords match'),
+                          child: _buildRequirementRow(
+                              passwordsMatch, 'Passwords match'),
                         ),
                     ],
                   ),
@@ -334,14 +366,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Navigator.of(context).pop();
                       setState(() => _isLoading = true);
                       try {
-                        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                        final profileViewModel = Provider.of<ProfileViewModel>(
+                            context,
+                            listen: false);
                         await profileViewModel.updatePassword(
                           currentPasswordController.text,
                           newPasswordController.text,
                         );
-                        if (mounted) _showSuccessSnackBar('Password updated successfully!');
+                        if (mounted)
+                          _showSuccessSnackBar(
+                              'Password updated successfully!');
                       } catch (e) {
-                        if (mounted) _showErrorSnackBar('Failed to update password: $e');
+                        if (mounted)
+                          _showErrorSnackBar('Failed to update password: $e');
                       } finally {
                         if (mounted) setState(() => _isLoading = false);
                       }
@@ -352,8 +389,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                   ),
                 ),
               ],
@@ -412,7 +451,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               try {
                 setState(() => _isLoading = true);
-                final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                final profileViewModel =
+                    Provider.of<ProfileViewModel>(context, listen: false);
                 await profileViewModel.logout();
                 if (mounted) {
                   context.go('/login');
@@ -426,7 +466,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             icon: const Icon(Icons.logout),
             label: const Text('Logout'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange, foregroundColor: Colors.white),
           ),
         ],
         shape: RoundedRectangleBorder(
@@ -480,7 +521,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               try {
                 setState(() => _isLoading = true);
-                final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                final profileViewModel =
+                    Provider.of<ProfileViewModel>(context, listen: false);
                 await profileViewModel.deleteAccount();
                 if (mounted) {
                   context.go('/login');
@@ -488,13 +530,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               } catch (e) {
                 if (mounted) {
                   setState(() => _isLoading = false);
-                  _showErrorSnackBar('Failed to delete account. Please try again.');
+                  _showErrorSnackBar(
+                      'Failed to delete account. Please try again.');
                 }
               }
             },
             icon: const Icon(Icons.delete_forever),
             label: const Text('Delete Account'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
           ),
         ],
         shape: RoundedRectangleBorder(
@@ -567,53 +611,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: _isUploadingImage
                     ? null
                     : () {
-                  setState(() => _imageFile = null);
-                  Navigator.pop(context);
-                },
+                        setState(() => _imageFile = null);
+                        Navigator.pop(context);
+                      },
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: _isUploadingImage
                     ? null
                     : () async {
-                  setDialogState(() {
-                    _isUploadingImage = true;
-                  });
-
-                  try {
-                    final profileViewModel = Provider.of<ProfileViewModel>(
-                        context,
-                        listen: false
-                    );
-
-                    await profileViewModel.updateProfileImage(
-                      _imageFile!,
-                      onProgress: (progress) {
                         setDialogState(() {
-                          _uploadProgress = progress;
+                          _isUploadingImage = true;
                         });
-                      },
-                    );
 
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _showSuccessSnackBar('Profile picture updated successfully!');
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _showErrorSnackBar('Failed to update profile picture: ${e.toString()}');
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() {
-                        _isUploadingImage = false;
-                        _uploadProgress = 0;
-                        _imageFile = null;
-                      });
-                    }
-                  }
-                },
+                        try {
+                          final profileViewModel =
+                              Provider.of<ProfileViewModel>(context,
+                                  listen: false);
+
+                          await profileViewModel.updateProfileImage(
+                            _imageFile!,
+                            onProgress: (progress) {
+                              setDialogState(() {
+                                _uploadProgress = progress;
+                              });
+                            },
+                          );
+
+                          if (mounted) {
+                            Navigator.pop(context);
+                            _showSuccessSnackBar(
+                                'Profile picture updated successfully!');
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            Navigator.pop(context);
+                            _showErrorSnackBar(
+                                'Failed to update profile picture: ${e.toString()}');
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isUploadingImage = false;
+                              _uploadProgress = 0;
+                              _imageFile = null;
+                            });
+                          }
+                        }
+                      },
                 child: const Text('Save'),
               ),
             ],
@@ -674,14 +719,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 try {
                   setState(() => _isLoading = true);
-                  final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-                  await profileViewModel.updateUsername(_usernameController.text.trim());
+                  final profileViewModel =
+                      Provider.of<ProfileViewModel>(context, listen: false);
+                  await profileViewModel
+                      .updateUsername(_usernameController.text.trim());
                   if (mounted) {
                     _showSuccessSnackBar('Username updated successfully!');
                   }
                 } catch (e) {
                   if (mounted) {
-                    _showErrorSnackBar('Failed to update username: ${e.toString()}');
+                    _showErrorSnackBar(
+                        'Failed to update username: ${e.toString()}');
                   }
                 } finally {
                   if (mounted) {
@@ -751,7 +799,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 try {
                   setState(() => _isLoading = true);
-                  final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                  final profileViewModel =
+                      Provider.of<ProfileViewModel>(context, listen: false);
                   await profileViewModel.updateBio(_bioController.text.trim());
                   if (mounted) {
                     _showSuccessSnackBar('Bio updated successfully!');
@@ -783,7 +832,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showEditProfileDialog() {
-    final usernameController = TextEditingController(text: _usernameController.text);
+    final usernameController =
+        TextEditingController(text: _usernameController.text);
     final bioController = TextEditingController(text: _bioController.text);
     File? tempImageFile = _imageFile;
 
@@ -797,7 +847,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Edit Profile', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const Text('Edit Profile',
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: _pickImage,
@@ -809,7 +861,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ? FileImage(tempImageFile)
                             : null,
                         child: tempImageFile == null
-                            ? const Icon(Icons.person, size: 48, color: Colors.grey)
+                            ? const Icon(Icons.person,
+                                size: 48, color: Colors.grey)
                             : null,
                         backgroundColor: Colors.grey[200],
                       ),
@@ -819,7 +872,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: CircleAvatar(
                           backgroundColor: AppTheme.primaryColor,
                           radius: 18,
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          child: const Icon(Icons.camera_alt,
+                              color: Colors.white, size: 20),
                         ),
                       ),
                     ],
@@ -830,7 +884,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: usernameController,
                   decoration: InputDecoration(
                     labelText: 'Username',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -839,7 +894,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     labelText: 'Bio',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -849,15 +905,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onPressed: () async {
                       Navigator.pop(context);
                       setState(() => _isLoading = true);
-                      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                      final profileViewModel =
+                          Provider.of<ProfileViewModel>(context, listen: false);
                       try {
                         if (tempImageFile != null) {
-                          await profileViewModel.updateProfileImage(tempImageFile);
+                          await profileViewModel
+                              .updateProfileImage(tempImageFile);
                         }
-                        await profileViewModel.updateUsername(usernameController.text.trim());
-                        await profileViewModel.updateBio(bioController.text.trim());
+                        await profileViewModel
+                            .updateUsername(usernameController.text.trim());
+                        await profileViewModel
+                            .updateBio(bioController.text.trim());
                         setState(() {
-                          _usernameController.text = usernameController.text.trim();
+                          _usernameController.text =
+                              usernameController.text.trim();
                           _bioController.text = bioController.text.trim();
                         });
                         _showSuccessSnackBar('Profile updated successfully!');
@@ -869,10 +930,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('Save Changes',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -906,159 +969,218 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Genie Avatar
-            const Center(
-              child: GenieAvatar(
-                state: AvatarState.idle,
-                size: 100,
-                message: "Manage your profile & preferences!",
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Profile Card
-            Card(
-              color: AppTheme.surfaceColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundImage: _imageFile != null
-                            ? FileImage(_imageFile!)
-                            : (user?.avatar != null && user!.avatar!.isNotEmpty
-                                ? NetworkImage(user.avatar!)
-                                : null) as ImageProvider<Object>?,
-                        child: _imageFile == null && (user?.avatar == null || user!.avatar!.isEmpty)
-                            ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                            : null,
-                        backgroundColor: Colors.grey[200],
-                      ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Genie Avatar
+                  const Center(
+                    child: GenieAvatar(
+                      state: AvatarState.idle,
+                      size: 100,
+                      message: "Manage your profile & preferences!",
                     ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  const SizedBox(height: 24),
+                  // Profile Card
+                  Card(
+                    color: AppTheme.surfaceColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
                         children: [
-                          Text(
-                            _usernameController.text,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: CircleAvatar(
+                              radius: 40,
+                              backgroundImage: _imageFile != null
+                                  ? FileImage(_imageFile!)
+                                  : (user?.avatar != null &&
+                                          user!.avatar!.isNotEmpty
+                                      ? NetworkImage(user.avatar!)
+                                      : null) as ImageProvider<Object>?,
+                              child: _imageFile == null &&
+                                      (user?.avatar == null ||
+                                          user!.avatar!.isEmpty)
+                                  ? const Icon(Icons.person,
+                                      size: 40, color: Colors.grey)
+                                  : null,
+                              backgroundColor: Colors.grey[200],
+                            ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _bioController.text.isNotEmpty ? _bioController.text : "No bio set.",
-                            style: const TextStyle(color: Colors.grey),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _usernameController.text,
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _bioController.text.isNotEmpty
+                                      ? _bioController.text
+                                      : "No bio set.",
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: _showEditProfileDialog,
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: _showEditProfileDialog,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            // Section: Security
-            const Text('Security', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Card(
-              color: AppTheme.surfaceColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              elevation: 2,
-              child: ListTile(
-                leading: Icon(Icons.password, color: AppTheme.primaryColor),
-                title: const Text('Change Password'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: _showChangePasswordDialog,
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Section: Reminders
-            const Text('Reminders', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Consumer<ReminderViewModel>(
-              builder: (context, reminderVM, _) => Card(
-                color: AppTheme.surfaceColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                elevation: 2,
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(Icons.notifications_active, color: AppTheme.primaryColor, size: 28),
                   ),
-                  title: const Text('Daily Reminder', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                    reminderVM.remindersEnabled
-                        ? 'Set for ${reminderVM.formattedTime}'
-                        : 'No reminder set',
-                    style: TextStyle(
-                      color: reminderVM.remindersEnabled ? Colors.green : Colors.grey,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(height: 32),
+                  // Section: Security
+                  const Text('Security',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Card(
+                    color: AppTheme.surfaceColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 2,
+                    child: ListTile(
+                      leading:
+                          Icon(Icons.password, color: AppTheme.primaryColor),
+                      title: const Text('Change Password'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: _showChangePasswordDialog,
                     ),
                   ),
-                  trailing: Switch(
-                    value: reminderVM.remindersEnabled,
-                    onChanged: (value) async {
-                      if (value && reminderVM.reminderTime == null) {
-                        _showReminderTimePicker(context);
-                        return;
-                      }
-                      await reminderVM.toggleReminders(value);
-                    },
-                    activeColor: AppTheme.primaryColor,
+                  const SizedBox(height: 24),
+                  // Section: Reminders
+                  const Text('Reminders',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Consumer<ReminderViewModel>(
+                    builder: (context, reminderVM, _) => Card(
+                      color: AppTheme.surfaceColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      elevation: 2,
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(Icons.notifications_active,
+                              color: AppTheme.primaryColor, size: 28),
+                        ),
+                        title: const Text('Daily Reminder',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(
+                          reminderVM.remindersEnabled
+                              ? 'Set for ${reminderVM.formattedTime}'
+                              : 'No reminder set',
+                          style: TextStyle(
+                            color: reminderVM.remindersEnabled
+                                ? Colors.green
+                                : Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        trailing: Switch(
+                          value: reminderVM.remindersEnabled,
+                          onChanged: (value) async {
+                            if (value && reminderVM.reminderTime == null) {
+                              _showReminderTimePicker(context);
+                              return;
+                            }
+                            await reminderVM.toggleReminders(value);
+                          },
+                          activeColor: AppTheme.primaryColor,
+                        ),
+                        onTap: reminderVM.remindersEnabled
+                            ? () => _showReminderTimePicker(context)
+                            : null,
+                      ),
+                    ),
                   ),
-                  onTap: reminderVM.remindersEnabled
-                      ? () => _showReminderTimePicker(context)
-                      : null,
-                ),
+                  const SizedBox(height: 32),
+                  const Text('Support',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  // Reclamation Button
+                  Card(
+                    color: AppTheme.surfaceColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 2,
+                    child: ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.report_problem_outlined,
+                          color: Colors.blue,
+                          size: 28,
+                        ),
+                      ),
+                      title: const Text('Submit Reclamation',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text(
+                        'Report issues or submit feedback',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () => context.go('/reclamation'),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Section: Account Actions
+                  const Text('Account Actions',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Card(
+                    color: AppTheme.surfaceColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 2,
+                    child: ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.orange),
+                      title: const Text('Logout'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: _showLogoutConfirmation,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    color: AppTheme.surfaceColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 2,
+                    child: ListTile(
+                      leading:
+                          const Icon(Icons.delete_forever, color: Colors.red),
+                      title: const Text('Delete Account',
+                          style: TextStyle(color: Colors.red)),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: _showDeleteAccountConfirmation,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
-            // Section: Account Actions
-            const Text('Account Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Card(
-              color: AppTheme.surfaceColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              elevation: 2,
-              child: ListTile(
-                leading: const Icon(Icons.logout, color: Colors.orange),
-                title: const Text('Logout'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: _showLogoutConfirmation,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              color: AppTheme.surfaceColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              elevation: 2,
-              child: ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.red),
-                title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: _showDeleteAccountConfirmation,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
-

@@ -8,8 +8,6 @@ import 'final.dart';
 import 'package:skillGenie/crosswordgame/cross_settings.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter/foundation.dart';
-import 'dart:io' show Platform;
 import 'wiki.dart';
 import 'crossgen.dart';
 

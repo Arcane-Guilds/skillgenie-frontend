@@ -10,7 +10,6 @@ import 'package:skillGenie/data/models/course/level.dart';
 import '../../../data/models/course_model.dart';
 import '../../viewmodels/course_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../community/post_detail_screen.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/avatar_widget.dart';
 import '../../../core/theme/app_theme.dart';
@@ -175,11 +174,6 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
     int totalExercises = 0;
     int completedExercises = 0;
 
-    // Check if course.content or course.content.levels is null
-    if (course.content.levels == null) {
-      return 0.0;
-    }
-
     for (int levelIndex = 0; levelIndex < course.content.levels.length; levelIndex++) {
       final level = course.content.levels[levelIndex];
 
@@ -282,7 +276,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
               ),
               if (_showingGenieMessage)
                 Positioned(
-                  bottom: 0,
+                  bottom: 80,
                   left: 0,
                   right: 0,
                   child: _buildGenieMessage(course),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'maincross.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ErrorRoute extends StatelessWidget {
   ErrorRoute({ super.key, required this.error });

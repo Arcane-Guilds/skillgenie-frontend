@@ -91,12 +91,12 @@ class _ResponsiveNavigationState extends State<ResponsiveNavigation> {
   PreferredSizeWidget _buildWebAppBar(BuildContext context, {required bool isWideWeb}) {
     return AppBar(
       automaticallyImplyLeading: !isWideWeb, // Show drawer icon on narrow web views
-      title: Row(
+      title: const Row(
         children: [
           // Logo and app name
-          const AppLogo(height: 30),
-          const SizedBox(width: 10),
-          const Text('SkillGenie', style: TextStyle(fontWeight: FontWeight.bold)),
+          AppLogo(height: 30),
+          SizedBox(width: 10),
+          Text('SkillGenie', style: TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
       centerTitle: false, // Align title (logo and name) to the left
@@ -240,13 +240,13 @@ class _ResponsiveNavigationState extends State<ResponsiveNavigation> {
                       width: 32,
                       height: 32,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => GenieAvatar(
+                      errorBuilder: (context, error, stackTrace) => const GenieAvatar(
                         size: 32,
                         state: AvatarState.idle,
                       ),
                     ),
                   )
-                : GenieAvatar(
+                : const GenieAvatar(
                     size: 32,
                     state: AvatarState.idle,
                   ),

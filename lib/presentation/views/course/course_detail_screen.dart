@@ -156,11 +156,33 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/chatbot');
+          showDialog(
+            context: context,
+            builder: (context) => Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                width: 350,
+                height: 500,
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const ChatbotScreen(), // Your chatbot widget
+              ),
+            ),
+          );
         },
         backgroundColor: Theme.of(context).primaryColor,
-        child: GenieAvatar(state: AvatarState.idle, size: 40),
         tooltip: 'Ask SkillGenie',
+        child: GenieAvatar(state: AvatarState.idle, size: 40),
       ),
       body: Consumer<CourseViewModel>(
         builder: (context, courseViewModel, child) {
@@ -180,7 +202,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           return Column(
             children: [
               const SizedBox(height: 16),
-              Center(
+              const Center(
                 child: GenieAvatar(state: AvatarState.idle, size: 80),
               ),
               const SizedBox(height: 8),

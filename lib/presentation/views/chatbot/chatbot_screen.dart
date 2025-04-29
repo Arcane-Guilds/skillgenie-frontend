@@ -88,7 +88,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           }
           
           return Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.background,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             appBar: AppBar(
               elevation: 0,
               backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
@@ -228,7 +228,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             Text(
               'Start a conversation with SkillGenie',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -236,7 +236,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             Text(
               'Ask questions about your learning journey, get practice exercises, or discuss any topic you want to learn about.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
               ),
               textAlign: TextAlign.center,
             ),

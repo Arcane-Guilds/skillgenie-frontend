@@ -8,7 +8,6 @@ import 'crossgen.dart';
 import 'definition.dart';
 import 'dart:math';
 
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CrosswordRoute extends StatefulWidget {
   const CrosswordRoute({

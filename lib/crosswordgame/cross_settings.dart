@@ -1,11 +1,8 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'crossgen.dart';
 import 'maincross.dart';
 
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CrosswordSettingsRoute extends StatefulWidget {
   final int pageid;

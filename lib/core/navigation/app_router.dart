@@ -35,6 +35,8 @@ import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 import '../widgets/responsive_navigation.dart';
 import '../../presentation/views/reclamation/reclamation_screen.dart';
+import '../../presentation/views/genie_story_screen.dart';
+import '../../presentation/views/genie_tutorial_screen.dart';
 
 // ShellScaffold remains the same
 class ShellScaffold extends StatelessWidget {
@@ -222,6 +224,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
+      path: '/genie-story',
+      builder: (context, state) => const GenieStoryScreen(),
+    ),
+    GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
@@ -279,6 +285,10 @@ final appRouter = GoRouter(
           ),
         );
       },
+    ),
+    GoRoute(
+      path: '/tutorial',
+      builder: (context, state) => const GenieTutorialScreen(),
     ),
     GoRoute(
       path: '/game',

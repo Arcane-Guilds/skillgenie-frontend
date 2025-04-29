@@ -6,6 +6,9 @@ import '../../../data/models/course_model.dart';
 import '../../viewmodels/course_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/lab_viewmodel.dart';
+import '../chatbot/chatbot_screen.dart';
+import '../../widgets/avatar_widget.dart';
+import '../../widgets/common_widgets.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -150,19 +153,36 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        actions: [
-          // Add reminder button
-          IconButton(
-            icon: const Icon(Icons.notifications_active),
-            tooltip: 'Set Reminder',
-            onPressed: () {
-              final course = Provider.of<CourseViewModel>(context, listen: false).currentCourse;
-              if (course != null) {
-                context.push('/course-reminder/${course.id}', extra: course);
-              }
-            },
-          ),
-        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                width: 350,
+                height: 500,
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const ChatbotScreen(), // Your chatbot widget
+              ),
+            ),
+          );
+        },
+        backgroundColor: Theme.of(context).primaryColor,
+        tooltip: 'Ask SkillGenie',
+        child: GenieAvatar(state: AvatarState.idle, size: 40),
       ),
       body: Consumer<CourseViewModel>(
         builder: (context, courseViewModel, child) {
@@ -179,7 +199,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             return const Center(child: Text('Course not found'));
           }
 
-          return _buildChapterContent(course);
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              const Center(
+                child: GenieAvatar(state: AvatarState.idle, size: 80),
+              ),
+              const SizedBox(height: 8),
+              // Animated progress indicator for the current level
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: AnimatedProgressIndicator(
+                  progress: _calculateLevelProgress(course, _selectedLevelIndex),
+                  label: 'Level Progress',
+                  progressColor: Theme.of(context).primaryColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(child: _buildChapterContent(course)),
+            ],
+          );
         },
       ),
       bottomNavigationBar: Consumer<CourseViewModel>(
@@ -207,51 +246,39 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (_selectedChapterIndex > 0)
-                  ElevatedButton.icon(
+                  GenieSecondaryButton(
+                    text: 'Previous',
+                    icon: Icons.arrow_back,
                     onPressed: () {
                       setState(() {
                         _selectedChapterIndex--;
                       });
                     },
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Previous'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[200],
-                      foregroundColor: Colors.black87,
-                    ),
                   )
                 else
                   const SizedBox.shrink(),
 
                 if (_selectedChapterIndex < level.chapters.length - 1)
-                  ElevatedButton.icon(
+                  GeniePrimaryButton(
+                    text: 'Next',
+                    icon: Icons.arrow_forward,
                     onPressed: () {
                       setState(() {
                         _selectedChapterIndex++;
                       });
                     },
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Next'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
                   )
                 else if (_selectedLevelIndex < course.content.levels.length - 1 &&
                         _selectedLevelIndex <= course.currentLevel)
-                  ElevatedButton.icon(
+                  GeniePrimaryButton(
+                    text: 'Next Level',
+                    icon: Icons.arrow_forward,
                     onPressed: () {
                       setState(() {
                         _selectedLevelIndex++;
                         _selectedChapterIndex = 0;
                       });
                     },
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Next Level'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
                   )
                 else
                   const SizedBox.shrink(),

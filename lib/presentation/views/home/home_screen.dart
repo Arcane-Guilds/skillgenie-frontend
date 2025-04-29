@@ -234,14 +234,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           Row(
             children: [
               IconButton(
-                icon: Icon(
-                  Icons.notifications_outlined,
-                  color: kPrimaryBlue,
-                ),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.settings_outlined,
                   color: kPrimaryBlue,
                 ),

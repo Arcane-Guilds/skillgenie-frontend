@@ -1,5 +1,3 @@
-//Запрос и парсинг информации с Википедии
-
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:characters/characters.dart';
@@ -13,7 +11,7 @@ import 'dart:convert' as convert;
 
 import 'package:skillGenie/crosswordgame/parser.dart';
 
-class WikiPage  //Страница с Википедии
+class WikiPage
 {
   WikiPage({required this.title, required this.content, required this.links, required this.priority, this.ext_content = '', this.picture = ''});
   String title;
@@ -21,34 +19,31 @@ class WikiPage  //Страница с Википедии
   String ext_content;
   String picture;
   List <int> links;
-  bool priority;  //Приоритет слова - если низкий, то слово не будет включаться само по себе, а будут использоваться только для рекурсивного поиска
+  bool priority;
 }
 
-Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target, bool russian, int max_len, {List<int> start_pool = const []}) async*  //Запрос страницы с википедии, где target - размер пула, recursive_target - количество статей, с которых берутся ссылки
+Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target, bool russian, int max_len, {List<int> start_pool = const []}) async*
 {
-  List <Gen_Word> result = [];  //Генерируемый список слов, использующийся для создания кроссворда
-  http.Client client = http.Client(); //Создание клиента для удобства нескольких запросов
+  List <Gen_Word> result = [];
+  http.Client client = http.Client();
   List <int> pool = [];
   if (pageid != -1)
   {
     var original_page = await GetArticle(client, pageid, true, russian, max_len);
     pool.addAll(original_page.links);
   }
-  pool += start_pool;  //Пул ссылок на статьи, из которых будет выбираться целевое количество слов (для тематических кроссвордов) 
+  pool += start_pool;
   pool.shuffle();
-  //1. Выбираем случайные статьи, ссылки с которых также добавятся в пул
   for (int i = 0; i < recursive_target && i < pool.length; i++)
   {
     var new_page = await GetArticle(client, pool[i], true, russian, max_len);
     pool.addAll(new_page.links);
   }
   pool.shuffle();
-  //2. Выбираем из пула окончательный пул
-  List <int> final_pool = [];  //Окончательный пул
-  final_pool.add(pageid);  //Добавляем оригинальную страницу, чтобы он не вошел в итоговый кроссворд
+  List <int> final_pool = [];
+  final_pool.add(pageid);
   for (int i = 0; i < target && i < pool.length; i++)
   {
-    //Проверка на повторы
     if (final_pool.contains(pool[i]))
     {
       pool.removeAt(i);
@@ -64,7 +59,7 @@ Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target
         add = false;
       }
     }
-    if (new_page.priority && add)  //Если новая страница подходит для включения в кроссворд
+    if (new_page.priority && add)
     {
       var new_word = Gen_Word(word: new_page.title, weight: 0, definition: new_page.content, ext_definition: new_page.ext_content, pic_url: new_page.picture);
       result.add(new_word);
@@ -89,8 +84,7 @@ Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target
 
 Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, bool russian, int max_len) async  //Получить название и содержание статьи
 {
-  String query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + 
-    '/w/api.php?format=json&origin=*&action=query&prop=extracts&exchars=500&exintro&explaintext&redirects=1&pageids=' + pageid.toString();
+  String query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?format=json&origin=*&action=query&prop=extracts&exchars=500&exintro&explaintext&redirects=1&pageids=$pageid';
   var uri = Uri.parse(query);
   var response = await client.get(uri);
   if ((response).statusCode != 200)
@@ -113,8 +107,7 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
   List<int> links = [];
   if (recursive)  //Поиск ссылок
   {
-    String link_query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + //Запрос ссылок
-    '/w/api.php?action=query&format=json&origin=*&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=true&inprop=url&pageids=' + pageid.toString();
+    String link_query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?action=query&format=json&origin=*&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=true&inprop=url&pageids=$pageid';
     var links_map = {};
     do
     {
@@ -142,9 +135,7 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
       if (links_map.containsKey('continue'))  //Если есть продолжение
       {
         var continue_map = links_map['continue'] as Map <String, dynamic>;
-        link_query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + //Запрос ссылок
-        '/w/api.php?action=query&format=json&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=tru&inprop=url&pageids=' + pageid.toString() +
-        '&continue=' + continue_map['continue']! + '&gplcontinue=' + continue_map['gplcontinue']!;
+        link_query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?action=query&format=json&redirects&generator=links&gpllimit=500&gplnamespace=0&prop=info&indexpageids=tru&inprop=url&pageids=$pageid&continue=' + continue_map['continue']! + '&gplcontinue=' + continue_map['gplcontinue']!;
       }
     }
     while (links_map.containsKey('continue'));
@@ -181,8 +172,7 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
   // print(short_desc);
   // print(full_desc);
   
-  String pic_query = (russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org') + //Запрос изображения
-    '/w/api.php?action=query&format=json&origin=*&prop=pageimages&pilimit=1&piprop=thumbnail&pithumbsize=600&pageids=' + pageid.toString();
+  String pic_query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?action=query&format=json&origin=*&prop=pageimages&pilimit=1&piprop=thumbnail&pithumbsize=600&pageids=$pageid';
   uri = Uri.parse(pic_query);
   response = await client.get(uri);
   json_result = jsonDecode(response.body);

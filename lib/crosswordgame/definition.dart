@@ -9,7 +9,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'cells.dart';
 
 class Definition extends StatefulWidget {
-  Definition({ Key? key, this.source, required this.index, required this.num}) : super(key: key);
+  Definition({ super.key, this.source, required this.index, required this.num});
   Field_Word? source;
   int index;
   int num;
@@ -26,12 +26,12 @@ class _DefinitionState extends State<Definition> {
 
   @override
   Widget build(BuildContext context) {
-    List<DefCross> res = [];  //Непосредственно слово
+    List<DefCross> res = [];
     if (widget.source != null)
     {
       for (int i = 0; i < widget.source!.length; i++)
       {
-        if (widget.source!.word.substring(i, i+1).contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))  //Посторонние символы
+        if (widget.source!.word.substring(i, i+1).contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))
         {
           res.add( 
             DefCross(
@@ -49,14 +49,14 @@ class _DefinitionState extends State<Definition> {
         else
         {
           String letter = widget.source!.in_word.substring(i, i+1);
-          int _clone_ind = -1;
-          int _clone_let_ind = -1;
+          int clone_ind = -1;
+          int clone_let_ind = -1;
           for (var inters in widget.source!.inters)
           {
             if (inters.source_index == i)
             {
-              _clone_ind = inters.word;
-              _clone_let_ind = inters.word_index;
+              clone_ind = inters.word;
+              clone_let_ind = inters.word_index;
               break;
             }
           }
@@ -68,8 +68,8 @@ class _DefinitionState extends State<Definition> {
               word_ind: widget.source!.num,
               is_const: false,
               focused: i == widget.index,
-              clone_ind: _clone_ind,
-              clone_let_ind: _clone_let_ind,
+              clone_ind: clone_ind,
+              clone_let_ind: clone_let_ind,
               mistake: widget.source!.mistakes.contains(i),
             )
           );
@@ -144,12 +144,12 @@ class _DefinitionState extends State<Definition> {
           const Divider(
           ),
           Container(  //Определение слова
+            margin: const EdgeInsets.all(10),  //Определение слова
             child:AutoSizeText(
               (widget.source==null)?'':widget.source!.definition,
               style: widget.Definit_style,
               maxLines: 5, 
             ),
-            margin: const EdgeInsets.all(10),
           ),
         ]
       )  
@@ -158,9 +158,9 @@ class _DefinitionState extends State<Definition> {
 }
 
 class DefCross extends StatelessWidget {  //Ячейка в определении слова
-  DefCross({ Key? key, required this.let_ind, required this.word_ind, required this.last, required this.letter,
+  DefCross({ super.key, required this.let_ind, required this.word_ind, required this.last, required this.letter,
             required this.is_const, required this.focused, required this.clone_ind, required this.clone_let_ind,
-            this.mistake = false}) : super(key: key); //Ячейка в определении слова
+            this.mistake = false}); //Ячейка в определении слова
 
   bool mistake;
   FocusNode myFocusNode = FocusNode();

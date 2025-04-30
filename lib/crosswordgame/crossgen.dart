@@ -1,4 +1,3 @@
-//Генерация кроссворда
 // ignore_for_file: camel_case_types, non_constant_identifier_names
 
 import '../crosswordgame/cells.dart';
@@ -6,24 +5,23 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class Math {
-  static bool interserct(int a, int b, int c, int d)  //Пересекаются ли отрезки a-c и b-d
+  static bool interserct(int a, int b, int c, int d)
   {
     return (max(a, b) <= min (c, d));
   }
-  static bool between(int a, int b, int c)  //Находится ли b в промежутке от a (вкл) до c (искл)
+  static bool between(int a, int b, int c)
   {
     return a <= b && b < c;
   }
 }
 
-class Gen_Crossword { //Сгенерированный кроссворд
-  var field_words = <Field_Word>[]; //Непосредственно слова, расставленные по полю
-  var intersec = <Intersection>[];  //Пересечения в кроссворде
-  int width = 0, height = 0;  //Ширина и высота поля
-  int word_count = 0; //Количество слов в кроссворде
+class Gen_Crossword {
+  var field_words = <Field_Word>[];
+  var intersec = <Intersection>[];
+  int width = 0, height = 0;
+  int word_count = 0;
 
-  Gen_Crossword(List <Gen_Word> words, int target, int buf_inc) {  //Генерация кроссворда по списку слов words с целевой длиной в target cлов
-    //Подсчет вхождений каждой буквы
+  Gen_Crossword(List <Gen_Word> words, int target, int buf_inc) {
     const String letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ';
     target = target>words.length?words.length:target;
     var let_count = List<int>.filled(59, 0);
@@ -32,7 +30,7 @@ class Gen_Crossword { //Сгенерированный кроссворд
     {
       words[i].word = words[i].word.toUpperCase();
     }
-    for(var word in words)  //Подсчет количества букв
+    for(var word in words)
     {
       for (int i = 0; i < word.word.length; i++)
       {
@@ -44,7 +42,7 @@ class Gen_Crossword { //Сгенерированный кроссворд
         }
       }
     }
-    for(var word in words)  //Подсчет весов
+    for(var word in words)
     {
       double weight = 0;
       for (int i = 0; i < word.word.length; i++)
@@ -57,18 +55,15 @@ class Gen_Crossword { //Сгенерированный кроссворд
       }
       word.weight = weight;
     }
-    //Сортиров очка
     words.sort((a,b) => b.weight.compareTo(a.weight));
-    //1. Выбираем случайно одно из первого буфера слов
     Random rng = Random();
-    int buffer = 5; //Первые слова - выбираются из топ 5 слов
+    int buffer = 5;
     int ind = rng.nextInt(buffer);
     bool first_hor = rng.nextBool();
     field_words.add(Field_Word(hor: first_hor, word: words[ind].word, x: 0, y: 0, num: 0, definition:words[ind].definition, 
       ext_definition: words[ind].ext_definition, picture_url: words[ind].pic_url));
     int min_x = 0, min_y = 0, max_x = first_hor?words[ind].word.length:1, max_y = !first_hor?words[ind].word.length:1;
     words.removeAt(ind);
-    //2. Постепенный выбор новых слов и попытка их вставить в кроссворд
     bool dead_end = false;
     int tries = 0;
     while (!dead_end && field_words.length < target)
@@ -78,13 +73,10 @@ class Gen_Crossword { //Сгенерированный кроссворд
       {
         break;
       }
-      //Выбор нового слова
       ind = rng.nextInt(buffer);
-      //Попытка это слово вставить
       bool word_added = false;
       for (var fword in field_words)
       {
-        //Поиск пересечений
         for (int i = 0; i < words[ind].word.length; i++)
         {
           int lastFound = 0;
@@ -95,7 +87,7 @@ class Gen_Crossword { //Сгенерированный кроссворд
           }
           else
           {
-            if (CheckPlacement(words[ind].word, //Проверка, можно ли расположить строку здесь
+            if (CheckPlacement(words[ind].word,
               fword.hor? fword.x + lastFound : fword.x - i, 
               fword.hor? fword.y - i : fword.y + lastFound, !fword.hor))
             {
@@ -141,84 +133,81 @@ class Gen_Crossword { //Сгенерированный кроссворд
       }
     }
     word_count = field_words.length;
-    //Добавление пересечений в каждое слово
     for (var inter in intersec)
     {
       field_words[inter.source].inters.add(Intersection(source: inter.source, source_index:inter.source_index, word: inter.word, word_index: inter.word_index));
       field_words[inter.word].inters.add(Intersection(source: inter.word, source_index:inter.word_index, word: inter.source, word_index: inter.source_index));
     }
-    //Перемещение левого верхнего угла поля в начало координат
     for (int i = 0; i < field_words.length; i++)
     {
       field_words[i].x -= min_x;
       field_words[i].y -= min_y;
     }
-    //Вычисление размеров поля
     width = (max_x - min_x) * 80;
     height = (max_y - min_y) * 80;
   }
   
-  bool CheckPlacement(String word, int x, int y, bool hor)  //Проверка расположения слова по указанным координатам
+  bool CheckPlacement(String word, int x, int y, bool hor)
   {
     for (var ex_word in field_words)
     {
-      if (ex_word.hor == hor) //Если слова параллельны
+      if (ex_word.hor == hor)
       {
         if (hor)
         {
-         if (y == ex_word.y)  //На одной линии
+         if (y == ex_word.y)
          {
-           if (Math.interserct(x, ex_word.x - 1, x + word.length, ex_word.x + 1 + ex_word.length))  //Если пересекаются или стыкуются
+           if (Math.interserct(x, ex_word.x - 1, x + word.length, ex_word.x + 1 + ex_word.length))
            {
              return false;
            }
          }
-         else if (y == ex_word.y-1 || y == ex_word.y+1) //Если на соседних линиях
+         else if (y == ex_word.y-1 || y == ex_word.y+1)
          {
-           if (Math.interserct(x, ex_word.x, x + word.length, ex_word.x + ex_word.length))  //Если пересекаются
+           if (Math.interserct(x, ex_word.x, x + word.length, ex_word.x + ex_word.length))
            {
              return false;
            }
          }
         }
-        else  //Если слова вертикальные
+        else
         {
-         if (x == ex_word.x)  //На одной линии
+         if (x == ex_word.x)
          {
-           if (Math.interserct(y, ex_word.y - 1, y + word.length, ex_word.y + 1 + ex_word.length))  //Если пересекаются или стыкуются
+           if (Math.interserct(y, ex_word.y - 1, y + word.length, ex_word.y + 1 + ex_word.length))
            {
              return false;
            }
          }
-         else if (x == ex_word.x-1 || x == ex_word.x+1) //Если на соседних линиях
+         else if (x == ex_word.x-1 || x == ex_word.x+1)
          {
-           if (Math.interserct(x, ex_word.x, x + word.length, ex_word.x + ex_word.length))  //Если пересекаются
+           if (Math.interserct(x, ex_word.x, x + word.length, ex_word.x + ex_word.length))
            {
              return false;
            }
          }
         }
       }
-      else  //Если слова перпендикулярны
+      else
       {
-        if (hor)  //Для горизонтальных
+        if (hor)
         {
-          if (ex_word.y <= y && y < ex_word.y+ex_word.length) //Если слова могут столкнуться
+          if (ex_word.y <= y && y < ex_word.y+ex_word.length)
           {
-            if (x <= ex_word.x && ex_word.x < x + word.length)  //Если слова пересекаются
+            if (x <= ex_word.x && ex_word.x < x + word.length)
             {
-              if (ex_word.word.substring(y - ex_word.y, y - ex_word.y + 1) != //Если в пересечении не совпадает буква/символ
+              if (ex_word.word.substring(y - ex_word.y, y - ex_word.y + 1) !=
                           word.substring(ex_word.x - x, ex_word.x - x + 1))
               {
                 return false;
               }
             }
-            else if (x == ex_word.x + 1 || x + word.length == ex_word.x)  //Если слова касаются
+            else if (x == ex_word.x + 1 || x + word.length == ex_word.x)
             {
               return false;
             }  
           }
-          else if (y == ex_word.y - 1 || y == ex_word.y + ex_word.length) //Если слова не могут пересекаться, но могут касаться
+          else if (y == ex_word.y - 1 || y == ex_word.y + ex_word.length)
           {
             if (x <= ex_word.x && ex_word.x < ex_word.x + ex_word.length)
             {
@@ -226,24 +215,24 @@ class Gen_Crossword { //Сгенерированный кроссворд
             }
           }
         }
-        else  //Для вертикальных слов
+        else
         {
-          if (ex_word.x <= x && x < ex_word.x+ex_word.length) //Если слова в принципе могут пересечься
+          if (ex_word.x <= x && x < ex_word.x+ex_word.length)
           {
-            if (y <= ex_word.y && ex_word.y < y + word.length)  //Если слова пересекаются
+            if (y <= ex_word.y && ex_word.y < y + word.length)
             {
-              if (ex_word.word.substring(x - ex_word.x, x - ex_word.x + 1) != //Если в пересечении не совпадает буква/символ
+              if (ex_word.word.substring(x - ex_word.x, x - ex_word.x + 1) !=
                           word.substring(ex_word.y - y, ex_word.y - y + 1))
               {
                 return false;
               }
             }
-            else if (y == ex_word.y + 1 || y + word.length == ex_word.y)  //Если слова касаются
+            else if (y == ex_word.y + 1 || y + word.length == ex_word.y)
             {
               return false;
             }           
           }
-          else if (x == ex_word.x - 1 || x == ex_word.x + ex_word.length) //Если слова не могут пересекаться, но могут касаться
+          else if (x == ex_word.x - 1 || x == ex_word.x + ex_word.length)
           {
             if (y <= ex_word.y && ex_word.y < ex_word.y + ex_word.length)
             {
@@ -256,19 +245,19 @@ class Gen_Crossword { //Сгенерированный кроссворд
     return true;
   }
 
-  void GetIntersections(int index)  //Поиск пересечений 
+  void GetIntersections(int index)
   {
     for (int i = 0; i < field_words.length; i++)
     {
       if (index == i)
       {
-        continue; //Не ищем пересечений с самим собой
+        continue;
       }
       if (field_words[i].hor == field_words[index].hor) 
       {
-        continue; //Параллельные также не пересекаются
+        continue;
       }
-      if (field_words[index].hor) //Горизонтальное слово
+      if (field_words[index].hor)
       {
         if (field_words[i].y <= field_words[index].y && field_words[index].y < field_words[i].y + field_words[i].length && 
             field_words[index].x <= field_words[i].x && field_words[i].x < field_words[index].x + field_words[index].length)
@@ -297,17 +286,17 @@ class Gen_Crossword { //Сгенерированный кроссворд
     }
   }
 
-  Widget ToWidgets()  //Первоначальная сборка кроссворда
+  Widget ToWidgets()
   {
-    var word_inputs = <Word>[]; //Вводимые слова
-    var positioned_words = <Positioned>[];  //Непосредственно виджеты слов, расположенные на поле
+    var word_inputs = <Word>[];
+    var positioned_words = <Positioned>[];
     for (var Field in field_words)
     {
       word_inputs.add(CreateWord(Field, -1));
       positioned_words.add(Positioned(
-        child: word_inputs.last,
         top: Field.y.toDouble() * 80,
         left: Field.x.toDouble() * 80,
+        child: word_inputs.last,
       ));
     }
     return InteractiveViewer(
@@ -326,17 +315,17 @@ class Gen_Crossword { //Сгенерированный кроссворд
       );
   }
 
-  Widget ToWidgetsHighlight(int word_ind, int let_ind, List<Field_Word> source) //Cборка кроссворда (с указанием выбранного слова и ячейки)
+  Widget ToWidgetsHighlight(int word_ind, int let_ind, List<Field_Word> source)
   {
-    var word_inputs = <Word>[]; //Виджеты слов
-    var positioned_words = <Positioned>[];  //Виджеты слов, расположенные на поле
+    var word_inputs = <Word>[];
+    var positioned_words = <Positioned>[];
     for (int i = 0; i < source.length; i++)
     {
       word_inputs.add(CreateWord(source[i], word_ind));
       positioned_words.add(Positioned(
-        child: word_inputs.last,
         top: source[i].y.toDouble() * 80,
         left: source[i].x.toDouble() * 80,
+        child: word_inputs.last,
       ));
     }
     return InteractiveViewer(
@@ -354,17 +343,15 @@ class Gen_Crossword { //Сгенерированный кроссворд
       );
   }
 
-  Word CreateWord(Field_Word field, int word_highlight) //Добавление нового слова
+  Word CreateWord(Field_Word field, int word_highlight)
   {
-    //Наполнение слова
-    var Cells = <Widget>[]; //Ячейки слова
+
+    var Cells = <Widget>[];
     for (int i = 0; i < field.length; i++)
     {
-      //Проверка на подсветку ошибки
       bool mistake = field.mistakes.contains(i);
       bool is_created = false;
-      //1. Проверка на посторонние символы
-      if (field.word.substring(i, i+1).contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))  //Посторонние символы
+      if (field.word.substring(i, i+1).contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))
       {
         Cells.add(ReadOnlyCell(
           last: i == field.length-1?true:false,
@@ -372,14 +359,13 @@ class Gen_Crossword { //Сгенерированный кроссворд
         );
         is_created = true;
       }
-      //2. Проверка на пересечение   
-      for (var inters in intersec)  //Создание пересечений
+      for (var inters in intersec)
       {
         if (is_created)
         {
           break;
         }
-        if (inters.word == field.num && i == inters.word_index)  //Добавляем виджет поверх. Бывшее место TransparentCell
+        if (inters.word == field.num && i == inters.word_index)
         {
           Cells.add(CellCross(
             last: i == field.length-1?true:false, 
@@ -394,7 +380,7 @@ class Gen_Crossword { //Сгенерированный кроссворд
           ));
           is_created = true;
         }
-        else if (inters.source == field.num && i == inters.source_index)  //Пересечение, но в другую сторону
+        else if (inters.source == field.num && i == inters.source_index)
         {
           Cells.add(CellCross(
             last: i == field.length-1?true:false, 
@@ -412,7 +398,7 @@ class Gen_Crossword { //Сгенерированный кроссворд
       }
       if (!is_created)
       {
-        Cells.add(CellCross(  //Обычные ячейки
+        Cells.add(CellCross(
           last: i == field.length-1?true:false,
           letter: field.in_word.substring(i, i+1) == '_'?' ':field.in_word.substring(i, i+1),
           let_ind: i,
@@ -427,28 +413,28 @@ class Gen_Crossword { //Сгенерированный кроссворд
     var result = Word (
       index: field.num,
       hor: field.hor,
-      children: Cells,
-      parent: field,     
+      parent: field,
+      children: Cells,     
     );
     return result;
   }
 
-  List <Field_Word> GetWordList() //Получение списка слов
+  List <Field_Word> GetWordList()
   {
     return field_words;
   }
 }
 
-class Gen_Word {  //Структура для хранения слов, используемых в генерации кроссворда
+class Gen_Word {
   Gen_Word ({required this.word, required this.weight, required this.definition, this.ext_definition = '', this.pic_url = ''});
-  double weight = 0;  //Вес слова
-  String word;  //Непосредственно само слово
-  String definition;  //Определение слова
+  double weight = 0;
+  String word;
+  String definition;
   String ext_definition;
   String pic_url;
 }
 
-class Field_Word {  //Слово, расположенное на поле
+class Field_Word {
   Field_Word({required this.word, required this.hor, required this.x, required this.y, required this.num,
               required this.definition, this.ext_definition = '', this.picture_url = ''})
   {
@@ -458,11 +444,11 @@ class Field_Word {  //Слово, расположенное на поле
     {
       if (word.substring(i, i+1).contains(RegExp(r"[^a-zA-Zа-яА-ЯёЁ]")))
       {
-        in_word += word.substring(i, i+1);  //Добавление посторонних символов
+        in_word += word.substring(i, i+1);
       }
       else
       {
-        in_word += '_'; //Еще не введенные символы
+        in_word += '_';
       }
     }
     // Initialize other properties with default values
@@ -472,24 +458,24 @@ class Field_Word {  //Слово, расположенное на поле
     inters = [];
   }
   int highlighted = -1;
-  String word;  //Непосредственно само слово
-  late String in_word; //Введенное слово
-  String definition;  //Определение этого слова
-  String ext_definition;  //Расширенное определение этого слова (может быть пустым)
-  String picture_url; //Ссылка на первое изображение этого слова (может быть пустым)
-  bool pic_showed = false;  //Было ли уже показано изображение
-  Set <int> mistakes = {}; //Ячейки, которые являются неправильными (подсвечиваются, если использована подсказка)
-  int x, y;   //Координаты начала слова
-  int num;  //Номер слова
-  late int length; //Длина слова
-  bool hor; //Горизонтально ли расположено слово
-  List <Intersection> inters = []; //Пересечения
+  String word;
+  late String in_word;
+  String definition;
+  String ext_definition;
+  String picture_url;
+  bool pic_showed = false;
+  Set <int> mistakes = {};
+  int x, y;
+  int num;
+  late int length;
+  bool hor;
+  List <Intersection> inters = [];
 }
 
-class Intersection {  //Класс для обозначения пересечений
+class Intersection {
   Intersection({required this.word_index, required this.word, required this.source, required this.source_index});
-  int source; //Индекс оригинального слова
-  int source_index; //Индекс места пересечения на оригинальном слове
-  int word; //Индекс перекрывающего слова
-  int word_index;  //Индекс места пересечения на перекрывающем слове
+  int source;
+  int source_index;
+  int word;
+  int word_index;
 }

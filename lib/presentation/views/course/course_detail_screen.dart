@@ -6,6 +6,9 @@ import '../../../data/models/course_model.dart';
 import '../../viewmodels/course_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/lab_viewmodel.dart';
+import '../chatbot/chatbot_screen.dart';
+import '../../widgets/avatar_widget.dart';
+import '../../widgets/common_widgets.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -13,11 +16,11 @@ class CourseDetailScreen extends StatefulWidget {
   final int? initialChapterIndex;
 
   const CourseDetailScreen({
-    Key? key, 
+    super.key, 
     required this.courseId, 
     this.initialLevelIndex,
     this.initialChapterIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -150,19 +153,36 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        actions: [
-          // Add reminder button
-          IconButton(
-            icon: const Icon(Icons.notifications_active),
-            tooltip: 'Set Reminder',
-            onPressed: () {
-              final course = Provider.of<CourseViewModel>(context, listen: false).currentCourse;
-              if (course != null) {
-                context.push('/course-reminder/${course.id}', extra: course);
-              }
-            },
-          ),
-        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                width: 350,
+                height: 500,
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const ChatbotScreen(), // Your chatbot widget
+              ),
+            ),
+          );
+        },
+        backgroundColor: Theme.of(context).primaryColor,
+        tooltip: 'Ask SkillGenie',
+        child: GenieAvatar(state: AvatarState.idle, size: 40),
       ),
       body: Consumer<CourseViewModel>(
         builder: (context, courseViewModel, child) {
@@ -179,7 +199,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             return const Center(child: Text('Course not found'));
           }
 
-          return _buildChapterContent(course);
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              const Center(
+                child: GenieAvatar(state: AvatarState.idle, size: 80),
+              ),
+              const SizedBox(height: 8),
+              // Animated progress indicator for the current level
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: AnimatedProgressIndicator(
+                  progress: _calculateLevelProgress(course, _selectedLevelIndex),
+                  label: 'Level Progress',
+                  progressColor: Theme.of(context).primaryColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(child: _buildChapterContent(course)),
+            ],
+          );
         },
       ),
       bottomNavigationBar: Consumer<CourseViewModel>(
@@ -207,51 +246,39 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (_selectedChapterIndex > 0)
-                  ElevatedButton.icon(
+                  GenieSecondaryButton(
+                    text: 'Previous',
+                    icon: Icons.arrow_back,
                     onPressed: () {
                       setState(() {
                         _selectedChapterIndex--;
                       });
                     },
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Previous'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[200],
-                      foregroundColor: Colors.black87,
-                    ),
                   )
                 else
                   const SizedBox.shrink(),
 
                 if (_selectedChapterIndex < level.chapters.length - 1)
-                  ElevatedButton.icon(
+                  GeniePrimaryButton(
+                    text: 'Next',
+                    icon: Icons.arrow_forward,
                     onPressed: () {
                       setState(() {
                         _selectedChapterIndex++;
                       });
                     },
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Next'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
                   )
                 else if (_selectedLevelIndex < course.content.levels.length - 1 &&
                         _selectedLevelIndex <= course.currentLevel)
-                  ElevatedButton.icon(
+                  GeniePrimaryButton(
+                    text: 'Next Level',
+                    icon: Icons.arrow_forward,
                     onPressed: () {
                       setState(() {
                         _selectedLevelIndex++;
                         _selectedChapterIndex = 0;
                       });
                     },
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Next Level'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
                   )
                 else
                   const SizedBox.shrink(),
@@ -364,19 +391,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
           
           // Concept Introduction Section
-          if (chapter.conceptIntroduction != null && chapter.conceptIntroduction!.isNotEmpty)
+          if (chapter.conceptIntroduction.isNotEmpty)
             _buildContentSection(
               title: 'Concept Introduction',
-              content: chapter.conceptIntroduction!,
+              content: chapter.conceptIntroduction,
               icon: Icons.lightbulb,
               color: Colors.purple,
             ),
           
           // Real-World Application Section
-          if (chapter.realWorldApplication != null && chapter.realWorldApplication!.isNotEmpty)
+          if (chapter.realWorldApplication.isNotEmpty)
             _buildContentSection(
               title: 'Real-World Application',
-              content: chapter.realWorldApplication!,
+              content: chapter.realWorldApplication,
               icon: Icons.public,
               color: Colors.green,
             ),
@@ -560,7 +587,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ],
                     ),
                   )
-                ).toList(),
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Your Solution:',
@@ -644,7 +671,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 ],
                               ),
                             ),
-                          ).toList(),
+                          ),
                           const SizedBox(height: 16),
                         ],
                         Center(
@@ -829,11 +856,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        Row(
+        const Row(
           children: [
             Icon(Icons.psychology, color: Colors.indigo),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'Concept Explanation',
               style: TextStyle(
                 fontSize: 20,
@@ -1015,11 +1042,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        Row(
+        const Row(
           children: [
             Icon(Icons.school, color: Colors.teal),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'Tutorial',
               style: TextStyle(
                 fontSize: 20,
@@ -1051,7 +1078,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           Container(
                             width: 32,
                             height: 32,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.teal,
                               shape: BoxShape.circle,
                             ),
@@ -1148,11 +1175,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        Row(
+        const Row(
           children: [
             Icon(Icons.library_books, color: Colors.orange),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'Additional Resources',
               style: TextStyle(
                 fontSize: 20,
@@ -1197,11 +1224,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 // Videos
                 if (additionalResources.videos != null && 
                     additionalResources.videos.isNotEmpty) ...[
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.video_library, color: Colors.red),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Videos',
                         style: TextStyle(
                           fontSize: 18,
@@ -1220,11 +1247,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 // Additional Exercises
                 if (additionalResources.exercises != null && 
                     additionalResources.exercises.isNotEmpty) ...[
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.extension, color: Colors.green),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Practice Exercises',
                         style: TextStyle(
                           fontSize: 18,
@@ -1401,12 +1428,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.green),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                        const SizedBox(width: 4),
-                        const Text(
+                        Icon(Icons.check_circle, color: Colors.green, size: 16),
+                        SizedBox(width: 4),
+                        Text(
                           'Completed',
                           style: TextStyle(
                             color: Colors.green,
@@ -1671,7 +1698,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   ? option == correctAnswer
                   : option == selectedAnswer,
               ),
-            ).toList(),
+            ),
             if (!isCompleted && selectedAnswer != null) ...[
               const SizedBox(height: 16),
               Row(

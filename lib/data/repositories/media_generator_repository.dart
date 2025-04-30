@@ -90,13 +90,13 @@ class MediaGeneratorRepository {
       final textPainter = TextPainter(
         text: TextSpan(
           text: text,
-          style: TextStyle(color: Colors.black, fontSize: 24),
+          style: const TextStyle(color: Colors.black, fontSize: 24),
         ),
         textDirection: TextDirection.ltr,
       );
 
       textPainter.layout(maxWidth: 800);
-      textPainter.paint(canvas, Offset(50, 50));
+      textPainter.paint(canvas, const Offset(50, 50));
 
       final picture = recorder.endRecording();
       final img = await picture.toImage(900, 600);

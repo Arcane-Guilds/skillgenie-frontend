@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:go_router/go_router.dart';
 
 import '../../../data/models/community/post.dart';
 import '../../../data/models/community/comment.dart';
@@ -123,6 +124,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).maybePop(),
+              color: AppTheme.primaryColor,
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.refresh),
@@ -161,7 +167,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.of(context).maybePop(),
                         child: const Text('Go Back'),
                       ),
                     ],

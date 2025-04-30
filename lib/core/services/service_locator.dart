@@ -12,6 +12,7 @@ import '../../data/repositories/chatbot_repository.dart';
 import '../../data/repositories/course_repository.dart';
 import '../../data/repositories/community_repository.dart';
 import '../../data/repositories/lab_repository.dart';
+import '../../data/repositories/friend_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
@@ -21,6 +22,7 @@ import '../../data/datasources/chatbot_local_datasource.dart';
 import '../constants/cloudinary_constants.dart';
 import '../constants/chatbot_constants.dart';
 import '../services/storage_service.dart';
+import '../storage/secure_storage.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/datasources/api_client.dart';
 
@@ -34,7 +36,10 @@ import '../../presentation/viewmodels/course_viewmodel.dart';
 import '../../presentation/viewmodels/lab_viewmodel.dart';
 import '../../presentation/viewmodels/reminder_viewmodel.dart';
 import '../../presentation/viewmodels/community_viewmodel.dart';
+import '../../presentation/viewmodels/friend_viewmodel.dart';
 import '../services/notification_service.dart';
+import '../../data/repositories/chat_repository.dart';
+import '../../presentation/viewmodels/chat_viewmodel.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -145,6 +150,25 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+  serviceLocator.registerSingleton<FriendRepository>(
+    FriendRepository(
+      client: serviceLocator<http.Client>(),
+    ),
+  );
+
+  // Register SecureStorage before using it in ChatRepository
+  // This is critical for authentication across the app, particularly for chat functionality
+  serviceLocator.registerSingleton<SecureStorage>(
+    SecureStorage(serviceLocator<SharedPreferences>()),
+  );
+
+  serviceLocator.registerSingleton<ChatRepository>(
+    ChatRepository(
+      client: serviceLocator<http.Client>(),
+      secureStorage: serviceLocator<SecureStorage>(),
+    ),
+  );
+
   // ViewModels
   serviceLocator.registerFactory<AuthViewModel>(() {
     final viewModel = AuthViewModel(
@@ -209,6 +233,12 @@ Future<void> setupServiceLocator() async {
       ),
   );
 
+  serviceLocator.registerFactory<FriendViewModel>(() =>
+      FriendViewModel(
+        friendRepository: serviceLocator<FriendRepository>(),
+      ),
+  );
+
   serviceLocator.registerFactory<ReminderViewModel>(
     () => ReminderViewModel(
       notificationService: serviceLocator<NotificationService>(),
@@ -221,6 +251,14 @@ Future<void> setupServiceLocator() async {
       communityRepository: serviceLocator<CommunityRepository>(),
       authViewModel: serviceLocator<AuthViewModel>(),
     ),
+  );
+
+  // Register ChatViewModel
+  serviceLocator.registerFactory<ChatViewModel>(() =>
+      ChatViewModel(
+        chatRepository: serviceLocator<ChatRepository>(),
+        secureStorage: serviceLocator<SecureStorage>(),
+      ),
   );
 }
 

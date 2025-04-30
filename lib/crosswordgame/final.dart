@@ -2,12 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:skillGenie/crosswordgame/crossgen.dart';
-import 'crossgen.dart';
 import 'maincross.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FinalRoute extends StatelessWidget {
-  FinalRoute({ Key? key, this.hints = 0, required this.words}) : super(key: key)
+  FinalRoute({ super.key, this.hints = 0, required this.words})
   {
     TextStyle wrong_st = TextStyle(fontSize: 20, color: Colors.red[400]);
     TextStyle right_st = TextStyle(fontSize: 20, color: Colors.green[400]);
@@ -73,12 +72,12 @@ class FinalRoute extends StatelessWidget {
               ],
             ),
             Column(children: [
-              Text('${AppLocalizations.of(context)!.hintsUsed} $hints'),
-              Text(right == all ? ' ' : '${AppLocalizations.of(context)!.rightWords} $right/$all')
+              Text('${AppLocalizations.of(context).hintsUsed} $hints'),
+              Text(right == all ? ' ' : '${AppLocalizations.of(context).rightWords} $right/$all')
             ],),  
             words_list.isEmpty?const SizedBox.shrink() :ElevatedButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(ColorTheme.GetCellColor(context)),
+                backgroundColor: WidgetStateProperty.all<Color>(ColorTheme.GetCellColor(context)),
               ),
               onPressed: () {
                 showDialog(context: context, builder: (context) {
@@ -102,7 +101,7 @@ class FinalRoute extends StatelessWidget {
                   );
                 });
               }, 
-              child: Text(AppLocalizations.of(context)!.showWrongWords, style: TextStyle(color: ColorTheme.GetTextColor(context)),)),
+              child: Text(AppLocalizations.of(context).showWrongWords, style: TextStyle(color: ColorTheme.GetTextColor(context)),)),
             Stack(  //Кнопка возврата на главный экран
               alignment: Alignment.center, 
               children: [

@@ -15,7 +15,7 @@ import 'maincross.dart';
 import 'cross_settings.dart';
 
 class SearchRoute extends StatelessWidget {
-  const SearchRoute({Key? key}) : super(key: key);
+  const SearchRoute({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +25,14 @@ class SearchRoute extends StatelessWidget {
           title: const Text('Wiki Crossword'),
           backgroundColor: Colors.transparent,
         ),
-        body: SearchScreen(),
+        body: const SearchScreen(),
       ),
     );
   }
 }
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  const SearchScreen({super.key});
 
   @override
   _SearchScreenState createState() => _SearchScreenState();

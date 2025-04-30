@@ -1,11 +1,8 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'crossgen.dart';
 import 'maincross.dart';
 
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CrosswordSettingsRoute extends StatefulWidget {
   final int pageid;
@@ -13,11 +10,11 @@ class CrosswordSettingsRoute extends StatefulWidget {
   final bool language;
 
   const CrosswordSettingsRoute({
-    Key? key,
+    super.key,
     required this.pageid,
     required this.title,
     required this.language,
-  }) : super(key: key);
+  });
 
   @override
   _CrosswordSettingsRouteState createState() => _CrosswordSettingsRouteState();
@@ -34,7 +31,7 @@ class _CrosswordSettingsRouteState extends State<CrosswordSettingsRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Crossword Settings'),
+        title: const Text('Crossword Settings'),
         backgroundColor: Colors.transparent,
       ),
       body: Padding(

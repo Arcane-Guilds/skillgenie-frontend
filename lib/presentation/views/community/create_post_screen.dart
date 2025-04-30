@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../viewmodels/community_viewmodel.dart';
 import '../../../core/theme/app_theme.dart';
@@ -14,11 +15,10 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
   final List<String> _selectedImages = [];
-  bool _isSubmitting = false;
-  final _imagePicker = ImagePicker();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -28,26 +28,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _pickImage() async {
-    // Check if we've already reached the maximum of 5 images
-    if (_selectedImages.length >= 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('You can only add up to 5 images per post'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
-      return;
-    }
-
     try {
-      final XFile? image = await _imagePicker.pickImage(
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1920,
-        maxHeight: 1920,
+        maxWidth: 1024,
+        maxHeight: 1024,
         imageQuality: 85,
       );
 
-      if (image != null) {
+      if (image != null && mounted) {
         setState(() {
           _selectedImages.add(image.path);
         });
@@ -64,254 +54,187 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-    });
-  }
-
-  Future<void> _submitPost() async {
+  Future<void> _createPost() async {
     if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter some content for your post'),
+        const SnackBar(
+          content: Text('Please write something in your post'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      final viewModel = context.read<CommunityViewModel>();
-      
-      // Format the content with title and body combined
-      final title = _titleController.text.trim();
-      final content = title.isNotEmpty 
-          ? '$title\n\n${_contentController.text.trim()}'  
-          : _contentController.text.trim();
-      
-      // The viewmodel will handle uploading images to Cloudinary
-      final post = await viewModel.createPost(content, _selectedImages);
+      final viewModel = Provider.of<CommunityViewModel>(context, listen: false);
+      final post = await viewModel.createPost(
+        _contentController.text.trim(),
+        _selectedImages,
+        title: _titleController.text.trim(),
+      );
 
-      if (post != null) {
-        if (mounted) {
-          Navigator.of(context).pop();
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(viewModel.errorMessage ?? 'Failed to create post'),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
-        }
+      if (mounted) {
+        await viewModel.loadPosts();
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Post created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Navigate back to community screen
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error creating post: ${e.toString()}'),
             backgroundColor: AppTheme.errorColor,
           ),
         );
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surfaceColor.withOpacity(0.97),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Create Post',
-          style: TextStyle(
-            color: AppTheme.textPrimaryColor,
+          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
             fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimaryColor,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: _isSubmitting ? null : _submitPost,
-            icon: _isSubmitting
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Icon(
-                    Icons.check,
-                    color: AppTheme.primaryColor,
-                  ),
-          ),
-        ],
+        centerTitle: false,
+        backgroundColor: AppTheme.surfaceColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Title input
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                hintText: 'Title (optional)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: AppTheme.backgroundColor,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Content input
-            TextField(
-              controller: _contentController,
-              decoration: InputDecoration(
-                hintText: 'What\'s on your mind?',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: AppTheme.backgroundColor,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              maxLines: null,
-              style: const TextStyle(fontSize: 16),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Image picker button
-            if (_selectedImages.isEmpty)
-              InkWell(
-                onTap: _pickImage,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.backgroundColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.2),
-                      width: 1,
-                    ),
+            // Title field
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_photo_alternate_outlined,
-                        color: AppTheme.primaryColor,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Add Photos (0/5)',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            
-            // Selected images
-            if (_selectedImages.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Selected Images (${_selectedImages.length}/5)',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (_selectedImages.length < 5)
-                    TextButton.icon(
-                      onPressed: _pickImage,
-                      icon: Icon(
-                        Icons.add_photo_alternate_outlined,
-                        color: AppTheme.primaryColor,
-                        size: 20,
-                      ),
-                      label: Text(
-                        'Add More',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
                 ],
               ),
-              const SizedBox(height: 8),
+              child: TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: 'Post title (optional)',
+                  hintStyle: TextStyle(
+                    color: AppTheme.textSecondaryColor.withOpacity(0.5),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                maxLength: 100,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Content field
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _contentController,
+                decoration: InputDecoration(
+                  hintText: 'What\'s on your mind?',
+                  hintStyle: TextStyle(
+                    color: AppTheme.textSecondaryColor.withOpacity(0.5),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                maxLines: 5,
+                maxLength: 1000,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Image preview
+            if (_selectedImages.isNotEmpty) ...[
               SizedBox(
                 height: 120,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: _selectedImages.length,
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                    return Container(
+                      margin: const EdgeInsets.only(right: 8),
                       child: Stack(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(_selectedImages[index]),
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.cover,
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              image: DecorationImage(
+                                image: FileImage(File(_selectedImages[index])),
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                           Positioned(
-                            top: 4,
-                            right: 4,
-                            child: InkWell(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
                               onTap: () => _removeImage(index),
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: Colors.black.withOpacity(0.5),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   Icons.close,
-                                  color: Colors.white,
                                   size: 16,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -322,10 +245,65 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   },
                 ),
               ),
+              const SizedBox(height: 16),
             ],
+            
+            // Add photo button
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextButton.icon(
+                onPressed: _selectedImages.length >= 5 ? null : _pickImage,
+                icon: Icon(
+                  Icons.add_photo_alternate,
+                  color: AppTheme.primaryColor,
+                ),
+                label: Text(
+                  _selectedImages.isEmpty
+                      ? 'Add Photos'
+                      : 'Add More Photos (${_selectedImages.length}/5)',
+                  style: TextStyle(
+                    color: AppTheme.textPrimaryColor,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isLoading ? null : _createPost,
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        icon: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(Icons.add),
+        label: Text(_isLoading ? 'Posting...' : 'Post'),
+      ).animate()
+        .fadeIn(duration: 500.ms)
+        .slideY(begin: 0.3, end: 0),
     );
   }
 } 

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
+import '../../core/constants/api_constants.dart';
 
 class StorageService {
   final String _cloudName;
@@ -17,7 +18,7 @@ class StorageService {
     required String cloudName,
     required String uploadPreset,
     http.Client? httpClient,
-  }) : _cloudName = cloudName,
+  })  : _cloudName = cloudName,
         _uploadPreset = uploadPreset,
         _httpClient = httpClient ?? http.Client() {
     _cloudinary = CloudinaryPublic(_cloudName, _uploadPreset, cache: false);
@@ -25,7 +26,8 @@ class StorageService {
 
   /// Uploads a profile image to Cloudinary
   /// Returns the secure URL of the uploaded image
-  Future<String?> uploadProfileImage(File image, {Function(double)? onProgress}) async {
+  Future<String?> uploadProfileImage(File image,
+      {Function(double)? onProgress}) async {
     try {
       log('Starting Cloudinary upload for profile image');
 
@@ -58,7 +60,8 @@ class StorageService {
 
   /// Alternative method to upload directly to the backend API
   /// This is useful if you want the backend to handle the Cloudinary upload
-  Future<String?> uploadProfileImageViaBackend(File image, {Function(double)? onProgress}) async {
+  Future<String?> uploadProfileImageViaBackend(File image,
+      {Function(double)? onProgress}) async {
     try {
       log('Starting profile image upload via backend API');
 
@@ -69,7 +72,7 @@ class StorageService {
       // Create a multipart request
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://your-backend-url/cloudinary/upload/profile-image'),
+        Uri.parse('${ApiConstants.baseUrl}/cloudinary/upload/profile-image'),
       );
 
       // Add the file to the request

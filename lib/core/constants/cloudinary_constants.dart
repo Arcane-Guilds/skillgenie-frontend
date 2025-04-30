@@ -19,6 +19,7 @@ class CloudinaryConstants {
   static const String profileImageTransformation = 'c_fill,g_face,w_400,h_400';
   static const String thumbnailTransformation = 'c_thumb,g_face,w_150,h_150';
   static const String highQualityTransformation = 'q_auto:best';
+  static const String postImageTransformation = 'c_fill,w_800,q_auto:good';
 
   // Helper method to get a transformed URL
   static String getProfileImageUrl(String originalUrl) {
@@ -49,6 +50,22 @@ class CloudinaryConstants {
     // Insert transformation after /upload/
     return originalUrl.substring(0, uploadIndex + 8) +
         thumbnailTransformation +
+        originalUrl.substring(uploadIndex + 7);
+  }
+
+  // Helper method to get a post image URL
+  static String getPostImageUrl(String originalUrl) {
+    if (originalUrl.isEmpty || !originalUrl.contains('cloudinary.com')) {
+      return originalUrl;
+    }
+
+    // Find the upload part in the URL
+    final uploadIndex = originalUrl.indexOf('/upload/');
+    if (uploadIndex == -1) return originalUrl;
+
+    // Insert transformation after /upload/
+    return originalUrl.substring(0, uploadIndex + 8) +
+        postImageTransformation +
         originalUrl.substring(uploadIndex + 7);
   }
 

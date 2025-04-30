@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'maincross.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ErrorRoute extends StatelessWidget {
-  ErrorRoute({ Key? key, required this.error }) : super(key: key);
+  ErrorRoute({ super.key, required this.error });
   String error;
 
   @override
@@ -14,9 +13,9 @@ class ErrorRoute extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Text('Error', style: TextStyle(fontSize: 25, color: ColorTheme.GetTextColor(context)),),
-            Stack(
+            const Stack(
               alignment: Alignment.center,
-              children: const [
+              children: [
                 Icon (Icons.error_outline, color: Colors.red, size: 180)
               ],
             ),

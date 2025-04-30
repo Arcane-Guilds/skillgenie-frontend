@@ -28,8 +28,27 @@ class ProfileViewModel extends ChangeNotifier {
     required AuthViewModel authViewModel,
   })  : _profileRepository = profileRepository,
         _authViewModel = authViewModel {
-    // Initialize profile data when viewmodel is created
-    _initializeProfile();
+    // Listen to auth changes
+    _authViewModel.addListener(_onAuthStateChanged);
+  }
+
+  // Add dispose to clean up listener
+  @override
+  void dispose() {
+    _authViewModel.removeListener(_onAuthStateChanged);
+    super.dispose();
+  }
+
+  // Handle auth state changes
+  void _onAuthStateChanged() {
+    if (_authViewModel.isAuthenticated) {
+      _initializeProfile();
+    } else {
+      // Clear profile data when logged out
+      _currentProfile = null;
+      _isCacheValid = false;
+      notifyListeners();
+    }
   }
 
   // Getters
@@ -48,16 +67,12 @@ class ProfileViewModel extends ChangeNotifier {
 
   // Initialize profile
   Future<void> _initializeProfile() async {
-    if (_authViewModel.isAuthenticated) {
-      try {
-        await getUserProfile();
-      } catch (e) {
-        // Handle initialization errors silently
-        if (e is ApiException && e.statusCode == 401) {
-          // Handle expired token by logging out
-          await _handleAuthError();
-        }
-      }
+    try {
+      // Get profile with force refresh to ensure we have latest data
+      await getUserProfile(forceRefresh: true);
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
     }
   }
 
@@ -74,9 +89,9 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   // Get user profile
-  Future<User> getUserProfile({bool forceRefresh = false}) async {
+  Future<User?> getUserProfile({bool forceRefresh = false}) async {
     if (!_authViewModel.isAuthenticated) {
-      throw Exception('User is not authenticated');
+      return null;
     }
 
     if (!forceRefresh && isCacheValid && _currentProfile != null) {
@@ -85,30 +100,30 @@ class ProfileViewModel extends ChangeNotifier {
 
     _setLoading(true);
     _errorMessage = null;
+    notifyListeners();
 
     try {
       _lastApiCallTime = DateTime.now();
-      final profile = await _profileRepository.getUserProfile(forceRefresh: forceRefresh);
+      
+      // Get fresh data from API
+      final profile = await _profileRepository.getUserProfile(forceRefresh: true);
       _currentProfile = profile;
       _lastFetchTime = DateTime.now();
       _isCacheValid = true;
       _setLoading(false);
+      notifyListeners();
       return profile;
     } catch (e) {
       _setLoading(false);
+      _errorMessage = e.toString();
       
-      if (e is ApiException) {
-        _errorMessage = e.message;
-        
-        // Handle authentication errors
-        if (e.statusCode == 401) {
-          await _handleAuthError();
-        }
-      } else {
-        _errorMessage = e.toString();
+      // Only handle auth error if it's actually an auth error
+      if (e is ApiException && e.statusCode == 401) {
+        await _handleAuthError();
       }
       
-      rethrow;
+      notifyListeners();
+      return null;
     }
   }
 
@@ -407,6 +422,18 @@ class ProfileViewModel extends ChangeNotifier {
   // Helper method to set loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
+    notifyListeners();
+  }
+
+  // Clear error message
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // Reset cache validity
+  void invalidateCache() {
+    _isCacheValid = false;
     notifyListeners();
   }
 }

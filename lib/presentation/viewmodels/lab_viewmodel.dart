@@ -132,10 +132,8 @@ class LabViewModel extends ChangeNotifier {
       
       // Always set the submission regardless of success status
       // This ensures we always have test results to show
-      if (response.submission != null) {
-        _currentSubmission = response.submission;
-      }
-      
+      _currentSubmission = response.submission;
+          
       // Check if submission was successful
       if (!response.success) {
         // Handle error response based on error type

@@ -36,7 +36,7 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   bool _isEditingBio = false;
   bool _isLoading = false;
   File? _imageFile;
@@ -45,13 +45,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Controllers
   late TextEditingController _bioController;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _initControllers();
-    
-    // Schedule the data loading after the widget is built
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialData();
     });
@@ -59,6 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -979,31 +980,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Achievements button
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AchievementsScreen(userId: user.id),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.emoji_events, color: Colors.amber),
-                    label: const Text('Achievements'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: kPrimaryBlue,
-                      side: const BorderSide(color: Colors.amber, width: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Stats
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -1013,44 +989,166 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AnalyticsScreen(userId: user.id),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.insights, color: kPrimaryBlue),
-                    label: const Text('View Analytics'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // User's Posts
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Your Posts',
-                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildUserPosts(),
+                    child: TabBar(
+                      controller: _tabController,
+                      labelColor: kPrimaryBlue,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: kPrimaryBlue,
+                      tabs: const [
+                        Tab(icon: Icon(Icons.list), text: 'Posts'),
+                        Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  
+                  SizedBox(
+                    height: 500, // or MediaQuery.of(context).size.height * 0.6, etc.
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        // Tab 1: User Posts
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Your Posts',
+                                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildUserPosts(),
+                            ],
+                          ),
+                        ),
+                        // Tab 2: Achievements & Analytics
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              // Achievements button
+                              Material(
+                                elevation: 4,
+                                borderRadius: BorderRadius.circular(18),
+                                color: Colors.white,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => AchievementsScreen(userId: user.id),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(18),
+                                      gradient: LinearGradient(
+                                        colors: [Colors.amber.shade200, Colors.amber.shade400],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
+                                        const SizedBox(width: 16),
+                                        const Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Achievements',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'View your badges and milestones',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              // Analytics button
+                              Material(
+                                elevation: 4,
+                                borderRadius: BorderRadius.circular(18),
+                                color: kPrimaryBlue,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => AnalyticsScreen(userId: user.id),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                    decoration: const BoxDecoration(
+                                      borderRadius: BorderRadius.all(Radius.circular(18)),
+                                      gradient: LinearGradient(
+                                        colors: [kPrimaryBlue, Colors.lightBlueAccent],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.insights, color: Colors.white, size: 32),
+                                        SizedBox(width: 16),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'View Analytics',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Track your learning progress',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -1517,32 +1615,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SizedBox(height: isWideScreen ? 30 : 20),
             // View analytics button
             Center(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AnalyticsScreen(userId: user.id),
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(isWideScreen ? 14 : 10),
+                color: kPrimaryBlue,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(isWideScreen ? 14 : 10),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AnalyticsScreen(userId: user.id),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWideScreen ? 32 : 20,
+                      vertical: isWideScreen ? 20 : 14,
                     ),
-                  );
-                },
-                icon: Icon(Icons.analytics, size: isWideScreen ? 22 : 18),
-                label: Text(
-                  'View Detailed Analytics',
-                  style: TextStyle(
-                    fontSize: isWideScreen ? 16 : 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: kPrimaryBlue,
-                  side: const BorderSide(color: kPrimaryBlue, width: 1.5),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWideScreen ? 24 : 20,
-                    vertical: isWideScreen ? 16 : 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(isWideScreen ? 10 : 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(isWideScreen ? 14 : 10),
+                      gradient: const LinearGradient(
+                        colors: [kPrimaryBlue, Colors.lightBlueAccent],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.analytics, color: Colors.white, size: isWideScreen ? 28 : 22),
+                        SizedBox(width: isWideScreen ? 18 : 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'View Detailed Analytics',
+                              style: TextStyle(
+                                fontSize: isWideScreen ? 18 : 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Track your learning journey',
+                              style: TextStyle(
+                                fontSize: isWideScreen ? 14 : 12,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

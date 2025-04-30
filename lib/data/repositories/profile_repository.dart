@@ -6,6 +6,9 @@ import '../repositories/auth_repository.dart';
 import '../../core/services/storage_service.dart';
 import '../models/user_model.dart';
 import '../models/api_exception.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../core/constants/api_constants.dart';
 
 /// Repository for profile-related operations
 class ProfileRepository {
@@ -338,5 +341,15 @@ class ProfileRepository {
       500,
       e.toString(),
     );
+  }
+
+  Future<int> fetchUserStreak(String userId) async {
+    final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/streak'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['currentStreak'] as int;
+    } else {
+      throw Exception('Failed to load user streak');
+    }
   }
 }

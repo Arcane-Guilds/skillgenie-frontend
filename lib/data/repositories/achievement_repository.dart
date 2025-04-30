@@ -15,4 +15,14 @@ class AchievementRepository {
       throw Exception('Failed to load achievements');
     }
   }
+
+  Future<int> fetchUserBadgeCount(String userId) async {
+    final response = await http.get(Uri.parse('$baseUrl/achievements/user/$userId/badge-count'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['badgeCount'] as int;
+    } else {
+      throw Exception('Failed to load badge count');
+    }
+  }
 }

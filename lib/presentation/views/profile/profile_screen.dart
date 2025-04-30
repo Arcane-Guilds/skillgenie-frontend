@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/foundation.dart';
+import 'package:skillGenie/presentation/views/achievements_screen.dart';
 
 import '../../../data/models/user_model.dart';
 import '../../../data/models/community/post.dart';
@@ -16,7 +17,6 @@ import '../community/post_detail_screen.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../community/update_post_screen.dart';
 import '../community/create_post_screen.dart';
-import '../../widgets/common_widgets.dart';
 import '../analytics/analytics_screen.dart';
 
 // App-wide primary blue color
@@ -185,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   LinearProgressIndicator(
                     value: _uploadProgress,
                     backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
+                    valueColor: const AlwaysStoppedAnimation<Color>(
                       kPrimaryBlue,
                     ),
                   ),
@@ -205,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   setState(() => _imageFile = null);
                   Navigator.pop(context);
                 },
-                child: Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
+                child: const Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
               ),
               ElevatedButton(
                 onPressed: _isUploadingImage
@@ -293,7 +293,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
         
         if (communityViewModel.userPostsStatus == CommunityStatus.loading) {
-          return Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue)));
+          return const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue)));
         }
         
         if (communityViewModel.userPostsStatus == CommunityStatus.error) {
@@ -409,7 +409,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? NetworkImage(post.author.avatar!)
                       : null,
                   child: post.author.avatar == null
-                      ? Icon(Icons.person, color: kPrimaryBlue)
+                      ? const Icon(Icons.person, color: kPrimaryBlue)
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -446,23 +446,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
                     },
                     itemBuilder: (context) => [
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
                             Icon(Icons.edit, size: 20, color: kPrimaryBlue),
-                            const SizedBox(width: 8),
-                            const Text('Edit Post'),
+                            SizedBox(width: 8),
+                            Text('Edit Post'),
                           ],
                         ),
                       ),
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
                             Icon(Icons.delete, size: 20, color: Colors.red),
-                            const SizedBox(width: 8),
-                            const Text('Delete Post'),
+                            SizedBox(width: 8),
+                            Text('Delete Post'),
                           ],
                         ),
                       ),
@@ -489,16 +489,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          if (post.images != null && post.images.isNotEmpty) ...[
+          if (post.images.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: SizedBox(
                 height: 200,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: post.images!.length,
+                  itemCount: post.images.length,
                   itemBuilder: (context, imageIndex) {
-                    final transformedUrl = CloudinaryConstants.getPostImageUrl(post.images![imageIndex]);
+                    final transformedUrl = CloudinaryConstants.getPostImageUrl(post.images[imageIndex]);
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ClipRRect(
@@ -594,7 +594,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatCard(BuildContext context, String title, String value, IconData icon) {
-    final isWeb = kIsWeb;
+    const isWeb = kIsWeb;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -662,7 +662,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _buildWebStatCard(
           context, 
           'Badges', 
-          '${user.earnedBadges?.length ?? 0}', 
+          '${user.earnedBadges.length ?? 0}', 
           Icons.emoji_events,
           Colors.amber.shade400,
           screenWidth
@@ -766,7 +766,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _buildWebStatCard(
           context, 
           'Badges', 
-          '${user.earnedBadges?.length ?? 0}', 
+          '${user.earnedBadges.length ?? 0}', 
           Icons.emoji_events,
           Colors.amber.shade400,
           screenWidth
@@ -810,7 +810,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
+            child: const Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
           ),
           TextButton(
             onPressed: () async {
@@ -872,7 +872,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.settings,
               color: kPrimaryBlue,
             ),
@@ -883,7 +883,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: Consumer2<AuthViewModel, ProfileViewModel>(
         builder: (context, authViewModel, profileViewModel, _) {
           if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
               ),
@@ -949,7 +949,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         right: 0,
                         child: Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: kPrimaryBlue,
                             shape: BoxShape.circle,
                           ),
@@ -979,13 +979,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Achievements button
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AchievementsScreen(userId: user.id),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.emoji_events, color: Colors.amber),
+                    label: const Text('Achievements'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: kPrimaryBlue,
+                      side: const BorderSide(color: Colors.amber, width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   // Stats
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
                       _buildStatCard(context, 'Coins', '${user.coins ?? 0}', Icons.monetization_on),
-                      _buildStatCard(context, 'Badges', '${user.earnedBadges?.length ?? 0}', Icons.emoji_events),
+                      _buildStatCard(context, 'Badges', '${user.earnedBadges.length ?? 0}', Icons.emoji_events),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -998,13 +1022,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       );
                     },
-                    icon: Icon(Icons.insights, color: kPrimaryBlue),
-                    label: Text('View Analytics'),
+                    icon: const Icon(Icons.insights, color: kPrimaryBlue),
+                    label: const Text('View Analytics'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimaryBlue,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -1512,7 +1536,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: kPrimaryBlue,
-                  side: BorderSide(color: kPrimaryBlue, width: 1.5),
+                  side: const BorderSide(color: kPrimaryBlue, width: 1.5),
                   padding: EdgeInsets.symmetric(
                     horizontal: isWideScreen ? 24 : 20,
                     vertical: isWideScreen ? 16 : 12,
@@ -1599,7 +1623,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: kPrimaryBlue,
-                  side: BorderSide(color: kPrimaryBlue, width: 1.5),
+                  side: const BorderSide(color: kPrimaryBlue, width: 1.5),
                   padding: EdgeInsets.symmetric(
                     horizontal: isWideScreen ? 24 : 20,
                     vertical: isWideScreen ? 16 : 12,

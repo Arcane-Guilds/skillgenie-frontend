@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/constants/api_constants.dart';
-import '../../../core/utils/ui_utils.dart';
 import 'step1_screen.dart';
 
 // App-wide primary color - changing from purple to blue
@@ -98,7 +97,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     Size size = MediaQuery.of(context).size;
-    final bool isWeb = kIsWeb;
+    const bool isWeb = kIsWeb;
 
     // Challenge categories
     List<String> challengesTypes = [
@@ -116,7 +115,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
             end: Alignment.bottomCenter,
             colors: [
               kPrimaryBlue.withOpacity(0.2), // Changed to blue
-              colorScheme.background,
+              colorScheme.surface,
             ],
           ),
         ),
@@ -139,7 +138,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                             color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.arrow_back_ios_new,
                             color: kPrimaryBlue, // Changed to blue
                             size: 20,
@@ -158,7 +157,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                           color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.info_outline,
                           color: kPrimaryBlue, // Changed to blue
                           size: 20,
@@ -171,7 +170,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
               // Content
               Expanded(
                 child: _isLoading 
-                ? Center(
+                ? const Center(
                     child: CircularProgressIndicator(
                       color: kPrimaryBlue, // Changed to blue
                     ),
@@ -677,7 +676,7 @@ class PatternPainter extends CustomPainter {
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
       
-    final double spacing = 20.0;
+    const double spacing = 20.0;
     
     // Draw diagonal lines
     for (double i = 0; i < size.width + size.height; i += spacing) {

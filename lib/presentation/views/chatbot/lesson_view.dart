@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/services.dart';
 
 import '../../viewmodels/lesson_view_model.dart';
 
 class LessonView extends StatelessWidget {
+  const LessonView({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -22,7 +23,7 @@ class LessonView extends StatelessWidget {
           centerTitle: true,
           backgroundColor: Colors.lightBlue,
           elevation: 5,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(
               bottom: Radius.circular(20),
             ),
@@ -39,13 +40,13 @@ class LessonView extends StatelessWidget {
                     icon: Icons.picture_as_pdf,
                     onPressed: viewModel.pickAndExtractText,
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Expanded(
                     child: AnimatedSwitcher(
-                      duration: Duration(milliseconds: 500),
+                      duration: const Duration(milliseconds: 500),
                       child: Container(
                         key: ValueKey(viewModel.lessonContent),
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
@@ -53,7 +54,7 @@ class LessonView extends StatelessWidget {
                             BoxShadow(
                               color: Colors.grey.withOpacity(0.3),
                               blurRadius: 8,
-                              offset: Offset(0, 4),
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
@@ -68,7 +69,7 @@ class LessonView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   if (viewModel.isProcessing)
                     _buildProcessingIndicator()
                   else
@@ -83,7 +84,7 @@ class LessonView extends StatelessWidget {
                                 }
                               : null,
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         if (viewModel.generatedVideoPath != null)
                           VideoPlayerCard(
                             videoPath: viewModel.generatedVideoPath!,
@@ -116,7 +117,7 @@ class LessonView extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.lightBlue,
           foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -131,8 +132,8 @@ class LessonView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 10),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 10),
           Text(
             "Traitement en cours, veuillez patienter...",
             style: GoogleFonts.roboto(fontSize: 16),
@@ -146,7 +147,7 @@ class LessonView extends StatelessWidget {
 class VideoPlayerCard extends StatefulWidget {
   final String videoPath;
 
-  const VideoPlayerCard({required this.videoPath});
+  const VideoPlayerCard({super.key, required this.videoPath});
 
   @override
   _VideoPlayerCardState createState() => _VideoPlayerCardState();
@@ -154,7 +155,7 @@ class VideoPlayerCard extends StatefulWidget {
 
 class _VideoPlayerCardState extends State<VideoPlayerCard> {
   late VideoPlayerController _controller;
-  bool _isMuted = false;
+  final bool _isMuted = false;
   late ValueNotifier<Duration> _videoPositionNotifier;
 
   @override
@@ -188,7 +189,7 @@ class _VideoPlayerCardState extends State<VideoPlayerCard> {
   @override
   Widget build(BuildContext context) {
     if (!_controller.value.isInitialized) {
-      return Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Card(
@@ -205,9 +206,9 @@ class _VideoPlayerCardState extends State<VideoPlayerCard> {
                 child: VideoPlayer(_controller),
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             VideoPlayerControls(controller: _controller, isMuted: _isMuted),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildVideoProgressBar(),
           ],
         ),
@@ -240,7 +241,7 @@ class VideoPlayerControls extends StatelessWidget {
   final VideoPlayerController controller;
   final bool isMuted;
 
-  const VideoPlayerControls({required this.controller, required this.isMuted});
+  const VideoPlayerControls({super.key, required this.controller, required this.isMuted});
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +261,7 @@ class VideoPlayerControls extends StatelessWidget {
           },
         ),
         IconButton(
-          icon: Icon(Icons.stop_circle, color: Colors.lightBlue, size: 40),
+          icon: const Icon(Icons.stop_circle, color: Colors.lightBlue, size: 40),
           onPressed: () {
             controller.seekTo(Duration.zero);
             controller.pause();

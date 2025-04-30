@@ -56,8 +56,8 @@ class _AnalyticsScreenBody extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (kIsWeb)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 20),
                             child: Text(
                               'Your Analytics',
                               style: TextStyle(
@@ -95,10 +95,10 @@ class _AnalyticsScreenBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
                 Icon(Icons.bar_chart, color: AppTheme.primaryColor),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Text('Progress', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimaryColor)),
               ],
             ),
@@ -107,11 +107,11 @@ class _AnalyticsScreenBody extends StatelessWidget {
               value: rate,
               minHeight: 10,
               backgroundColor: AppTheme.backgroundColor.withOpacity(0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
             ),
             const SizedBox(height: 10),
             Text('$completed / $total exercises completed (${(rate * 100).toStringAsFixed(1)}%)',
-                style: TextStyle(color: AppTheme.textSecondaryColor)),
+                style: const TextStyle(color: AppTheme.textSecondaryColor)),
           ],
         ),
       ),
@@ -135,7 +135,7 @@ class _AnalyticsScreenBody extends StatelessWidget {
               children: [
                 Icon(Icons.star, color: Colors.amber[700]),
                 const SizedBox(width: 10),
-                Text('Strengths & Weaknesses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimaryColor)),
+                const Text('Strengths & Weaknesses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimaryColor)),
               ],
             ),
             const SizedBox(height: 16),
@@ -145,7 +145,7 @@ class _AnalyticsScreenBody extends StatelessWidget {
                   const Icon(Icons.trending_up, color: Colors.green),
                   const SizedBox(width: 8),
                   Text('Strengths: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[700])),
-                  Expanded(child: Text(strengths.join(', '), style: TextStyle(color: AppTheme.textSecondaryColor))),
+                  Expanded(child: Text(strengths.join(', '), style: const TextStyle(color: AppTheme.textSecondaryColor))),
                 ],
               ),
             if (weaknesses.isNotEmpty)
@@ -156,7 +156,7 @@ class _AnalyticsScreenBody extends StatelessWidget {
                     const Icon(Icons.trending_down, color: Colors.red),
                     const SizedBox(width: 8),
                     Text('Weaknesses: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red[700])),
-                    Expanded(child: Text(weaknesses.join(', '), style: TextStyle(color: AppTheme.textSecondaryColor))),
+                    Expanded(child: Text(weaknesses.join(', '), style: const TextStyle(color: AppTheme.textSecondaryColor))),
                   ],
                 ),
               ),
@@ -187,10 +187,10 @@ class _AnalyticsScreenBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
                 Icon(Icons.insights, color: AppTheme.primaryColor),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Text('Engagement', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimaryColor)),
               ],
             ),
@@ -212,9 +212,9 @@ class _AnalyticsScreenBody extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: AppTheme.primaryColor.withOpacity(0.7)),
           const SizedBox(width: 8),
-          Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimaryColor)),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimaryColor)),
           const SizedBox(width: 8),
-          Expanded(child: Text(value, style: TextStyle(color: AppTheme.textSecondaryColor))),
+          Expanded(child: Text(value, style: const TextStyle(color: AppTheme.textSecondaryColor))),
         ],
       ),
     );
@@ -236,7 +236,7 @@ class _AnalyticsScreenBody extends StatelessWidget {
               children: [
                 Icon(Icons.recommend, color: Colors.blue[700]),
                 const SizedBox(width: 10),
-                Text('Recommendations', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimaryColor)),
+                const Text('Recommendations', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimaryColor)),
               ],
             ),
             const SizedBox(height: 16),
@@ -246,7 +246,7 @@ class _AnalyticsScreenBody extends StatelessWidget {
                     children: [
                       const Icon(Icons.arrow_right, color: Colors.blueAccent),
                       const SizedBox(width: 6),
-                      Expanded(child: Text(rec, style: TextStyle(color: AppTheme.textSecondaryColor))),
+                      Expanded(child: Text(rec, style: const TextStyle(color: AppTheme.textSecondaryColor))),
                     ],
                   ),
                 )),

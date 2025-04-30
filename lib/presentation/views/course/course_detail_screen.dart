@@ -9,6 +9,7 @@ import '../../viewmodels/lab_viewmodel.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../../widgets/avatar_widget.dart';
 import '../../widgets/common_widgets.dart';
+import '../../../services/ai_service.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -35,11 +36,24 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   int _exerciseIndex = 0;
   final TextEditingController _codeController = TextEditingController();
   String? _selectedQuizAnswer;
+  List<Map<String, String>> _chatMessages = [];
+  final TextEditingController _chatController = TextEditingController();
+  bool _isChatOpen = false;
+  bool _isSending = false;
+  final ScrollController _chatScrollController = ScrollController();
+  String _streamingBotMessage = '';
 
   @override
   void initState() {
     super.initState();
     _loadCourse();
+  }
+
+  @override
+  void dispose() {
+    _chatController.dispose();
+    _chatScrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCourse() async {
@@ -144,6 +158,165 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     return totalExercises > 0 ? completedExercises / totalExercises : 0.0;
   }
 
+  void _openChat() {
+    setState(() {
+      _isChatOpen = true;
+      _streamingBotMessage = '';
+    });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 6,
+                  width: 60,
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const Text('SkillGenie Chatbot', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView.builder(
+                    controller: _chatScrollController,
+                    itemCount: _chatMessages.length + (_streamingBotMessage.isNotEmpty ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index < _chatMessages.length) {
+                        final msg = _chatMessages[index];
+                        final isUser = msg['role'] == 'user';
+                        return Align(
+                          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Row(
+                            mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!isUser) ...[
+                                const GenieAvatar(state: AvatarState.explaining, size: 32),
+                                const SizedBox(width: 8),
+                              ],
+                              Flexible(
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isUser ? Colors.blue[100] : Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(msg['content'] ?? '', style: TextStyle(color: Colors.black)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        // Streaming bot message
+                        return Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const GenieAvatar(state: AvatarState.explaining, size: 32),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(_streamingBotMessage, style: TextStyle(color: Colors.black)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8, top: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _chatController,
+                          decoration: const InputDecoration(
+                            hintText: 'Ask the AI...'
+                          ),
+                          onSubmitted: (_) => _sendChatMessage(),
+                        ),
+                      ),
+                      IconButton(
+                        icon: _isSending ? const CircularProgressIndicator() : const Icon(Icons.send, color: Colors.blue),
+                        onPressed: _isSending || _chatController.text.trim().isEmpty ? null : _sendChatMessage,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).whenComplete(() {
+      setState(() {
+        _isChatOpen = false;
+        _streamingBotMessage = '';
+      });
+    });
+  }
+
+  Future<void> _sendChatMessage() async {
+    final text = _chatController.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _chatMessages.add({'role': 'user', 'content': text});
+      _chatController.clear();
+      _isSending = true;
+      _streamingBotMessage = '';
+    });
+    // Streaming effect for AI response
+    final response = await AIService.getChatbotResponse(message: text);
+    for (int i = 1; i <= response.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 16)); // Slightly slower for a more natural effect
+      setState(() {
+        _streamingBotMessage = response.substring(0, i);
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_chatScrollController.hasClients) {
+          _chatScrollController.jumpTo(_chatScrollController.position.maxScrollExtent + 60);
+        }
+      });
+    }
+    setState(() {
+      _chatMessages.add({'role': 'bot', 'content': response});
+      _isSending = false;
+      _streamingBotMessage = '';
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chatScrollController.hasClients) {
+        _chatScrollController.jumpTo(_chatScrollController.position.maxScrollExtent + 60);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,34 +328,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => Align(
-              alignment: Alignment.bottomRight,
-              child: Container(
-                width: 350,
-                height: 500,
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 16,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const ChatbotScreen(), // Your chatbot widget
-              ),
-            ),
-          );
-        },
-        backgroundColor: Theme.of(context).primaryColor,
+        onPressed: _openChat,
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.chat),
         tooltip: 'Ask SkillGenie',
-        child: GenieAvatar(state: AvatarState.idle, size: 40),
       ),
       body: Consumer<CourseViewModel>(
         builder: (context, courseViewModel, child) {
@@ -246,42 +395,48 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (_selectedChapterIndex > 0)
-                  GenieSecondaryButton(
-                    text: 'Previous',
-                    icon: Icons.arrow_back,
-                    onPressed: () {
-                      setState(() {
-                        _selectedChapterIndex--;
-                      });
-                    },
+                  Expanded(
+                    child: GenieSecondaryButton(
+                      text: 'Previous',
+                      icon: Icons.arrow_back,
+                      onPressed: () {
+                        setState(() {
+                          _selectedChapterIndex--;
+                        });
+                      },
+                    ),
                   )
                 else
-                  const SizedBox.shrink(),
+                  const Expanded(child: SizedBox.shrink()),
 
                 if (_selectedChapterIndex < level.chapters.length - 1)
-                  GeniePrimaryButton(
-                    text: 'Next',
-                    icon: Icons.arrow_forward,
-                    onPressed: () {
-                      setState(() {
-                        _selectedChapterIndex++;
-                      });
-                    },
+                  Expanded(
+                    child: GeniePrimaryButton(
+                      text: 'Next',
+                      icon: Icons.arrow_forward,
+                      onPressed: () {
+                        setState(() {
+                          _selectedChapterIndex++;
+                        });
+                      },
+                    ),
                   )
                 else if (_selectedLevelIndex < course.content.levels.length - 1 &&
                         _selectedLevelIndex <= course.currentLevel)
-                  GeniePrimaryButton(
-                    text: 'Next Level',
-                    icon: Icons.arrow_forward,
-                    onPressed: () {
-                      setState(() {
-                        _selectedLevelIndex++;
-                        _selectedChapterIndex = 0;
-                      });
-                    },
+                  Expanded(
+                    child: GeniePrimaryButton(
+                      text: 'Next Level',
+                      icon: Icons.arrow_forward,
+                      onPressed: () {
+                        setState(() {
+                          _selectedLevelIndex++;
+                          _selectedChapterIndex = 0;
+                        });
+                      },
+                    ),
                   )
                 else
-                  const SizedBox.shrink(),
+                  const Expanded(child: SizedBox.shrink()),
               ],
             ),
           );

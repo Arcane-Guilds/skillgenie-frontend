@@ -5,12 +5,12 @@ class CommunityConstants {
   // Posts endpoints
   static const String posts = '$basePath/posts';
   static const String allPosts = '$posts/all';
-  static const String postById = '$posts'; // + /{postId}
+  static const String postById = posts; // + /{postId}
   
   // Comments endpoints
   static const String comments = '$basePath/comments';
-  static const String commentsWithReplies = '$posts'; // + /{postId}/comments-with-replies
-  static const String replyToComment = '$comments'; // + /{commentId}/reply
+  static const String commentsWithReplies = posts; // + /{postId}/comments-with-replies
+  static const String replyToComment = comments; // + /{commentId}/reply
   
   // Likes endpoints
   static const String likes = '$basePath/likes';

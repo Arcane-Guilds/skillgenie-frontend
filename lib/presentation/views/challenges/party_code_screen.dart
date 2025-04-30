@@ -196,7 +196,7 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GenieAvatar(
+                const GenieAvatar(
                   state: AvatarState.idle,
                   size: 120,
                   message: "Invite your friends by sharing or joining a party code!",
@@ -223,10 +223,10 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         TextField(
                           controller: _partyCodeController,
                           readOnly: true,
-                          style: TextStyle(color: AppTheme.textPrimaryColor),
+                          style: const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Generated Party Code",
-                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
+                            labelStyle: const TextStyle(color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(
@@ -276,10 +276,10 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _joinCodeController,
-                          style: TextStyle(color: AppTheme.textPrimaryColor),
+                          style: const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Enter Party Code",
-                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
+                            labelStyle: const TextStyle(color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(

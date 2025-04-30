@@ -54,7 +54,7 @@ class ChatbotRemoteDataSource {
       _logger.info('Sending text message to Gemini AI');
       
       final content = [Content.text(message)];
-      final response = await _model!.generateContent(content);
+      final response = await _model.generateContent(content);
       
       if (response.text == null || response.text!.isEmpty) {
         _logger.warning('Received empty response from Gemini AI');
@@ -102,7 +102,7 @@ class ChatbotRemoteDataSource {
         Content.text("Describe this image in detail: $base64Image")
       ];
       
-      final response = await _model!.generateContent(content);
+      final response = await _model.generateContent(content);
       
       if (response.text == null || response.text!.isEmpty) {
         _logger.warning('Received empty response from Gemini AI for image');

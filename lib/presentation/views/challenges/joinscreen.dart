@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'challenges_screen.dart';
 import '../../widgets/avatar_widget.dart';
 
@@ -44,7 +42,7 @@ class _JoinScreenState extends State<JoinScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              GenieAvatar(state: AvatarState.idle, size: 200),
+              const GenieAvatar(state: AvatarState.idle, size: 200),
               const SizedBox(height: 24),
               Card(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -54,7 +52,7 @@ class _JoinScreenState extends State<JoinScreen>
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         'Enter your party code!',
                         style: TextStyle(
                           fontSize: 18,

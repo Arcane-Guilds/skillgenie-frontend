@@ -1,2 +1,0 @@
-C:/git/frontend-backup/android/app/.cxx/Debug/c5621c2s/armeabi-v7a/CMakeFiles/edit_cache.dir
-C:/git/frontend-backup/android/app/.cxx/Debug/c5621c2s/armeabi-v7a/CMakeFiles/rebuild_cache.dir

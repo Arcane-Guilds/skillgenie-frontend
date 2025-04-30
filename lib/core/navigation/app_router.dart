@@ -31,7 +31,6 @@ import '../../presentation/views/course/course_roadmap_screen.dart';
 import '../../presentation/views/course/lab_screen.dart';
 import '../../presentation/views/chat/chat_detail_screen.dart';
 import '../../presentation/views/chat/socket_test_screen.dart';
-import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 import '../widgets/responsive_navigation.dart';
 import '../../presentation/views/reclamation/reclamation_screen.dart';
@@ -44,16 +43,16 @@ class ShellScaffold extends StatelessWidget {
   final int currentIndex;
 
   const ShellScaffold({
-    Key? key,
+    super.key,
     required this.child,
     required this.currentIndex,
-  }) : super(key: key);
+  });
 
 @override
 Widget build(BuildContext context) {
 return ResponsiveNavigation(
-  child: child,
   currentIndex: currentIndex,
+  child: child,
 );
 }
 }
@@ -78,9 +77,9 @@ String getUniqueHeroTag(String baseTag, String uniqueIdentifier) {
 // Completely disable hero animations during bottom tab navigation
 class NoHeroTheme extends InheritedWidget {
   const NoHeroTheme({
-    Key? key,
-    required Widget child,
-  }) : super(key: key, child: child);
+    super.key,
+    required super.child,
+  });
 
   static bool of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<NoHeroTheme>() != null;

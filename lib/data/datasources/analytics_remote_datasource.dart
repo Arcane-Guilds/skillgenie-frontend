@@ -2,7 +2,6 @@ import '../models/analytics_model.dart';
 import '../models/api_exception.dart';
 import 'api_client.dart';
 import '../../core/constants/api_constants.dart';
-import '../../core/constants/api_constants.dart';
 
 class AnalyticsRemoteDataSource {
   final ApiClient _apiClient;

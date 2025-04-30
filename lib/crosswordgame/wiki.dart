@@ -1,13 +1,9 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'package:characters/characters.dart';
-import 'dart:math';
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:skillGenie/crosswordgame/crossgen.dart';
-import 'dart:convert' as convert;
 
 import 'package:skillGenie/crosswordgame/parser.dart';
 

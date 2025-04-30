@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:math' as math;
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:skillGenie/data/models/course/chapter.dart';
-import 'package:skillGenie/data/models/course/exercise.dart';
-import 'package:skillGenie/data/models/course/level.dart';
 
 import '../../../data/models/course_model.dart';
 import '../../viewmodels/course_viewmodel.dart';
-import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/avatar_widget.dart';
-import '../../../core/theme/app_theme.dart';
 
 class CourseRoadmapScreen extends StatefulWidget {
   final String courseId;
@@ -391,14 +385,14 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
   }
 
   Widget _buildLevelsList(Course course) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: course.content.levels.length,
-      itemBuilder: (context, levelIndex) {
-        final level = course.content.levels[levelIndex];
-        return _buildLevelItem(level, levelIndex, course);
-      },
+    return Column(
+      children: List.generate(
+        course.content.levels.length,
+        (levelIndex) {
+          final level = course.content.levels[levelIndex];
+          return _buildLevelItem(level, levelIndex, course);
+        },
+      ),
     );
   }
 
@@ -531,14 +525,14 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
-          children: chapter.exercises.map((exercise) => _buildExerciseItem(exercise, parentLevel, chapter, course)).toList(),
+          children: chapter.exercises.map((exercise) => _buildExerciseItem(exercise, parentLevel, chapter, course, parentLevel.levelNumber, chapter.title, exercise.type)).toList(),
         ),
       ),
     );
   }
 
-  Widget _buildExerciseItem(CourseExercise exercise, CourseLevel parentLevel, CourseChapter parentChapter, Course course) {
-    final progressKey = 'L${parentLevel.levelNumber}C${parentChapter.title}E${exercise.type}';
+  Widget _buildExerciseItem(CourseExercise exercise, CourseLevel parentLevel, CourseChapter parentChapter, Course course, int levelIndex, String chapterTitle, String exerciseType) {
+    final progressKey = 'L${levelIndex + 1}C${chapterTitle}E${exerciseType}';
     final isCompleted = course.progress[progressKey] == 1;
     final isLocked = parentLevel.levelNumber > course.currentLevel;
     
@@ -551,7 +545,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
       onTap: () {
         if (!isLocked) {
           context.push(
-            '/course-detail/${course.id}?level=${parentLevel.levelNumber}&chapter=${parentChapter.title}&exercise=${exercise.type}'
+            '/course-detail/${course.id}?level=$levelIndex&chapter=$chapterTitle&exercise=$exerciseType'
           );
         }
       },

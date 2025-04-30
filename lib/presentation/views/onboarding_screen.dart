@@ -143,7 +143,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             const SizedBox(height: 16),
                             Text(
                               page['description'],
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 color: AppTheme.textSecondaryColor,
                                 height: 1.5,

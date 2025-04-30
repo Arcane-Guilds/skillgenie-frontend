@@ -5,7 +5,7 @@ import '../../viewmodels/chat_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 
 class SocketTestScreen extends StatefulWidget {
-  const SocketTestScreen({Key? key}) : super(key: key);
+  const SocketTestScreen({super.key});
 
   @override
   State<SocketTestScreen> createState() => _SocketTestScreenState();

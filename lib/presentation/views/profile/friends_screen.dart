@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 
 class FriendsScreen extends StatefulWidget {
-  const FriendsScreen({Key? key}) : super(key: key);
+  const FriendsScreen({super.key});
 
   @override
   State<FriendsScreen> createState() => _FriendsScreenState();

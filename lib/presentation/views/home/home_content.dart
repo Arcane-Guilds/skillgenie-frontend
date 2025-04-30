@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:math' as math;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,7 +10,6 @@ import '../../../data/models/user_model.dart';
 import '../../../presentation/viewmodels/course_viewmodel.dart';
 import '../../../presentation/viewmodels/auth/auth_viewmodel.dart';
 import '../../../data/models/course_model.dart';
-import '../../views/course/course_detail_screen.dart';
 
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
@@ -92,10 +90,6 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +334,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
       margin: const EdgeInsets.symmetric(vertical: 24),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: theme.colorScheme.outline.withOpacity(0.2),
@@ -529,7 +523,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                     borderRadius: BorderRadius.circular(8),
                         child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: theme.colorScheme.surfaceVariant,
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
                           valueColor: AlwaysStoppedAnimation<Color>(progress == 1.0 ? Colors.green : courseColor),
                       minHeight: 8,
                         ),

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,9 +8,7 @@ import 'package:skillGenie/core/theme/app_theme.dart';
 import 'package:skillGenie/presentation/widgets/avatar_widget.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../viewmodels/reminder_viewmodel.dart';
-import '../../../core/constants/cloudinary_constants.dart';
 import '../../../core/errors/error_handler.dart';
-import '../../../data/models/user_model.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -236,11 +233,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24)),
-              title: Row(
+              title: const Row(
                 children: [
                   Icon(Icons.lock_reset, color: AppTheme.primaryColor),
-                  const SizedBox(width: 10),
-                  const Text('Change Password'),
+                  SizedBox(width: 10),
+                  Text('Change Password'),
                 ],
               ),
               content: Form(
@@ -288,16 +285,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Enter new password';
+                          }
                           if (!hasMinLength) return 'At least 8 characters';
-                          if (!hasUppercase)
+                          if (!hasUppercase) {
                             return 'At least one uppercase letter';
-                          if (!hasLowercase)
+                          }
+                          if (!hasLowercase) {
                             return 'At least one lowercase letter';
+                          }
                           if (!hasNumber) return 'At least one number';
-                          if (!hasSpecialChar)
+                          if (!hasSpecialChar) {
                             return 'At least one special character';
+                          }
                           return null;
                         },
                       ),
@@ -338,10 +339,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Confirm your password';
-                          if (value != newPasswordController.text)
+                          }
+                          if (value != newPasswordController.text) {
                             return 'Passwords do not match';
+                          }
                           return null;
                         },
                       ),
@@ -373,12 +376,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           currentPasswordController.text,
                           newPasswordController.text,
                         );
-                        if (mounted)
+                        if (mounted) {
                           _showSuccessSnackBar(
                               'Password updated successfully!');
+                        }
                       } catch (e) {
-                        if (mounted)
+                        if (mounted) {
                           _showErrorSnackBar('Failed to update password: $e');
+                        }
                       } finally {
                         if (mounted) setState(() => _isLoading = false);
                       }
@@ -860,19 +865,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         backgroundImage: tempImageFile != null
                             ? FileImage(tempImageFile)
                             : null,
+                        backgroundColor: Colors.grey[200],
                         child: tempImageFile == null
                             ? const Icon(Icons.person,
                                 size: 48, color: Colors.grey)
                             : null,
-                        backgroundColor: Colors.grey[200],
                       ),
-                      Positioned(
+                      const Positioned(
                         bottom: 0,
                         right: 0,
                         child: CircleAvatar(
                           backgroundColor: AppTheme.primaryColor,
                           radius: 18,
-                          child: const Icon(Icons.camera_alt,
+                          child: Icon(Icons.camera_alt,
                               color: Colors.white, size: 20),
                         ),
                       ),
@@ -1002,13 +1007,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                           user!.avatar!.isNotEmpty
                                       ? NetworkImage(user.avatar!)
                                       : null) as ImageProvider<Object>?,
+                              backgroundColor: Colors.grey[200],
                               child: _imageFile == null &&
                                       (user?.avatar == null ||
                                           user!.avatar!.isEmpty)
                                   ? const Icon(Icons.person,
                                       size: 40, color: Colors.grey)
                                   : null,
-                              backgroundColor: Colors.grey[200],
                             ),
                           ),
                           const SizedBox(width: 24),
@@ -1053,7 +1058,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     elevation: 2,
                     child: ListTile(
                       leading:
-                          Icon(Icons.password, color: AppTheme.primaryColor),
+                          const Icon(Icons.password, color: AppTheme.primaryColor),
                       title: const Text('Change Password'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: _showChangePasswordDialog,
@@ -1078,7 +1083,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             color: AppTheme.primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Icon(Icons.notifications_active,
+                          child: const Icon(Icons.notifications_active,
                               color: AppTheme.primaryColor, size: 28),
                         ),
                         title: const Text('Daily Reminder',

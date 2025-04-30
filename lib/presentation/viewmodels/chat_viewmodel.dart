@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,8 +29,8 @@ class ChatViewModel with ChangeNotifier {
   bool _isLoading = false;
   bool _socketInitialized = false;
   String? _errorMessage;
-  int _page = 1;
-  bool _hasMoreMessages = true;
+  final int _page = 1;
+  final bool _hasMoreMessages = true;
   Timer? _messageRefreshTimer;
   String? _currentUserId;
   int _totalUnreadCount = 0;
@@ -92,7 +91,7 @@ class ChatViewModel with ChangeNotifier {
       notifyListeners();
 
       // Check connection status periodically and reconnect if needed
-      Timer.periodic(Duration(seconds: 15), (timer) {
+      Timer.periodic(const Duration(seconds: 15), (timer) {
         if (!_chatRepository.isSocketConnected) {
           print('Socket disconnected, attempting to reconnect...');
           _chatRepository.initializeSocket();
@@ -326,7 +325,7 @@ class ChatViewModel with ChangeNotifier {
         final success = await _chatRepository.sendMessageViaSocketWithTimeout(
           _currentChat!.id,
           content,
-          timeout: Duration(seconds: 3),
+          timeout: const Duration(seconds: 3),
         );
 
         if (success) {
@@ -585,6 +584,7 @@ class ChatViewModel with ChangeNotifier {
     }
   }
 
+  @override
   void dispose() {
     _messageRefreshTimer?.cancel();
     _chatRepository.dispose();

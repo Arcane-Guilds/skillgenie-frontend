@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => LessonView()),
+                        MaterialPageRoute(builder: (context) => const LessonView()),
                       );
                     },
                   ),
@@ -187,9 +187,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             },
           );
         },
-        child: const Icon(Icons.menu),
         backgroundColor: kPrimaryBlue,
         foregroundColor: Colors.white,
+        child: const Icon(Icons.menu),
       ),
     );
   }
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Text(
                   _welcomeMessage,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -217,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       width: 120,
                       child: LinearProgressIndicator(
                         backgroundColor: kPrimaryBlue.withOpacity(0.2),
-                        valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
+                        valueColor: const AlwaysStoppedAnimation<Color>(kPrimaryBlue),
                       ),
                     )
                   : Text(
@@ -286,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.tips_and_updates_outlined,
                   color: kPrimaryBlue,
                 ),

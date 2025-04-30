@@ -10,13 +10,13 @@ class GeniePrimaryButton extends StatelessWidget {
   final double width;
 
   const GeniePrimaryButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.icon,
     this.isLoading = false,
     this.width = double.infinity,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,12 +77,12 @@ class GenieSecondaryButton extends StatelessWidget {
   final double width;
 
   const GenieSecondaryButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.icon,
     this.width = double.infinity,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +137,7 @@ class GenieCard extends StatelessWidget {
   final bool isLocked;
 
   const GenieCard({
-    Key? key,
+    super.key,
     required this.title,
     this.subtitle,
     this.description,
@@ -146,7 +146,7 @@ class GenieCard extends StatelessWidget {
     this.trailingWidget,
     this.isCompleted = false,
     this.isLocked = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -301,13 +301,13 @@ class CourseThumbnailCard extends StatelessWidget {
   final double progress;
 
   const CourseThumbnailCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.courseId,
     required this.onTap,
     this.progress = 0.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -453,12 +453,12 @@ class BadgeWidget extends StatelessWidget {
   final VoidCallback? onTap;
 
   const BadgeWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     this.isEarned = false,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -527,9 +527,9 @@ class StreakWidget extends StatelessWidget {
   final int streakDays;
 
   const StreakWidget({
-    Key? key,
+    super.key,
     required this.streakDays,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -549,7 +549,7 @@ class StreakWidget extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             Icons.local_fire_department,
             color: Colors.orange,
             size: 28,
@@ -589,9 +589,9 @@ class CoinWidget extends StatelessWidget {
   final int coins;
 
   const CoinWidget({
-    Key? key,
+    super.key,
     required this.coins,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -611,7 +611,7 @@ class CoinWidget extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             Icons.monetization_on,
             color: Colors.amber,
             size: 28,
@@ -639,11 +639,11 @@ class AnimatedProgressIndicator extends StatelessWidget {
   final double height;
 
   const AnimatedProgressIndicator({
-    Key? key,
+    super.key,
     required this.progress,
     required this.label,
     this.height = 10, required Color progressColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

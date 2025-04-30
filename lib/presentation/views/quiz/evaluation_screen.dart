@@ -309,7 +309,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
           showDialog(
             context: context,
             barrierDismissible: false,
-            builder: (context) => AlertDialog(
+            builder: (context) => const AlertDialog(
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -317,8 +317,8 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                     state: AvatarState.thinking,
                     size: 100,
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Generating your personalized learning path...'),
+                  SizedBox(height: 16),
+                  Text('Generating your personalized learning path...'),
                 ],
               ),
             ),

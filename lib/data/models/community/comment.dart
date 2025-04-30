@@ -28,7 +28,7 @@ class Comment {
   factory Comment.fromJson(Map<String, dynamic> json) {
     try {
       // Basic validation to prevent processing empty or invalid JSON
-      if (json == null || json.isEmpty) {
+      if (json.isEmpty) {
         print('Warning: Received null or empty JSON for Comment');
         throw ArgumentError('Invalid JSON: null or empty');
       }
@@ -56,7 +56,7 @@ class Comment {
             // Handle case where author is just an ID
             author = UserPreview(id: json['author'], username: 'Unknown User');
           } else {
-            throw FormatException('Author is not a Map or String');
+            throw const FormatException('Author is not a Map or String');
           }
         } catch (e) {
           print('Error parsing author: $e');

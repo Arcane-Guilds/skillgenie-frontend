@@ -4,7 +4,6 @@ import '../../core/constants/auth_constants.dart';
 import '../models/auth_response.dart';
 import '../models/user_model.dart';
 import 'api_client.dart';
-import '../../core/constants/api_constants.dart';
 
 /// Remote data source for authentication-related API calls
 class AuthRemoteDataSource {

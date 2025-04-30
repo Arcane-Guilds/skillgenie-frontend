@@ -22,7 +22,7 @@ class ChallengesHomePage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GenieAvatar(state: AvatarState.idle, size: 120),
+                const GenieAvatar(state: AvatarState.idle, size: 120),
                 const SizedBox(height: 24),
                 Card(
                   color: AppTheme.surfaceColor,
@@ -44,10 +44,10 @@ class ChallengesHomePage extends StatelessWidget {
                         TextField(
                           controller: nicknameController,
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppTheme.textPrimaryColor),
+                          style: const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             hintText: 'NICKNAME',
-                            hintStyle: TextStyle(color: AppTheme.textSecondaryColor),
+                            hintStyle: const TextStyle(color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(

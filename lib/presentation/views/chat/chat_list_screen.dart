@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../data/models/chat_model.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
@@ -12,7 +11,7 @@ import 'create_chat_screen.dart';
 import 'socket_test_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
-  const ChatListScreen({Key? key}) : super(key: key);
+  const ChatListScreen({super.key});
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();

@@ -50,7 +50,7 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -58,7 +58,7 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GenieAvatar(
+                const GenieAvatar(
                   state: AvatarState.idle,
                   size: 150,
                   message: "Generate your party code!",
@@ -82,7 +82,7 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen> {
                                   labelText: "Generated Code",
                                   labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
                                   filled: true,
-                                  fillColor: Theme.of(context).colorScheme.background,
+                                  fillColor: Theme.of(context).colorScheme.surface,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30),
                                     borderSide: BorderSide.none,

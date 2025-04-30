@@ -80,7 +80,7 @@ class QuizPage extends StatelessWidget {
 
   // Loading Screen with GenieAvatar Animation
   Widget _buildLoadingScreen() {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
@@ -90,7 +90,7 @@ class QuizPage extends StatelessWidget {
               state: AvatarState.thinking,
               size: 120,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               'Getting ready for your learning journey...',
               style: TextStyle(
@@ -105,7 +105,7 @@ class QuizPage extends StatelessWidget {
   }
 
   Widget _buildEvaluationLoading(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
@@ -115,7 +115,7 @@ class QuizPage extends StatelessWidget {
               state: AvatarState.thinking,
               size: 120,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               'Generating your personalized evaluation...',
               style: TextStyle(
@@ -202,7 +202,7 @@ class QuizPage extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
+              const Text(
                 'Skill Assessment',
                 style: TextStyle(
                   fontSize: 20,
@@ -213,7 +213,7 @@ class QuizPage extends StatelessWidget {
               const Spacer(),
               Text(
                 'Question ${quizVM.currentQuestionIndex + 1}/${quizVM.questions.length}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppTheme.textSecondaryColor,
@@ -225,7 +225,7 @@ class QuizPage extends StatelessWidget {
           LinearProgressIndicator(
             value: quizVM.progress,
             backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
             minHeight: 8,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -268,7 +268,7 @@ class QuizPage extends StatelessWidget {
             ),
             child: Text(
               question.question,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimaryColor,
@@ -289,10 +289,10 @@ class QuizPage extends StatelessWidget {
                       duration: const Duration(milliseconds: 400),
                       delay: Duration(milliseconds: index * 100),
                     ),
-                    SlideEffect(
-                      begin: const Offset(0, 0.3),
-                      end: const Offset(0, 0),
-                      duration: const Duration(milliseconds: 400),
+                    const SlideEffect(
+                      begin: Offset(0, 0.3),
+                      end: Offset(0, 0),
+                      duration: Duration(milliseconds: 400),
                       curve: Curves.easeOutQuad,
                     ),
                   ],
@@ -418,7 +418,7 @@ class QuizPage extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
@@ -426,7 +426,7 @@ class QuizPage extends StatelessWidget {
                     size: 16,
                     color: AppTheme.textSecondaryColor,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Previous',
                     style: TextStyle(

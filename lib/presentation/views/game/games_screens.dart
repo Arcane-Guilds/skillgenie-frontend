@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:skillGenie/presentation/views/game/game_page.dart';
 import 'package:skillGenie/presentation/views/hangman/homegame_screen.dart';
 import 'package:skillGenie/crosswordgame/search.dart';
@@ -32,7 +31,7 @@ class GamesScreen extends StatefulWidget {
       'description': 'Solve programming-related crossword puzzles!',
       'color': Colors.blue,
       'icon': Icons.grid_on,
-      'page': SearchRoute(),
+      'page': const SearchRoute(),
     },
   ];
 
@@ -54,7 +53,7 @@ class _GamesScreenState extends State<GamesScreen> {
         backgroundColor: AppTheme.surfaceColor,
         actions: [
           IconButton(
-            icon: Icon(Icons.brightness_6, color: AppTheme.textPrimaryColor),
+            icon: const Icon(Icons.brightness_6, color: AppTheme.textPrimaryColor),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Dark mode toggle coming soon!")),
@@ -62,7 +61,7 @@ class _GamesScreenState extends State<GamesScreen> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.store, color: AppTheme.textPrimaryColor),
+            icon: const Icon(Icons.store, color: AppTheme.textPrimaryColor),
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -94,7 +93,7 @@ class _GamesScreenState extends State<GamesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Choose a Game',
                 style: TextStyle(
                   color: AppTheme.textPrimaryColor,
@@ -103,7 +102,7 @@ class _GamesScreenState extends State<GamesScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
+              const Text(
                 'Test your knowledge while having fun!',
                 style: TextStyle(
                   color: AppTheme.textSecondaryColor,
@@ -117,7 +116,7 @@ class _GamesScreenState extends State<GamesScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Icon(Icons.pets, 
+                      const Icon(Icons.pets, 
                         size: 60, 
                         color: AppTheme.textPrimaryColor
                       ),
@@ -224,7 +223,7 @@ class _GamesScreenState extends State<GamesScreen> {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppTheme.textPrimaryColor,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -233,7 +232,7 @@ class _GamesScreenState extends State<GamesScreen> {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppTheme.textSecondaryColor,
                         fontSize: 14,
                       ),
@@ -241,7 +240,7 @@ class _GamesScreenState extends State<GamesScreen> {
                   ],
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.arrow_forward_ios,
                 color: AppTheme.textSecondaryColor,
                 size: 20,
@@ -299,7 +298,7 @@ class _GamesScreenState extends State<GamesScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -311,7 +310,7 @@ class _GamesScreenState extends State<GamesScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       "Try a random game for fun!",
                       style: TextStyle(
@@ -322,7 +321,7 @@ class _GamesScreenState extends State<GamesScreen> {
                   ],
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.arrow_forward_ios,
                 color: AppTheme.textSecondaryColor,
                 size: 20,

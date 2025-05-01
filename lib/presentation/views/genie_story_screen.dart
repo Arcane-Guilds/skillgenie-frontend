@@ -23,7 +23,7 @@ class _GenieStoryScreenState extends State<GenieStoryScreen> {
       setState(() => _current++);
     } else {
       // Go to signup or login
-      context.go('/signup'); // or '/login'
+      context.go('/signup');
     }
   }
 

@@ -11,6 +11,10 @@ class User {
   final int streak;
   final int totalXP;
   final double dailyProgress;
+  final int coins;
+  final int currentStreak;
+  final int bestStreak;
+  final DateTime lastActivityDate;
 
   User({
     required this.id,
@@ -23,7 +27,11 @@ class User {
     this.streak = 0,
     this.totalXP = 0,
     this.dailyProgress = 0.0,
-  });
+    this.coins = 0,
+    this.currentStreak = 0,
+    this.bestStreak = 0,
+    DateTime? lastActivityDate,
+  }) : lastActivityDate = lastActivityDate ?? DateTime(0);
 
   factory User.fromJson(Map<String, dynamic> json) {
     try {
@@ -54,6 +62,12 @@ class User {
         streak: json['streak'] ?? 0,
         totalXP: json['totalXP'] ?? 0,
         dailyProgress: (json['dailyProgress'] ?? 0.0).toDouble(),
+        coins: json['coins'] ?? 0,
+        currentStreak: json['currentStreak'] ?? 0,
+        bestStreak: json['bestStreak'] ?? 0,
+        lastActivityDate: json['lastActivityDate'] != null 
+            ? DateTime.parse(json['lastActivityDate'] as String)
+            : DateTime(0),
       );
     } catch (e) {
       print('Error parsing User JSON: $e');
@@ -79,6 +93,21 @@ class User {
       'streak': streak,
       'totalXP': totalXP,
       'dailyProgress': dailyProgress,
+      'coins': coins,
+      'currentStreak': currentStreak,
+      'bestStreak': bestStreak,
+      'lastActivityDate': lastActivityDate.toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> toUpdateJson() {
+    return {
+      if (username != null) 'username': username,
+      if (email != null) 'email': email,
+      if (role != null) 'role': role,
+      if (avatar != null) 'avatar': avatar,
+      if (bio != null) 'bio': bio,
+      // Do NOT include id, streak, totalXP, dailyProgress, profilePicture, etc.
     };
   }
 
@@ -106,6 +135,10 @@ class User {
     int? streak,
     int? totalXP,
     double? dailyProgress,
+    int? coins,
+    int? currentStreak,
+    int? bestStreak,
+    DateTime? lastActivityDate,
   }) {
     return User(
       id: id ?? this.id,
@@ -118,6 +151,10 @@ class User {
       streak: streak ?? this.streak,
       totalXP: totalXP ?? this.totalXP,
       dailyProgress: dailyProgress ?? this.dailyProgress,
+      coins: coins ?? this.coins,
+      currentStreak: currentStreak ?? this.currentStreak,
+      bestStreak: bestStreak ?? this.bestStreak,
+      lastActivityDate: lastActivityDate ?? this.lastActivityDate,
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/repositories/achievement_repository.dart';
 import '../../data/models/user_achievement_model.dart';
-import '../../data/models/achievement_model.dart';
 import 'package:provider/provider.dart';
 
 class AchievementsScreen extends StatefulWidget {

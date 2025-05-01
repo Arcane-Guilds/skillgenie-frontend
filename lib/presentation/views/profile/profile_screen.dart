@@ -103,11 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       final profile = await profileViewModel.getUserProfile(forceRefresh: true);
       if (!mounted) return;
 
-      if (profile == null) {
-        // _showErrorSnackBar('Could not load profile data');
-        // return;
-      }
-
+      await profileViewModel.fetchUserBadgeCount();
       await _loadUserPosts(profile!.id);
 
     } catch (e) {
@@ -302,7 +298,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             children: [
               Text(communityViewModel.errorMessage ?? 'Error loading posts'),
               ElevatedButton(
-                onPressed: () => _loadUserPosts(profileViewModel.currentProfile!.id),
+                onPressed: () {
+                  final user = profileViewModel.currentProfile;
+                  if (user != null) {
+                    _loadUserPosts(user.id);
+                  } else {
+                    _showErrorSnackBar('No profile data available');
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryBlue,
                   foregroundColor: Colors.white,
@@ -355,7 +358,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         builder: (context) => const CreatePostScreen(),
                       ),
                     ).then((_) {
-                      _loadUserPosts(profileViewModel.currentProfile!.id);
+                      final user = profileViewModel.currentProfile;
+                      if (user != null) {
+                        _loadUserPosts(user.id);
+                      } else {
+                        _showErrorSnackBar('No profile data available');
+                      }
                     });
                   },
                   backgroundColor: kPrimaryBlue,
@@ -369,8 +377,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         }
         
         return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
           itemCount: communityViewModel.userPosts.length,
           itemBuilder: (context, index) {
             final post = communityViewModel.userPosts[index];
@@ -972,11 +978,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // User email
+                  // User bio (replace email)
                   Text(
-                    user.email ?? 'email@example.com',
+                    (user.bio != null && user.bio!.trim().isNotEmpty)
+                        ? user.bio!
+                        : 'No bio set.',
                     style: Theme.of(context).textTheme.titleMedium!.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -985,7 +994,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     children: [
                       _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
                       _buildStatCard(context, 'Coins', '${user.coins ?? 0}', Icons.monetization_on),
-                      _buildStatCard(context, 'Badges', '${user.earnedBadges.length ?? 0}', Icons.emoji_events),
+                      _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -1010,19 +1019,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         // Tab 1: User Posts
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Your Posts',
-                                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildUserPosts(),
-                            ],
-                          ),
+                          child: _buildUserPosts(),
                         ),
                         // Tab 2: Achievements & Analytics
                         Padding(
@@ -1376,10 +1373,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             ),
                           ),
                           Text(
-                            user.email ?? 'email@example.com',
+                            (user.bio != null && user.bio!.trim().isNotEmpty)
+                                ? user.bio!
+                                : 'No bio set.',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
                               fontSize: subtitleFontSize,
+                              fontStyle: FontStyle.italic,
                               shadows: [
                                 Shadow(
                                   color: Colors.black.withOpacity(0.5),
@@ -1860,7 +1860,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           builder: (context) => const CreatePostScreen(),
                         ),
                       ).then((_) {
-                        _loadUserPosts(Provider.of<ProfileViewModel>(context, listen: false).currentProfile!.id);
+                        final user = Provider.of<ProfileViewModel>(context).currentProfile;
+                        if (user != null) {
+                          _loadUserPosts(user.id);
+                        } else {
+                          _showErrorSnackBar('No profile data available');
+                        }
                       });
                     },
                     child: Container(
@@ -1945,7 +1950,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             builder: (context) => const CreatePostScreen(),
           ),
         ).then((_) {
-          _loadUserPosts(Provider.of<ProfileViewModel>(context, listen: false).currentProfile!.id);
+          final user = Provider.of<ProfileViewModel>(context).currentProfile;
+          if (user != null) {
+            _loadUserPosts(user.id);
+          } else {
+            _showErrorSnackBar('No profile data available');
+          }
         });
       },
       icon: Icon(

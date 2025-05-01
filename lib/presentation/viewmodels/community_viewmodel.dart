@@ -1166,4 +1166,10 @@ class CommunityViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void setUserPosts(List<Post> posts) {
+    _userPosts = posts;
+    _userPostsStatus = CommunityStatus.loaded;
+    notifyListeners();
+  }
 } 

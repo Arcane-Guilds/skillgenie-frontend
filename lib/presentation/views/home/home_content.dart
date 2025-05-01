@@ -284,14 +284,14 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
           ),
           const SizedBox(height: 16),
           Text(
-            'Error loading courses',
+            'Somthing went wrong !',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            error,
+            'Failed to load courses. Please try again.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),

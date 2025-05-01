@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 import '../../core/constants/profile_constants.dart';
 import '../models/user_model.dart';
 import '../models/api_exception.dart';
+import '../models/community/post.dart';
 import 'api_client.dart';
 
 /// Remote data source for profile-related API calls
@@ -63,7 +64,7 @@ class ProfileRemoteDataSource {
   /// Update user profile
   Future<void> updateUserProfile(String accessToken, Map<String, dynamic> profileData) async {
     try {
-      _logger.info('Updating user profile');
+      _logger.info('Updating user profile with data: $profileData');
       
       // Add the token to the API client
       _apiClient.addAuthenticationToken(accessToken);
@@ -78,6 +79,12 @@ class ProfileRemoteDataSource {
           'Your session has expired. Please log in again.',
           401,
           'Unauthorized access',
+        );
+      } else if (statusCode == 400) {
+        throw ApiException(
+          'Invalid profile data. Please check your input and try again.',
+          400,
+          response.data.toString(),
         );
       } else if (statusCode != 200) {
         throw ApiException(
@@ -220,4 +227,4 @@ class ProfileRemoteDataSource {
       _apiClient.removeAuthenticationToken();
     }
   }
-} 
+}

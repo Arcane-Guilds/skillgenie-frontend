@@ -538,7 +538,9 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                 alignment: Alignment.centerRight,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    context.push('/course/${course.id}');
+                    Future.microtask(() {
+                      context.push('/course/${course.id}');
+                    });
                   },
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Continue'),

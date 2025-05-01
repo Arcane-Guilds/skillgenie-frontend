@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/foundation.dart';
 import 'package:skillGenie/presentation/views/achievements_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 import '../../../data/models/user_model.dart';
 import '../../../data/models/community/post.dart';
@@ -37,7 +39,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
-  bool _isEditingBio = false;
   bool _isLoading = false;
   File? _imageFile;
   bool _isUploadingImage = false;
@@ -259,26 +260,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Future _saveBio() async {
-    if (_bioController.text.trim().isEmpty) {
-      _showErrorSnackBar('Bio cannot be empty');
-      return;
-    }
-
-    try {
-      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-      await profileViewModel.updateBio(_bioController.text.trim());
-
-      if (mounted) {
-        setState(() => _isEditingBio = false);
-        _showSuccessSnackBar('Bio updated successfully!');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Failed to update bio. Please try again.');
-      }
-    }
-  }
 
   void _navigateToSettings() {
     context.push('/settings');
@@ -481,7 +462,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text(
-              post.title ?? '',
+              post.title,
               style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -659,15 +640,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         const SizedBox(width: 24),
         _buildWebStatCard(
           context, 
-          'Coins', 
-          '${user.coins}', 
-          Icons.monetization_on,
-          Colors.amber.shade700,
-          screenWidth
-        ),
-        const SizedBox(width: 24),
-        _buildWebStatCard(
-          context, 
           'Badges', 
           '${user.earnedBadges.length ?? 0}', 
           Icons.emoji_events,
@@ -760,14 +732,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           '${user.streakDays} days', 
           Icons.local_fire_department,
           Colors.orange.shade700,
-          screenWidth
-        ),
-        _buildWebStatCard(
-          context, 
-          'Coins', 
-          '${user.coins}', 
-          Icons.monetization_on,
-          Colors.amber.shade700,
           screenWidth
         ),
         _buildWebStatCard(
@@ -993,7 +957,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
-                      _buildStatCard(context, 'Coins', '${user.coins ?? 0}', Icons.monetization_on),
                       _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
                     ],
                   ),
@@ -1128,6 +1091,69 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                             SizedBox(height: 2),
                                             Text(
                                               'Track your learning progress',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              // Take Quiz button
+                              Material(
+                                elevation: 4,
+                                borderRadius: BorderRadius.circular(18),
+                                color: Colors.deepPurpleAccent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () async {
+                                    final prefs = await SharedPreferences.getInstance();
+                                    final String? userJson = prefs.getString("user");
+                                    if (userJson != null) {
+                                      final user = User.fromJson(jsonDecode(userJson));
+                                      if (!mounted) return;
+                                      context.push('/quiz/${user.id}');
+                                    } else {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('User ID not found')),
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(18),
+                                      gradient: LinearGradient(
+                                        colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.quiz, color: Colors.white, size: 32),
+                                        SizedBox(width: 16),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Take Quiz',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Get personalized course ',
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: Colors.white70,

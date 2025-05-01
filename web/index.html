@@ -31,6 +31,87 @@
 
   <title>frontend</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Stripe.js - Load and initialize immediately -->
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>
+    // Create global Stripe object immediately
+    var stripeInstance = null;
+
+    // Make stripeWeb globally available
+    window.stripeWeb = {
+      init: function(publishableKey) {
+        console.log("Initializing Stripe with key:", publishableKey);
+        try {
+          stripeInstance = Stripe(publishableKey);
+          console.log("✅ Stripe initialized successfully!");
+          return true;
+        } catch (error) {
+          console.error("❌ Error initializing Stripe:", error);
+          return false;
+        }
+      },
+
+      createPaymentFlow: function(clientSecret) {
+        console.log("Processing payment with client secret:", clientSecret);
+
+        if (!stripeInstance) {
+          console.error("❌ Stripe not initialized yet!");
+          return Promise.resolve({
+            success: false,
+            error: "Stripe not initialized"
+          });
+        }
+
+        // Always return a Promise
+        return Promise.resolve(
+          stripeInstance.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: {
+                number: '4242424242424242',
+                exp_month: 12,
+                exp_year: 25,
+                cvc: '123',
+              },
+              billing_details: {
+                name: 'Test User',
+                postal_code: '12345',
+              },
+            },
+          }).then(function(result) {
+            if (result.error) {
+              console.error("❌ Payment failed:", result.error);
+              return {
+                success: false,
+                error: result.error.message
+              };
+            } else if (result.paymentIntent.status === 'succeeded') {
+              console.log("✅ Payment succeeded:", result.paymentIntent);
+              return {
+                success: true,
+                paymentIntent: result.paymentIntent
+              };
+            } else {
+              console.warn("⚠️ Payment not completed:", result.paymentIntent);
+              return {
+                success: false,
+                error: "Payment not completed"
+              };
+            }
+          }).catch(function(error) {
+            console.error("❌ Payment error:", error);
+            return {
+              success: false,
+              error: error.message || "Unknown payment error"
+            };
+          })
+        );
+      }
+    };
+
+    // Log that Stripe is ready
+    console.log("🚀 Stripe web functions initialized and ready to use");
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

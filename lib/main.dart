@@ -9,7 +9,7 @@ import 'package:skillGenie/presentation/viewmodels/chat_viewmodel.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/service_locator.dart';
 import 'core/storage/secure_storage.dart';
-import 'data/datasources/api_client.dart';  
+import 'data/datasources/api_client.dart';
 
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
@@ -27,8 +27,9 @@ import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'presentation/viewmodels/reclamation_viewmodel.dart';
 
-// Conditionally import web plugins only on web platform
-// This prevents dart:ui_web errors on mobile platforms
+// Stripe import
+import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
+
 import 'web_imports.dart' if (dart.library.io) 'mobile_imports.dart';
 
 class AppErrorHandler {
@@ -40,51 +41,68 @@ class AppErrorHandler {
   }
 
   static void init() {
-    // Set up error handling
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
-      // Only log to console in debug mode
       if (kDebugMode) {
         print('FlutterError: ${details.exception}');
         print('Stack trace: ${details.stack}');
       }
     };
 
-    // Handle uncaught async errors
     PlatformDispatcher.instance.onError = (error, stack) {
-      // Only log to console in debug mode
       if (kDebugMode) {
         print('Uncaught exception: $error');
         print('Stack trace: $stack');
       }
-      return true; // Return true to indicate the error was handled
+      return true;
     };
   }
 }
 
 void main() async {
-  // Initialize error handling
   AppErrorHandler.init();
 
   runZonedGuarded(() async {
-    // Ensure Flutter is initialized
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Configure for web - use path URL strategy for cleaner URLs
     if (kIsWeb) {
-      configureApp(); // This function is defined in web_imports.dart or mobile_imports.dart
+      configureApp();
     }
 
-    // Load environment variables first
+    // Load .env file
     await dotenv.load(fileName: ".env");
 
-    // Initialize dependency injection
+    // Debug: Print all env variables (remove in production)
+    if (kDebugMode) {
+      print('Environment variables loaded:');
+      print('API_BASE_URL: ${dotenv.env['API_BASE_URL']}');
+      print('STRIPE_PUBLISHABLE_KEY: ${dotenv.env['STRIPE_PUBLISHABLE_KEY']?.substring(0, 10)}...');
+    }
+
+    // Stripe init (non-blocking)
+    try {
+      final pk = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+      if (pk != null && pk.isNotEmpty) {
+        if (kDebugMode) print('Initializing Stripe with key: ${pk.substring(0, 10)}...');
+        
+        stripe.Stripe.publishableKey = pk;
+        stripe.Stripe.merchantIdentifier = 'merchant.com.skillgenie';
+        await stripe.Stripe.instance.applySettings();
+        
+        if (kDebugMode) print('✅ Stripe initialized successfully');
+      } else {
+        if (kDebugMode) print('⚠️ Stripe publishable key is missing or empty');
+      }
+    } catch (e, st) {
+      if (kDebugMode) {
+        print('❌ Stripe initialization failed:');
+        print('Error: $e');
+        print('Stack trace:\n$st');
+      }
+    }
+
     await setupServiceLocator();
-
-    // Initialize the notification service
     await serviceLocator<NotificationService>().initialize();
-
-    // Request notification permissions
     await serviceLocator<NotificationService>().requestPermissions();
 
     runApp(const MyApp());
@@ -98,89 +116,50 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => serviceLocator<AuthViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<ProfileViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<CourseViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<LabViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<ReminderViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<CommunityViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<FriendViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<ChatViewModel>()),
         ChangeNotifierProvider(
-          create: (context) => serviceLocator<AuthViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => serviceLocator<ProfileViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => serviceLocator<CourseViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => serviceLocator<LabViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => serviceLocator<ReminderViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => serviceLocator<CommunityViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => serviceLocator<FriendViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => serviceLocator<ChatViewModel>(),
-        ),
-        ChangeNotifierProvider(
-          create: (context) =>
-              ReclamationViewModel(context.read<AuthViewModel>()),
+          create: (c) => ReclamationViewModel(c.read<AuthViewModel>()),
         ),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'SkillGenie',
-        theme: AppTheme.theme, // Use AppTheme
+        theme: AppTheme.theme,
         routerConfig: appRouter,
-        // Add restorationScopeId to help with state restoration
         restorationScopeId: 'app',
-        //navigatorKey: AppLogo.globalKey, // Use AppLogo's global key for navigation
         builder: (context, child) {
-          // Initialize socket connection when app is built
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
-            // Try to initialize socket connection
-            //chatViewModel.refreshCurrentChat();
+            final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+            // chatVM.refreshCurrentChat();
           });
-          
-          // Add error handling for widget errors
+
           ErrorWidget.builder = (FlutterErrorDetails details) {
             return Scaffold(
-              appBar: AppBar(
-                title: const Text('Error'),
-              ),
+              appBar: AppBar(title: const Text('Error')),
               body: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 60,
-                    ),
+                    const Icon(Icons.error_outline, color: Colors.red, size: 60),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Something went wrong',
-                      style: TextStyle(fontSize: 18),
-                    ),
+                    const Text('Something went wrong', style: TextStyle(fontSize: 18)),
                     const SizedBox(height: 8),
                     Text(
-                      kDebugMode
-                          ? details.exception.toString()
-                          : 'An error occurred',
+                      kDebugMode ? details.exception.toString() : 'An error occurred',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        try {
-                          // Don't use GoRouter.of(context) here as it might not be available
-                          // Instead use a Navigator to pop back or restart
-                          Navigator.of(context, rootNavigator: true).pop();
-                        } catch (e) {
-                          print('Failed to navigate: $e');
-                        }
+                        Navigator.of(context, rootNavigator: true).pop();
                       },
                       child: const Text('Go Back'),
                     ),
@@ -190,8 +169,6 @@ class MyApp extends StatelessWidget {
             );
           };
 
-          // Just return the child without another HeroControllerScope
-          // Let the app_router.dart handle Hero animations
           return child!;
         },
       ),

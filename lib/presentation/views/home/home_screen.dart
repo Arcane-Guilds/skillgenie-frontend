@@ -8,8 +8,8 @@ import '../../../data/models/user_model.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../../widgets/avatar_widget.dart';
 import '../chatbot/lesson_view.dart';
+import '../game/MarketplaceScreen.dart'; // Import your Marketplace screen
 
-// App-wide primary color
 const Color kPrimaryBlue = Color(0xFF29B6F6);
 
 class HomeScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String _welcomeMessage = "Welcome back!";
   bool _isLoading = true;
   User? _user;
-  
+
   @override
   void initState() {
     super.initState();
@@ -33,17 +33,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    
+
     _loadUserData();
     _setWelcomeMessage();
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   void _setWelcomeMessage() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
@@ -56,82 +56,91 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _loadUserData() async {
-    setState(() {
-      _isLoading = true;
-    });
-    
+    setState(() => _isLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? userJson = prefs.getString("user");
-
+      final userJson = prefs.getString("user");
       if (userJson != null) {
         final user = User.fromJson(jsonDecode(userJson));
         setState(() {
           _user = user;
           _username = user.username;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _user = null;
-          _username = null;
-          _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _user = null;
-        _username = null;
-        _isLoading = false;
-      });
+    } catch (_) {
+      // ignore
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  void _navigateToChatbot(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+  void _showBottomMenu() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline),
+              title: const Text("Ask Genie"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.school_outlined),
+              title: const Text("Lesson in a video"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => LessonView()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart_outlined),
+              title: const Text("Marketplace"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MarketplaceScreen()));
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
+          // Background
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  kPrimaryBlue.withOpacity(0.2),
-                  theme.scaffoldBackgroundColor,
-                ],
+                colors: [kPrimaryBlue.withOpacity(0.2), theme.scaffoldBackgroundColor],
               ),
             ),
           ),
-          
-          // Main content
+
+          // Main
           SafeArea(
             child: Column(
               children: [
-                // Top app bar with user info and actions
-                _buildAppBar(context),
-                
-                // Genie avatar section
-                _buildGenieSection(context),
-                
-                // Courses section
+                _buildAppBar(theme),
+                _buildGenieSection(theme),
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
-                    ),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                     child: Container(
                       decoration: BoxDecoration(
                         color: theme.cardColor,
@@ -152,114 +161,80 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton( 
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (BuildContext context) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.chat_bubble_outline),
-                    title: const Text("Ask Genie"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ChatbotScreen()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.school_outlined),
-                    title: const Text("Lesson in a video"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LessonView()),
-                      );
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        },
-        child: const Icon(Icons.menu),
+      floatingActionButton: FloatingActionButton(
         backgroundColor: kPrimaryBlue,
         foregroundColor: Colors.white,
+        onPressed: _showBottomMenu,
+        child: const Icon(Icons.menu),
       ),
     );
   }
-  
-  Widget _buildAppBar(BuildContext context) {
+
+  Widget _buildAppBar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Welcome text and username
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   _welcomeMessage,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onBackground.withOpacity(0.7),
                   ),
                 ),
                 const SizedBox(height: 4),
                 _isLoading
-                  ? SizedBox(
-                      width: 120,
-                      child: LinearProgressIndicator(
-                        backgroundColor: kPrimaryBlue.withOpacity(0.2),
-                        valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
-                      ),
-                    )
-                  : Text(
-                      _username ?? "Guest",
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    ? SizedBox(
+                  width: 120,
+                  child: LinearProgressIndicator(
+                    backgroundColor: kPrimaryBlue.withOpacity(0.2),
+                    valueColor: AlwaysStoppedAnimation(kPrimaryBlue),
+                  ),
+                )
+                    : Text(
+                  _username ?? "Guest",
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),
-          
-          // Action buttons
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.notifications_outlined,
-                  color: kPrimaryBlue,
-                ),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.settings_outlined,
-                  color: kPrimaryBlue,
-                ),
-                onPressed: () {},
-              ),
-            ],
+
+          // Notification button
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: kPrimaryBlue),
+            onPressed: () {},
+          ),
+
+          // ✅ NEW: Marketplace button right next to notifications
+          IconButton(
+            icon: const Icon(Icons.shopping_cart_outlined, color: kPrimaryBlue),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
+              );
+            },
+          ),
+
+          // Settings button
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: kPrimaryBlue),
+            onPressed: () {},
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildGenieSection(BuildContext context) {
+
+  Widget _buildGenieSection(ThemeData theme) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       child: Column(
         children: [
-          // Genie Avatar with animation
           Container(
             decoration: BoxDecoration(
               color: kPrimaryBlue.withOpacity(0.1),
@@ -278,38 +253,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             begin: const Offset(0.9, 0.9),
             end: const Offset(1.0, 1.0),
           ),
-          
           const SizedBox(height: 20),
-          
-          // Daily tip or quick actions
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
               color: kPrimaryBlue.withOpacity(0.05),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: kPrimaryBlue.withOpacity(0.2),
-              ),
+              border: Border.all(color: kPrimaryBlue.withOpacity(0.2)),
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.tips_and_updates_outlined,
-                  color: kPrimaryBlue,
-                ),
+                const Icon(Icons.tips_and_updates_outlined, color: kPrimaryBlue),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     "Tip: Practice daily to build your skills faster!",
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ),
               ],
             ),
-          ).animate().fadeIn(
-            duration: 800.ms,
-            delay: 200.ms,
-          ),
+          ).animate().fadeIn(duration: 800.ms, delay: 200.ms),
         ],
       ),
     );

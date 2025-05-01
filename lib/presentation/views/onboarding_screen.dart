@@ -76,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: TextButton(
-                  onPressed: () => context.go('/login'),
+                  onPressed: _handleSkip,
                   child: Text(
                     'Skip',
                     style: TextStyle(
@@ -143,7 +143,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             const SizedBox(height: 16),
                             Text(
                               page['description'],
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 color: AppTheme.textSecondaryColor,
                                 height: 1.5,
@@ -191,7 +191,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                     child: ElevatedButton(
                       onPressed: () {
                         if (_isLastPage) {
-                          context.go('/signup');
+                          context.go('/genie-story');
                         } else {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 500),
@@ -233,5 +233,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
         ],
       ),
     );
+  }
+
+  void _handleSkip() {
+    context.go('/genie-story');
   }
 }

@@ -58,7 +58,7 @@ class _Step2ScreenState extends State<Step2Screen>
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => JoinScreen()),
+                        MaterialPageRoute(builder: (context) => const JoinScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -81,7 +81,7 @@ class _Step2ScreenState extends State<Step2Screen>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => GenerateCodeScreen()),
+                            builder: (context) => const GenerateCodeScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(

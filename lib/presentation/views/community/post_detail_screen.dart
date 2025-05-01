@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:go_router/go_router.dart';
 
 import '../../../data/models/community/post.dart';
 import '../../../data/models/community/comment.dart';
@@ -149,7 +148,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.error_outline,
                         size: 64,
                         color: AppTheme.errorColor,
@@ -160,7 +159,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
-                      Text(
+                      const Text(
                         'This post might have been deleted or is no longer available.',
                         style: TextStyle(color: AppTheme.textSecondaryColor),
                         textAlign: TextAlign.center,
@@ -194,7 +193,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             // Comments section title
                             Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.comment_outlined,
                                   color: AppTheme.primaryColor,
                                 ),
@@ -250,7 +249,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               children: [
                                 Text(
                                   'Replying to $_replyToUsername',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: AppTheme.primaryColor,
                                     fontSize: 12,
                                   ),
@@ -258,7 +257,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 const SizedBox(width: 8),
                                 GestureDetector(
                                   onTap: _cancelReply,
-                                  child: Icon(
+                                  child: const Icon(
                                     Icons.close,
                                     size: 16,
                                     color: AppTheme.primaryColor,
@@ -302,7 +301,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : Icon(
+                                  : const Icon(
                                       Icons.send,
                                       color: AppTheme.primaryColor,
                                     ),
@@ -364,7 +363,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                       Text(
                         timeago.format(post.createdAt),
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppTheme.textSecondaryColor,
                           fontSize: 12,
                         ),
@@ -450,7 +449,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         const SizedBox(width: 4),
                         Text(
                           post.likeCount.toString(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppTheme.textSecondaryColor,
                             fontSize: 14,
                           ),
@@ -503,7 +502,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         child: Center(
           child: Column(
             children: [
-              Icon(
+              const Icon(
                 Icons.comment_outlined,
                 size: 48,
                 color: AppTheme.textSecondaryColor,
@@ -514,7 +513,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 4),
-              Text(
+              const Text(
                 'Be the first to comment!',
                 style: TextStyle(color: AppTheme.textSecondaryColor),
               ),
@@ -573,7 +572,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                       Text(
                         timeago.format(comment.createdAt),
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppTheme.textSecondaryColor,
                           fontSize: 12,
                         ),
@@ -613,7 +612,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         const SizedBox(width: 4),
                         Text(
                           comment.likeCount.toString(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppTheme.textSecondaryColor,
                             fontSize: 12,
                           ),
@@ -629,8 +628,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 InkWell(
                   onTap: () => _startReply(comment.id, comment.author.username),
                   borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Row(
                       children: [
                         Icon(
@@ -638,7 +637,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           color: AppTheme.textSecondaryColor,
                           size: 16,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           'Reply',
                           style: TextStyle(
@@ -704,7 +703,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                     ),
                                     Text(
                                       timeago.format(reply.createdAt),
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: AppTheme.textSecondaryColor,
                                         fontSize: 10,
                                       ),
@@ -745,7 +744,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       const SizedBox(width: 4),
                                       Text(
                                         reply.likeCount.toString(),
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: AppTheme.textSecondaryColor,
                                           fontSize: 10,
                                         ),

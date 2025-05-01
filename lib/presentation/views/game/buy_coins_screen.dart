@@ -99,7 +99,7 @@ class BuyCoinsScreen extends StatelessWidget {
                   ),
                 ),
               ).animate().fadeIn(duration: 700.ms).slideY(begin: 0.2, end: 0);
-            }).toList(),
+            }),
           ],
         ),
       ),

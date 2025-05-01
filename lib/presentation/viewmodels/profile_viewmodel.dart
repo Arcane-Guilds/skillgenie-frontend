@@ -4,10 +4,12 @@ import '../../data/repositories/profile_repository.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/api_exception.dart';
 import 'auth/auth_viewmodel.dart';
+import '../../data/repositories/achievement_repository.dart';
 
 class ProfileViewModel extends ChangeNotifier {
   final ProfileRepository _profileRepository;
   final AuthViewModel _authViewModel;
+  final AchievementRepository _achievementRepository = AchievementRepository();
 
   User? _currentProfile;
   bool _isLoading = false;
@@ -22,6 +24,9 @@ class ProfileViewModel extends ChangeNotifier {
   // Image upload state
   double _uploadProgress = 0;
   bool _isUploadingImage = false;
+
+  int _badgeCount = 0;
+  int get badgeCount => _badgeCount;
 
   ProfileViewModel({
     required ProfileRepository profileRepository,
@@ -107,12 +112,38 @@ class ProfileViewModel extends ChangeNotifier {
       
       // Get fresh data from API
       final profile = await _profileRepository.getUserProfile(forceRefresh: true);
-      _currentProfile = profile;
+      // --- Streak logic start ---
+      final now = DateTime.now();
+      final last = profile.lastActivityDate;
+      final today = DateTime(now.year, now.month, now.day);
+      final lastDay = DateTime(last.year, last.month, last.day);
+      int newStreak = profile.streak;
+      bool shouldUpdate = false;
+      if (lastDay.isBefore(today)) {
+        final diff = today.difference(lastDay).inDays;
+        if (diff == 1) {
+          newStreak = profile.streak + 1;
+        } else if (diff > 1) {
+          newStreak = 1;
+        }
+        shouldUpdate = true;
+      }
+      if (shouldUpdate) {
+        final updatedProfile = profile.copyWith(
+          streak: newStreak,
+          lastActivityDate: today,
+        );
+        await updateUserProfile(updatedProfile);
+        _currentProfile = updatedProfile;
+      } else {
+        _currentProfile = profile;
+      }
+      // --- Streak logic end ---
       _lastFetchTime = DateTime.now();
       _isCacheValid = true;
       _setLoading(false);
       notifyListeners();
-      return profile;
+      return _currentProfile;
     } catch (e) {
       _setLoading(false);
       _errorMessage = e.toString();
@@ -435,5 +466,84 @@ class ProfileViewModel extends ChangeNotifier {
   void invalidateCache() {
     _isCacheValid = false;
     notifyListeners();
+  }
+
+  Future<void> fetchUserBadgeCount() async {
+    try {
+      final count = await _achievementRepository.fetchUserBadgeCount(_authViewModel.user!.id);
+      _badgeCount = count;
+      notifyListeners();
+    } catch (e) {
+      // Optionally handle error
+      _badgeCount = 0;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateProfile(Map<String, dynamic> updateData, {String? username, String? bio, File? image}) async {
+    if (!_authViewModel.isAuthenticated) {
+      throw Exception('User is not authenticated');
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      _lastApiCallTime = DateTime.now();
+      
+      // Create a clean update data object with only the fields the backend expects
+      final Map<String, dynamic> cleanUpdateData = {};
+      
+      // Handle profile fields
+      if (username != null && username.isNotEmpty) {
+        cleanUpdateData['username'] = username;
+      } else if (updateData.containsKey('username')) {
+        cleanUpdateData['username'] = updateData['username'];
+      }
+      
+      if (bio != null) {
+        cleanUpdateData['bio'] = bio;
+      } else if (updateData.containsKey('bio')) {
+        cleanUpdateData['bio'] = updateData['bio'];
+      }
+      
+      if (updateData.containsKey('avatar')) {
+        cleanUpdateData['avatar'] = updateData['avatar'];
+      }
+      
+      // Make sure we have at least one field to update
+      if (cleanUpdateData.isEmpty) {
+        _setLoading(false);
+        throw ApiException('No data to update', 400, 'Bad Request');
+      }
+
+      // Send the update to the API
+      await _profileRepository.updateProfile(cleanUpdateData);
+      
+      // Refresh the profile data
+      await getUserProfile(forceRefresh: true);
+      
+      _setLoading(false);
+    } catch (e) {
+      _setLoading(false);
+      
+      if (e is ApiException) {
+        _errorMessage = e.message;
+        
+        // Handle authentication errors
+        if (e.statusCode == 401) {
+          await _handleAuthError();
+        }
+      } else {
+        _errorMessage = e.toString();
+      }
+      
+      rethrow;
+    }
+  }
+
+  Future<String> uploadProfileImageAndGetUrl(File imageFile) async {
+    // Use your storage service to upload and return the URL
+    return await _profileRepository.uploadProfileImageAndGetUrl(imageFile);
   }
 }

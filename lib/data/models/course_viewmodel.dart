@@ -5,12 +5,12 @@ import '../../data/repositories/course_repository.dart';
 class CourseViewModel extends ChangeNotifier {
   final CourseRepository _courseRepository;
 
-  List<Course> _userCourses = [];
+  final List<Course> _userCourses = [];
   Course? _currentCourse;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   String? _errorMessage;
-  bool _isGeneratingCourse = false;
-  bool _isUpdatingProgress = false;
+  final bool _isGeneratingCourse = false;
+  final bool _isUpdatingProgress = false;
   bool _isVerifyingCode = false;
   bool _isVerifyingQuiz = false;
   bool _isVerifyingChallenge = false;

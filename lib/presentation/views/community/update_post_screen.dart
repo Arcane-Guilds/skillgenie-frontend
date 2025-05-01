@@ -286,7 +286,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
               ),
               child: TextButton.icon(
                 onPressed: _selectedImages.length >= 5 ? null : _pickImage,
-                icon: Icon(
+                icon: const Icon(
                   Icons.add_photo_alternate,
                   color: AppTheme.primaryColor,
                 ),
@@ -294,7 +294,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
                   _selectedImages.isEmpty
                       ? 'Add Photos'
                       : 'Add More Photos (${_selectedImages.length}/5)',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppTheme.textPrimaryColor,
                   ),
                 ),

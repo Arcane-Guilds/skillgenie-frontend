@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:skillGenie/crosswordgame/crossgen.dart';
-import 'crossgen.dart';
 import 'maincross.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

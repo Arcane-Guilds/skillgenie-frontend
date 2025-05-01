@@ -1,9 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:lottie/lottie.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
-import '../../core/theme/app_theme.dart';
 import '../../services/ai_service.dart';
 
 // App-wide primary color - changing from purple to blue
@@ -17,13 +15,13 @@ class GenieAvatar extends StatefulWidget {
   final double size;
 
   const GenieAvatar({
-    Key? key,
+    super.key,
     this.state = AvatarState.idle,
     this.message,
     this.onMessageComplete,
     this.onTap,
     this.size = 150,
-  }) : super(key: key);
+  });
 
   @override
   State<GenieAvatar> createState() => _GenieAvatarState();
@@ -136,7 +134,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
         Container(
           height: widget.size * 0.7,
           width: widget.size * 0.7,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: kPrimaryBlue, // Changed to blue
             shape: BoxShape.circle,
           ),
@@ -159,7 +157,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
                 Container(
                   height: widget.size * 0.1,
                   width: widget.size * 0.1,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.black87,
                     shape: BoxShape.circle,
                   ),
@@ -168,7 +166,7 @@ class _GenieAvatarState extends State<GenieAvatar> with TickerProviderStateMixin
                 Container(
                   height: widget.size * 0.1,
                   width: widget.size * 0.1,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.black87,
                     shape: BoxShape.circle,
                   ),
@@ -313,11 +311,11 @@ class AvatarWithMessage extends StatelessWidget {
   final VoidCallback? onDismiss;
   
   const AvatarWithMessage({
-    Key? key,
+    super.key,
     required this.message,
     this.state = AvatarState.explaining,
     this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -382,11 +380,11 @@ class AskGenieWidget extends StatefulWidget {
   final String skillLevel;
   
   const AskGenieWidget({
-    Key? key,
+    super.key,
     required this.learningStyle,
     required this.selectedSkill,
     required this.skillLevel,
-  }) : super(key: key);
+  });
 
   @override
   State<AskGenieWidget> createState() => _AskGenieWidgetState();
@@ -472,13 +470,13 @@ class _AskGenieWidgetState extends State<AskGenieWidget> {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: kPrimaryBlue, // Changed to blue
                 ),
                 child: IconButton(
                   icon: _isLoading 
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 24, 
                         height: 24, 
                         child: CircularProgressIndicator(
@@ -486,7 +484,7 @@ class _AskGenieWidgetState extends State<AskGenieWidget> {
                           color: Colors.white,
                         ),
                       )
-                    : Icon(
+                    : const Icon(
                         Icons.send_rounded,
                         color: Colors.white,
                       ),

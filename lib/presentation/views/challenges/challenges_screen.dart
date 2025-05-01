@@ -33,7 +33,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   bool _isTimeUp = false;
   int _remainingTime = 60;
   late Timer _timer;
-  bool _hasSubmitted = false;
+  final bool _hasSubmitted = false;
   int _coinBalance = 0;
   final TextEditingController _solutionController = TextEditingController();
   final CountDownController _timerController = CountDownController();
@@ -217,9 +217,9 @@ class _ChallengesScreenState extends State<ChallengesScreen>
             fit: BoxFit.cover,
           ),
           const SizedBox(height: 10),
-          Text(
+          const Text(
             'Vous avez gagné 10 coins! 🎊',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -274,11 +274,11 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.monetization_on, color: Colors.amber, size: 32),
+                                  const Icon(Icons.monetization_on, color: Colors.amber, size: 32),
                                   const SizedBox(width: 8),
                                   Text(
                                     '$_coinBalance',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.primaryColor,
@@ -325,7 +325,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                                 children: [
                                   Text(
                                     challengeTitle ?? '',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.primaryColor,
@@ -334,7 +334,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                                   const SizedBox(height: 10),
                                   Text(
                                     challengeDescription ?? '',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       height: 1.4,
                                       color: AppTheme.textSecondaryColor,
@@ -452,7 +452,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                         ],
                       ),
                     ),
-                    Positioned(
+                    const Positioned(
                       bottom: 0,
                       left: 0,
                       right: 0,

@@ -71,22 +71,22 @@ class LessonViewModel extends ChangeNotifier {
 
   Future<String> generateImageFromText(String text, int index) async {
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(900, 600)));
+    final canvas = Canvas(recorder, Rect.fromPoints(const Offset(0, 0), const Offset(900, 600)));
 
     final paint = Paint()..color = Colors.white;
-    canvas.drawRect(Rect.fromLTWH(0, 0, 900, 600), paint);
+    canvas.drawRect(const Rect.fromLTWH(0, 0, 900, 600), paint);
 
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(color: Colors.black, fontSize: 24),
+        style: const TextStyle(color: Colors.black, fontSize: 24),
       ),
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
     );
 
     textPainter.layout(maxWidth: 850);
-    textPainter.paint(canvas, Offset(25, 250));
+    textPainter.paint(canvas, const Offset(25, 250));
 
     final picture = recorder.endRecording();
     final img = await picture.toImage(900, 600);

@@ -14,9 +14,9 @@ class ChatDetailScreen extends StatefulWidget {
   final String chatId;
 
   const ChatDetailScreen({
-    Key? key,
+    super.key,
     required this.chatId,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatDetailScreen> createState() => _ChatDetailScreenState();
@@ -28,7 +28,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _isComposing = false;
   String? _currentUserId;
   bool _isFirstLoad = true;
-  DateTime _lastRefreshTime = DateTime.now();
+  final DateTime _lastRefreshTime = DateTime.now();
   Timer? _autoRefreshTimer;
   StreamSubscription? _newMessageSubscription;
 
@@ -533,7 +533,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           else if (isFailed)
                             Icon(Icons.error_outline, size: 14, color: Colors.red[700])
                           else
-                            Icon(Icons.done_all, size: 14, color: Colors.white70)
+                            const Icon(Icons.done_all, size: 14, color: Colors.white70)
                         ],
                       ],
                     ),

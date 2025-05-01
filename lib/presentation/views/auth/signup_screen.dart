@@ -135,8 +135,8 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                   if (value == null || value.isEmpty) {
                                     return 'Please enter your email';
                                   }
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                      .hasMatch(value)) {
+                                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}');
+                                  if (!emailRegex.hasMatch(value)) {
                                     return 'Please enter a valid email';
                                   }
                                   return null;

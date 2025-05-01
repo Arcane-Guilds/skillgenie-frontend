@@ -54,7 +54,7 @@ class CommunityViewModel extends ChangeNotifier {
   // Add new state variables
   List<Post> _userPosts = [];
   CommunityStatus _userPostsStatus = CommunityStatus.initial;
-  int _userPostsTotal = 0;
+  final int _userPostsTotal = 0;
 
   // Constructor to automatically load posts when created
   CommunityViewModel({
@@ -1165,5 +1165,11 @@ class CommunityViewModel extends ChangeNotifier {
       _errorMessage = e.toString();
       notifyListeners();
     }
+  }
+
+  void setUserPosts(List<Post> posts) {
+    _userPosts = posts;
+    _userPostsStatus = CommunityStatus.loaded;
+    notifyListeners();
   }
 } 

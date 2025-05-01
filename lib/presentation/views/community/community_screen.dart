@@ -59,7 +59,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 elevation: 0,
                 actions: [
                   IconButton(
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.notifications_outlined,
                       color: AppTheme.primaryColor,
                     ),
@@ -142,7 +142,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 hintStyle: TextStyle(
                   color: AppTheme.textSecondaryColor.withOpacity(0.5),
                 ),
-                prefixIcon: Icon(
+                prefixIcon: const Icon(
                   Icons.search,
                   color: AppTheme.primaryColor,
                 ),
@@ -198,7 +198,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             size: 64,
             color: AppTheme.errorColor,
@@ -212,7 +212,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           Text(
             viewModel.errorMessage!,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.textSecondaryColor),
+            style: const TextStyle(color: AppTheme.textSecondaryColor),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -315,7 +315,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       child: post.author.avatar == null
                           ? Text(
                               post.author.username.substring(0, 1).toUpperCase(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppTheme.primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -337,7 +337,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         ),
                         Text(
                           timeago.format(post.createdAt),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppTheme.textSecondaryColor,
                             fontSize: 12,
                           ),

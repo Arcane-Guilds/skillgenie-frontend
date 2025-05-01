@@ -35,8 +35,7 @@ class _SelectableLetterContent extends StatelessWidget {
   final int index;
   
   const _SelectableLetterContent({
-    required this.index, 
-    super.key
+    required this.index
   });
 
   bool _isActive(int index, List<int> selectedText) {

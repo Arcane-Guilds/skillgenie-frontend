@@ -76,7 +76,7 @@ class CourseContent {
     List<CourseLevel> learningPathLevels = [];
     if (json['learningPath'] != null && json['learningPath']['levels'] is List) {
       // Filter out the "finalProjectRequirementsList" entry if it exists
-      final levelsList = (json['learningPath']['levels'] as List).where((item) => item is Map).toList();
+      final levelsList = (json['learningPath']['levels'] as List).whereType<Map<String, dynamic>>().toList();
       learningPathLevels = levelsList
           .map((level) => CourseLevel.fromJson(level))
           .toList();

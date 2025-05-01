@@ -18,7 +18,7 @@ class ResponsiveScaffold extends StatelessWidget {
   
   /// Creates a scaffold that adapts to web or mobile platforms
   const ResponsiveScaffold({
-    Key? key,
+    super.key,
     required this.title,
     required this.body,
     this.floatingActionButton,
@@ -31,7 +31,7 @@ class ResponsiveScaffold extends StatelessWidget {
     this.backgroundColor,
     this.appBarBottom,
     this.leading,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -96,13 +96,13 @@ class ResponsiveFormLayout extends StatelessWidget {
   final Widget? logo;
   
   const ResponsiveFormLayout({
-    Key? key,
+    super.key,
     required this.title,
     required this.form,
     this.footer,
     this.centerTitle = true,
     this.logo,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {

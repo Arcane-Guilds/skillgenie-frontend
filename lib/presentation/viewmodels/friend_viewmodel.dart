@@ -48,7 +48,7 @@ class FriendViewModel extends ChangeNotifier {
       // If we need to refresh and aren't already queued, schedule a refresh
       if (!_friendsRefreshQueued) {
         _friendsRefreshQueued = true;
-        Future.delayed(Duration(seconds: 2), () {
+        Future.delayed(const Duration(seconds: 2), () {
           _friendsRefreshQueued = false;
           loadFriends();
         });
@@ -81,7 +81,7 @@ class FriendViewModel extends ChangeNotifier {
       if (needsRefresh) {
         print('Some friends had only IDs, will refresh friend data shortly');
         // Small delay to prevent bombarding the server
-        Future.delayed(Duration(seconds: 2), () {
+        Future.delayed(const Duration(seconds: 2), () {
           if (!_isLoading) {
             // Load friends from scratch but don't show loading spinner again
             _refreshFriendsQuietly();

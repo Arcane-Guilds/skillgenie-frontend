@@ -31,10 +31,11 @@ import '../../presentation/views/course/course_roadmap_screen.dart';
 import '../../presentation/views/course/lab_screen.dart';
 import '../../presentation/views/chat/chat_detail_screen.dart';
 import '../../presentation/views/chat/socket_test_screen.dart';
-import '../widgets/buttom_custom_navbar.dart';
 import '../services/service_locator.dart';
 import '../widgets/responsive_navigation.dart';
 import '../../presentation/views/reclamation/reclamation_screen.dart';
+import '../../presentation/views/genie_story_screen.dart';
+import '../../presentation/views/genie_tutorial_screen.dart';
 
 // ShellScaffold remains the same
 class ShellScaffold extends StatelessWidget {
@@ -42,16 +43,16 @@ class ShellScaffold extends StatelessWidget {
   final int currentIndex;
 
   const ShellScaffold({
-    Key? key,
+    super.key,
     required this.child,
     required this.currentIndex,
-  }) : super(key: key);
+  });
 
 @override
 Widget build(BuildContext context) {
 return ResponsiveNavigation(
-  child: child,
   currentIndex: currentIndex,
+  child: child,
 );
 }
 }
@@ -76,9 +77,9 @@ String getUniqueHeroTag(String baseTag, String uniqueIdentifier) {
 // Completely disable hero animations during bottom tab navigation
 class NoHeroTheme extends InheritedWidget {
   const NoHeroTheme({
-    Key? key,
-    required Widget child,
-  }) : super(key: key, child: child);
+    super.key,
+    required super.child,
+  });
 
   static bool of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<NoHeroTheme>() != null;
@@ -222,6 +223,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
+      path: '/genie-story',
+      builder: (context, state) => const GenieStoryScreen(),
+    ),
+    GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
@@ -279,6 +284,10 @@ final appRouter = GoRouter(
           ),
         );
       },
+    ),
+    GoRoute(
+      path: '/tutorial',
+      builder: (context, state) => const GenieTutorialScreen(),
     ),
     GoRoute(
       path: '/game',

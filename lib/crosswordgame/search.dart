@@ -2,16 +2,11 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:flag/flag.dart';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 
-import 'maincross.dart';
 import 'cross_settings.dart';
 
 class SearchRoute extends StatelessWidget {

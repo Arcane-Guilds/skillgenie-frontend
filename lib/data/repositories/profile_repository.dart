@@ -6,6 +6,9 @@ import '../repositories/auth_repository.dart';
 import '../../core/services/storage_service.dart';
 import '../models/user_model.dart';
 import '../models/api_exception.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../core/constants/api_constants.dart';
 
 /// Repository for profile-related operations
 class ProfileRepository {
@@ -61,7 +64,7 @@ class ProfileRepository {
   /// Update the user profile
   Future<void> updateUserProfile(User profile) async {
     try {
-      _logger.info('Updating user profile for: ${profile.username}');
+      _logger.info('Updating user profile for: [1m${profile.username}[0m');
       
       // Get tokens for API call
       final tokens = await _authRepository.getTokens();
@@ -69,8 +72,8 @@ class ProfileRepository {
         throw ApiException('No authentication tokens found', 401, 'Unauthorized');
       }
       
-      // Update profile via API
-      await _remoteDataSource.updateUserProfile(tokens.accessToken, profile.toJson());
+      // Only send allowed fields to the backend
+      await _remoteDataSource.updateUserProfile(tokens.accessToken, profile.toUpdateJson());
       
       // Update cached profile
       await _localDataSource.cacheProfile(profile);
@@ -338,5 +341,58 @@ class ProfileRepository {
       500,
       e.toString(),
     );
+  }
+
+  Future<int> fetchUserStreak(String userId) async {
+    final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/users/$userId/streak'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['currentStreak'] as int;
+    } else {
+      throw Exception('Failed to load user streak');
+    }
+  }
+
+  Future<void> updateProfile(Map<String, dynamic> updateData) async {
+    try {
+      _logger.info('Updating user profile with data: $updateData');
+      final tokens = await _authRepository.getTokens();
+      if (tokens == null) {
+        throw ApiException('No authentication tokens found', 401, 'Unauthorized');
+      }
+
+      // Ensure the update data matches the backend's UpdateUserDto structure
+      final formattedUpdateData = {
+        if (updateData.containsKey('username')) 'username': updateData['username'],
+        if (updateData.containsKey('email')) 'email': updateData['email'],
+        if (updateData.containsKey('avatar')) 'avatar': updateData['avatar'],
+        if (updateData.containsKey('bio')) 'bio': updateData['bio'],
+      };
+
+      await _remoteDataSource.updateUserProfile(tokens.accessToken, formattedUpdateData);
+
+      // Update cached profile
+      final cachedProfile = await _localDataSource.getCachedProfile();
+      if (cachedProfile != null) {
+        final updatedProfile = cachedProfile.copyWith(
+          username: updateData['username'] ?? cachedProfile.username,
+          bio: updateData['bio'] ?? cachedProfile.bio,
+          avatar: updateData['avatar'] ?? cachedProfile.avatar,
+        );
+        await _localDataSource.cacheProfile(updatedProfile);
+      }
+    } catch (e) {
+      _logger.severe('Error updating profile: $e');
+      throw _handleException(e);
+    }
+  }
+
+  /// Upload image and return its URL (without updating profile)
+  Future<String> uploadProfileImageAndGetUrl(File imageFile) async {
+    final imageUrl = await _storageService.uploadProfileImage(imageFile);
+    if (imageUrl == null || imageUrl.isEmpty) {
+      throw ApiException('Failed to upload image', 500, 'Empty URL returned');
+    }
+    return imageUrl;
   }
 }

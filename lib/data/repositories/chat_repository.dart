@@ -90,7 +90,7 @@ class ChatRepository {
       }
 
       print(
-          'Adding auth token to headers: Bearer ${token.length > 10 ? token.substring(0, 10) + "..." : token}');
+          'Adding auth token to headers: Bearer ${token.length > 10 ? "${token.substring(0, 10)}..." : token}');
 
       return {
         'Content-Type': 'application/json',
@@ -247,7 +247,7 @@ class ChatRepository {
       // Debug: Show authorization header (first 15 chars only)
       String authHeader = headers['Authorization'] ?? '';
       print(
-          'Authorization header (truncated): ${authHeader.length > 15 ? authHeader.substring(0, 15) + '...' : authHeader}');
+          'Authorization header (truncated): ${authHeader.length > 15 ? '${authHeader.substring(0, 15)}...' : authHeader}');
 
       final body = jsonEncode({
         'participants': participants,
@@ -278,7 +278,7 @@ class ChatRepository {
 
         print('DEBUG AUTH STATUS: accessToken exists: $hasAccessToken');
         print(
-            'accessToken value: ${accessToken != null ? accessToken.substring(0, math.min(10, accessToken.length)) + "..." : "null"}');
+            'accessToken value: ${accessToken != null ? "${accessToken.substring(0, math.min(10, accessToken.length))}..." : "null"}');
         print('refreshToken exists: $hasRefreshToken, user exists: $hasUser');
 
         // Try to get a new token if possible
@@ -384,7 +384,7 @@ class ChatRepository {
       });
 
       // Add a short timeout to detect potential delivery issues
-      Future.delayed(Duration(seconds: 5), () {
+      Future.delayed(const Duration(seconds: 5), () {
         // Check if the message appears in the messages list
         // This is a simplified approach - in a real app you would track message IDs
         print('Message delivery verification timeout reached');

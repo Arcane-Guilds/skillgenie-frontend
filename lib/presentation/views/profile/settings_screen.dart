@@ -373,12 +373,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           currentPasswordController.text,
                           newPasswordController.text,
                         );
-                        if (mounted)
+                        if (mounted) {
                           _showSuccessSnackBar(
                               'Password updated successfully!');
+                        }
                       } catch (e) {
-                        if (mounted)
+                        if (mounted) {
                           _showErrorSnackBar('Failed to update password: $e');
+                        }
                       } finally {
                         if (mounted) setState(() => _isLoading = false);
                       }
@@ -832,8 +834,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showEditProfileDialog() {
-    final usernameController =
-        TextEditingController(text: _usernameController.text);
+    final usernameController = TextEditingController(text: _usernameController.text);
     final bioController = TextEditingController(text: _bioController.text);
     File? tempImageFile = _imageFile;
 
@@ -848,8 +849,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('Edit Profile',
-                    style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: _pickImage,
@@ -860,20 +860,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         backgroundImage: tempImageFile != null
                             ? FileImage(tempImageFile)
                             : null,
-                        child: tempImageFile == null
-                            ? const Icon(Icons.person,
-                                size: 48, color: Colors.grey)
-                            : null,
                         backgroundColor: Colors.grey[200],
+                        child: tempImageFile == null
+                            ? const Icon(Icons.person, size: 48, color: Colors.grey)
+                            : null,
                       ),
-                      Positioned(
+                      const Positioned(
                         bottom: 0,
                         right: 0,
                         child: CircleAvatar(
                           backgroundColor: AppTheme.primaryColor,
                           radius: 18,
-                          child: const Icon(Icons.camera_alt,
-                              color: Colors.white, size: 20),
+                          child: Icon(Icons.camera_alt, color: Colors.white, size: 20),
                         ),
                       ),
                     ],
@@ -884,9 +882,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: usernameController,
                   decoration: InputDecoration(
                     labelText: 'Username',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a username';
+                    }
+                    if (value.length < 3) {
+                      return 'Username must be at least 3 characters';
+                    }
+                    if (value.length > 30) {
+                      return 'Username must be less than 30 characters';
+                    }
+                    if (!RegExp(r'^[a-zA-Z0-9_\-]+$').hasMatch(value)) {
+                      return 'Username can only contain letters, numbers, underscores, and hyphens';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -894,33 +906,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     labelText: 'Bio',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   ),
+                  validator: (value) {
+                    if (value != null && value.length > 150) {
+                      return 'Bio must be less than 150 characters';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () async {
+                      // Validate inputs
+                      if (usernameController.text.trim().isEmpty) {
+                        _showErrorSnackBar('Username cannot be empty');
+                        return;
+                      }
+                      
                       Navigator.pop(context);
                       setState(() => _isLoading = true);
-                      final profileViewModel =
-                          Provider.of<ProfileViewModel>(context, listen: false);
+                      
                       try {
+                        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                        String? imageUrl;
+                        
+                        // First, handle image upload if needed
                         if (tempImageFile != null) {
-                          await profileViewModel
-                              .updateProfileImage(tempImageFile);
+                          try {
+                            imageUrl = await profileViewModel.uploadProfileImageAndGetUrl(tempImageFile);
+                          } catch (e) {
+                            setState(() => _isLoading = false);
+                            _showErrorSnackBar('Failed to upload image: $e');
+                            return;
+                          }
                         }
-                        await profileViewModel
-                            .updateUsername(usernameController.text.trim());
-                        await profileViewModel
-                            .updateBio(bioController.text.trim());
+                        
+                        // Now update the profile with all the data
+                        final updateData = {
+                          'username': usernameController.text.trim(),
+                          'bio': bioController.text.trim(),
+                        };
+                        
+                        // Only add avatar if we have a new image URL
+                        if (imageUrl != null && imageUrl.isNotEmpty) {
+                          updateData['avatar'] = imageUrl;
+                        }
+                        
+                        // Send direct update with validated data, not through the updateProfile wrapper
+                        await profileViewModel.updateProfile(updateData);
+                        
+                        // Update local state
                         setState(() {
-                          _usernameController.text =
-                              usernameController.text.trim();
+                          _usernameController.text = usernameController.text.trim();
                           _bioController.text = bioController.text.trim();
+                          _imageFile = tempImageFile;
                         });
+                        
                         _showSuccessSnackBar('Profile updated successfully!');
                       } catch (e) {
                         _showErrorSnackBar('Failed to update profile: $e');
@@ -930,12 +974,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Save Changes',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

@@ -41,14 +41,14 @@ final Widget child;
 final int currentIndex;
 
 const ShellScaffold({
-Key? key,
+super.key,
 required this.child,
 required this.currentIndex,
-}) : super(key: key);
+});
 
 @override
 Widget build(BuildContext context) {
-  final bool isMobile = !kIsWeb;
+  const bool isMobile = !kIsWeb;
   
   return Scaffold(
     body: child,
@@ -77,9 +77,9 @@ String getUniqueHeroTag(String baseTag, String uniqueIdentifier) {
 // Completely disable hero animations during bottom tab navigation
 class NoHeroTheme extends InheritedWidget {
   const NoHeroTheme({
-    Key? key,
-    required Widget child,
-  }) : super(key: key, child: child);
+    super.key,
+    required super.child,
+  });
 
   static bool of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<NoHeroTheme>() != null;
@@ -160,7 +160,7 @@ class CustomHeroController extends HeroController {
   @override
   Widget createPlatformSpecificHeroFlightShuttleBuilder(Widget child) {
     // Always use basic fade transition which is less problematic
-    return FadeTransition(opacity: AlwaysStoppedAnimation(1.0), child: child);
+    return FadeTransition(opacity: const AlwaysStoppedAnimation(1.0), child: child);
   }
 }
 

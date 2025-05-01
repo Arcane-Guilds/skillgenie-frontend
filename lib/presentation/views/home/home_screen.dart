@@ -209,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             onPressed: () {},
           ),
 
-          // ✅ NEW: Marketplace button right next to notifications
+          // Marketplace button right next to notifications
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined, color: kPrimaryBlue),
             onPressed: () {

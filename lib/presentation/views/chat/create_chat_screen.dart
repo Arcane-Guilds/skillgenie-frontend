@@ -6,7 +6,7 @@ import '../../viewmodels/friend_viewmodel.dart';
 import '../../../data/models/user_model.dart';
 
 class CreateChatScreen extends StatefulWidget {
-  const CreateChatScreen({Key? key}) : super(key: key);
+  const CreateChatScreen({super.key});
 
   @override
   State<CreateChatScreen> createState() => _CreateChatScreenState();

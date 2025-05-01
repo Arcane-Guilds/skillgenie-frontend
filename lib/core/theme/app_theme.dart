@@ -32,16 +32,16 @@ class AppTheme {
   static ThemeData get theme => ThemeData(
     primaryColor: primaryColor,
     scaffoldBackgroundColor: kIsWeb ? webBackgroundColor : backgroundColor,
-    colorScheme: ColorScheme.light(
+    colorScheme: const ColorScheme.light(
       primary: primaryColor,
       secondary: secondaryColor,
       error: errorColor,
       surface: kIsWeb ? webSurfaceColor : surfaceColor,
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: surfaceColor,
       elevation: kIsWeb ? 0 : 1,
-      iconTheme: const IconThemeData(color: textPrimaryColor),
+      iconTheme: IconThemeData(color: textPrimaryColor),
       titleTextStyle: TextStyle(
         color: textPrimaryColor,
         fontSize: kIsWeb ? 22 : 20,
@@ -52,7 +52,7 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: kIsWeb ? 32 : 24, 
           vertical: kIsWeb ? 16 : 12
         ),
@@ -78,17 +78,17 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(kIsWeb ? 8 : 12),
-        borderSide: BorderSide(
+        borderSide: const BorderSide(
           color: primaryColor,
           width: kIsWeb ? 1.5 : 2.0,
         ),
       ),
-      contentPadding: EdgeInsets.symmetric(
+      contentPadding: const EdgeInsets.symmetric(
         horizontal: 16, 
         vertical: kIsWeb ? 16 : 12
       ),
     ),
-    textTheme: TextTheme(
+    textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontSize: kIsWeb ? 32 : 28,
         fontWeight: FontWeight.bold,

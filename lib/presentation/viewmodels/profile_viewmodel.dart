@@ -112,12 +112,38 @@ class ProfileViewModel extends ChangeNotifier {
       
       // Get fresh data from API
       final profile = await _profileRepository.getUserProfile(forceRefresh: true);
-      _currentProfile = profile;
+      // --- Streak logic start ---
+      final now = DateTime.now();
+      final last = profile.lastActivityDate;
+      final today = DateTime(now.year, now.month, now.day);
+      final lastDay = DateTime(last.year, last.month, last.day);
+      int newStreak = profile.streak;
+      bool shouldUpdate = false;
+      if (lastDay.isBefore(today)) {
+        final diff = today.difference(lastDay).inDays;
+        if (diff == 1) {
+          newStreak = profile.streak + 1;
+        } else if (diff > 1) {
+          newStreak = 1;
+        }
+        shouldUpdate = true;
+      }
+      if (shouldUpdate) {
+        final updatedProfile = profile.copyWith(
+          streak: newStreak,
+          lastActivityDate: today,
+        );
+        await updateUserProfile(updatedProfile);
+        _currentProfile = updatedProfile;
+      } else {
+        _currentProfile = profile;
+      }
+      // --- Streak logic end ---
       _lastFetchTime = DateTime.now();
       _isCacheValid = true;
       _setLoading(false);
       notifyListeners();
-      return profile;
+      return _currentProfile;
     } catch (e) {
       _setLoading(false);
       _errorMessage = e.toString();

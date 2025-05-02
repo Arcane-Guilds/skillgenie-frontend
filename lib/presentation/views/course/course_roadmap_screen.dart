@@ -532,7 +532,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
   }
 
   Widget _buildExerciseItem(CourseExercise exercise, CourseLevel parentLevel, CourseChapter parentChapter, Course course, int levelIndex, String chapterTitle, String exerciseType) {
-    final progressKey = 'L${levelIndex + 1}C${chapterTitle}E${exerciseType}';
+    final progressKey = 'L${levelIndex + 1}C${chapterTitle}E$exerciseType';
     final isCompleted = course.progress[progressKey] == 1;
     final isLocked = parentLevel.levelNumber > course.currentLevel;
     

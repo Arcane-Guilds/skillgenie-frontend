@@ -102,8 +102,8 @@ class User {
 
   Map<String, dynamic> toUpdateJson() {
     return {
-      if (username != null) 'username': username,
-      if (email != null) 'email': email,
+      'username': username,
+      'email': email,
       if (role != null) 'role': role,
       if (avatar != null) 'avatar': avatar,
       if (bio != null) 'bio': bio,

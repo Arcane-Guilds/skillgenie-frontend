@@ -7,10 +7,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:js/js.dart';
-import 'package:js/js_util.dart';
 import 'dart:async';
-import 'dart:js_util' as js_util;
+
+// Web-specific imports
+import 'package:js/js.dart' if (dart.library.io) 'dart:io';
+import 'package:js/js_util.dart' if (dart.library.io) 'dart:io';
+import 'dart:js_util.dart' if (dart.library.io) 'dart:io' as js_util;
 
 // JS interop annotations for Stripe web functions
 @JS('stripeWebInit')
@@ -149,25 +151,30 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final paymentPromise = showStripePaymentModal(clientSecret, amountCents);
         print('Payment modal opened, awaiting result...');
 
-        final result = await js_util.promiseToFuture(paymentPromise);
-        print('Payment result: $result');
+        try {
+          final result = await js_util.promiseToFuture(paymentPromise);
+          print('Payment result: $result');
 
-        final bool success = js_util.getProperty(result, 'success');
-        if (success) {
-          print('Web payment successful!');
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment successful! 🎉'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context, widget.coins);
-        } else {
-          final error = js_util.hasProperty(result, 'error')
-              ? js_util.getProperty(result, 'error')
-              : 'Payment failed';
-          throw error;
+          final bool success = js_util.getProperty(result, 'success');
+          if (success) {
+            print('Web payment successful!');
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Payment successful! 🎉'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context, widget.coins);
+          } else {
+            final error = js_util.hasProperty(result, 'error')
+                ? js_util.getProperty(result, 'error')
+                : 'Payment failed';
+            throw error;
+          }
+        } catch (e) {
+          print('Web payment error: $e');
+          throw e;
         }
       } else {
         // Mobile payment flow

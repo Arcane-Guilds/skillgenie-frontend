@@ -98,7 +98,7 @@ dependencies:
   circular_countdown_timer: ^0.2.4
   json_annotation: ^4.8.1
   flutter_stripe: ^11.5.0
-
+  js: ^0.6.7
 
   
 

@@ -8,7 +8,7 @@ import '../../../data/models/user_model.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../../widgets/avatar_widget.dart';
 import '../chatbot/lesson_view.dart';
-import '../game/MarketplaceScreen.dart'; // Import your Marketplace screen
+import '../game/MarketplaceScreen.dart';
 
 const Color kPrimaryBlue = Color(0xFF29B6F6);
 

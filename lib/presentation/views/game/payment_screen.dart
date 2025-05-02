@@ -10,8 +10,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:js/js.dart';
 import 'package:js/js_util.dart';
 import 'dart:async';
-import 'dart:js' as js;
 import 'dart:js_util' as js_util;
+
+// JS interop annotations for Stripe web functions
+@JS('stripeWebInit')
+external bool stripeWebInit(String publishableKey);
+
+@JS('showStripePaymentModal')
+external Object showStripePaymentModal(String clientSecret, int amount);
 
 class PaymentScreen extends StatefulWidget {
   final int coins;
@@ -28,26 +34,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
   late final String _backendUrl = dotenv.env['API_BASE_URL'] ?? '';
   late final String? _publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
 
-  // Controllers for the text fields
-  final _cardNumberController = TextEditingController(text: '4242 4242 4242 4242');
-  final _expiryController = TextEditingController(text: '12/25');
-  final _cvcController = TextEditingController(text: '123');
-  final _postalCodeController = TextEditingController(text: '12345');
-
   @override
   void initState() {
     super.initState();
     _checkConfiguration();
     _initializeStripe();
-  }
-
-  @override
-  void dispose() {
-    _cardNumberController.dispose();
-    _expiryController.dispose();
-    _cvcController.dispose();
-    _postalCodeController.dispose();
-    super.dispose();
   }
 
   void _checkConfiguration() {
@@ -67,12 +58,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
 
       if (kIsWeb) {
-        // Check if stripeWeb is available immediately
-        if (js.context['stripeWeb'] == null) {
-          throw Exception('Stripe web functions not found. Please check if Stripe script is loaded properly.');
-        }
-        // Call the init function
-        final result = js.context['stripeWeb'].callMethod('init', [_publishableKey]);
+        // Web initialization
+        final result = stripeWebInit(_publishableKey!);
         print('Stripe initialization result: $result');
         if (result != true) {
           throw Exception('Failed to initialize Stripe on web');
@@ -107,7 +94,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Future<void> _handlePayment() async {
     print('=================== PAYMENT STARTED ===================');
-    
+
     if (_backendUrl.isEmpty) {
       const message = 'Error: API URL not configured';
       print('ERROR: $message');
@@ -152,21 +139,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       print('3. Processing payment...');
       if (kIsWeb) {
-        // Web-specific payment flow
+        // Web-specific payment flow using modal
         print('Starting web payment flow');
-        final stripeWeb = js.context['stripeWeb'];
-        if (stripeWeb == null) {
-          throw Exception('Stripe web functions not found. Please refresh the page and try again.');
-        }
-        final jsPromise = js_util.callMethod(stripeWeb, 'createPaymentFlow', [clientSecret]);
-        print('jsPromise type: ${jsPromise.runtimeType}');
-        if (jsPromise == null) {
-          throw Exception('Stripe createPaymentFlow did not return a Promise. Check your JS integration.');
-        }
-        print('Payment promise created, awaiting result...');
-        final result = await js_util.promiseToFuture(jsPromise);
+
+        // Calculate the amount in cents (integer)
+        final amountCents = (widget.price * 100).toInt();
+
+        // Show the Stripe payment modal and wait for result
+        final paymentPromise = showStripePaymentModal(clientSecret, amountCents);
+        print('Payment modal opened, awaiting result...');
+
+        final result = await js_util.promiseToFuture(paymentPromise);
         print('Payment result: $result');
-        if (result != null && js_util.getProperty(result, 'success') == true) {
+
+        final bool success = js_util.getProperty(result, 'success');
+        if (success) {
           print('Web payment successful!');
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -177,7 +164,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           );
           Navigator.pop(context, widget.coins);
         } else {
-          final error = result != null && js_util.hasProperty(result, 'error')
+          final error = js_util.hasProperty(result, 'error')
               ? js_util.getProperty(result, 'error')
               : 'Payment failed';
           throw error;
@@ -227,178 +214,156 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Payment'),
-          elevation: 0,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Stripe status
-              if (kIsWeb)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: _stripeInitialized ? Colors.green.shade50 : Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Payment'),
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Stripe status
+            if (kIsWeb)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: _stripeInitialized ? Colors.green.shade50 : Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _stripeInitialized ? Colors.green : Colors.amber,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _stripeInitialized ? Icons.check_circle : Icons.info_outline,
                       color: _stripeInitialized ? Colors.green : Colors.amber,
-                      width: 1,
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _stripeInitialized ? Icons.check_circle : Icons.info_outline,
-                        color: _stripeInitialized ? Colors.green : Colors.amber,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _stripeInitialized
-                              ? 'Payment system ready'
-                              : 'Payment system is initializing...',
-                          style: TextStyle(
-                            color: _stripeInitialized ? Colors.green : Colors.amber.shade800,
-                          ),
-                        ),
-                      ),
-                      if (!_stripeInitialized)
-                        TextButton(
-                          onPressed: _initializeStripe,
-                          child: const Text('Retry'),
-                        ),
-                    ],
-                  ),
-                ),
-              // Payment amount display
-              Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).cardColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Purchase ${widget.coins} Coins',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '\$${widget.price.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Card Information Fields
-              Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).cardColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Test Card Information',
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _stripeInitialized
+                            ? 'Payment system ready'
+                            : 'Payment system is initializing...',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          color: _stripeInitialized ? Colors.green : Colors.amber.shade800,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _cardNumberController,
-                        decoration: const InputDecoration(
-                          labelText: 'Card Number',
-                          border: OutlineInputBorder(),
-                          helperText: 'Test card number',
-                        ),
-                        readOnly: true,
+                    ),
+                    if (!_stripeInitialized)
+                      TextButton(
+                        onPressed: _initializeStripe,
+                        child: const Text('Retry'),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _expiryController,
-                              decoration: const InputDecoration(
-                                labelText: 'Expiry',
-                                border: OutlineInputBorder(),
-                                helperText: 'MM/YY',
-                              ),
-                              readOnly: true,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _cvcController,
-                              decoration: const InputDecoration(
-                                labelText: 'CVC',
-                                border: OutlineInputBorder(),
-                                helperText: 'Security code',
-                              ),
-                              readOnly: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _postalCodeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Postal Code',
-                          border: OutlineInputBorder(),
-                          helperText: 'ZIP code',
-                        ),
-                        readOnly: true,
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              // Pay button
-              ElevatedButton(
-                onPressed: (_stripeInitialized || !kIsWeb) && !_loading ? _handlePayment : null,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            // Payment amount display
+            Material(
+              elevation: 2,
+              borderRadius: BorderRadius.circular(8),
+              color: Theme.of(context).cardColor,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(
+                      'Purchase ${widget.coins} Coins',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '\$${widget.price.toStringAsFixed(2)}',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'You will be prompted to enter your card details securely via Stripe after clicking the button below.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Test card info box
+            if (kIsWeb)
+              Container(
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.blue.shade200,
+                    width: 1,
                   ),
                 ),
-                child: _loading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Text(
-                        'Pay \$${widget.price.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Test Mode Information',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.blue,
                       ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'This is a test mode integration. Use the following test card information:',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    SizedBox(height: 8),
+                    Text('• Card Number: 4242 4242 4242 4242'),
+                    Text('• Expiry Date: Any future date (MM/YY)'),
+                    Text('• CVC: Any 3 digits'),
+                    Text('• ZIP: Any 5 digits'),
+                  ],
+                ),
               ),
-            ],
-          ),
+            // Pay button
+            ElevatedButton(
+              onPressed: (_stripeInitialized || !kIsWeb) && !_loading ? _handlePayment : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: _loading
+                  ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+                  : Text(
+                'Pay \$${widget.price.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }

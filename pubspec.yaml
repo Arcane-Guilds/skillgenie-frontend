@@ -21,19 +21,16 @@ dependencies:
   cupertino_icons: ^1.0.8
   auto_size_text: ^3.0.0
   google_fonts: ^4.0.4
-  flutter_svg: ^1.0.1
+  flutter_svg: ^2.0.9
   lottie: ^2.3.1
   animations: ^2.0.2
   smooth_page_indicator: ^1.1.0
   material_design_icons_flutter: ^7.0.7296
   flutter_spinkit: ^5.2.0
-
+  flutter_svg_provider: ^1.0.7
   font_awesome_flutter: ^10.4.0
 
   #speach to tesxt 
-  
-
-
   animated_text_kit: ^4.2.2
 
 
@@ -72,7 +69,7 @@ dependencies:
   flutter_image_compress: ^2.1.0
   mime: ^2.0.0
   sqflite: ^2.3.0
-  flag: ^6.0.0
+  flag: 7.0.0
   syncfusion_flutter_pdf: ^28.2.6
   file_picker: ^9.0.0
   media_scanner: ^2.2.0
@@ -129,6 +126,8 @@ flutter:
     - assets/images/error.json
     - .env
     - assets/images/avatar1.png
+    - assets/images/logo.svg
+    - assets/images/logo.png
     - assets/images/avatar2.png
     - assets/images/avatar3.png
     - assets/images/avatar4.png
@@ -152,5 +151,11 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/genie.png"
+  image_path: "assets/images/logo.png"  
+  adaptive_icon_background: "#FFFFFF"  
+  adaptive_icon_foreground: "assets/images/logo.png"
   min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/images/logo.svg"
+    background_color: "#FFFFFF"

@@ -1,7 +1,16 @@
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:skillGenie/data/models/user_model.dart';
+import 'package:skillGenie/presentation/viewmodels/auth/auth_viewmodel.dart';
 
 import '../../../data/models/course_model.dart';
 import '../../viewmodels/course_viewmodel.dart';
@@ -25,11 +34,12 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
   List<Map<String, dynamic>> _lessons = [];
   bool _showingGenieMessage = true;
   late List<bool> _expandedLevels;
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
-
+    _loadCurrentUser();
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
@@ -53,6 +63,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
 
   Future<void> _loadCourse() async {
     final courseViewModel = Provider.of<CourseViewModel>(context, listen: false);
+    
 
     try {
       setState(() {
@@ -377,6 +388,8 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
               fontWeight: FontWeight.w500,
             ),
           ),
+          const SizedBox(height: 16),
+          _buildCertificateWidget(course),
         ],
       ),
     ).animate()
@@ -624,4 +637,230 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
     final int hash = title.hashCode.abs();
     return colors[hash % colors.length];
   }
+
+  // Certificate widget displayed below progress bar
+  Widget _buildCertificateWidget(Course course) {
+    final double progress = _calculateCourseProgress(course);
+    final bool isCompleted = progress >= 1.0;
+    return Center(
+      child: GestureDetector(
+        onTap: isCompleted
+            ? () => _showCertificateDialog(context, course)
+            : null,
+        child: Container(
+          width: 220,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          decoration: BoxDecoration(
+            color: isCompleted ? Colors.amber[400] : Colors.grey[400],
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isCompleted ? Icons.emoji_events : Icons.lock_outline,
+                color: isCompleted ? Colors.white : Colors.white70,
+                size: 32,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  isCompleted ? 'Download Certificate!' : 'Certificate Locked',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isCompleted ? Colors.white : Colors.white70,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Shows the certificate popup dialog
+  void _showCertificateDialog(BuildContext context, Course course) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          content: SizedBox(
+            width: 340,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.emoji_events, color: Colors.amber[700], size: 60),
+                const SizedBox(height: 8),
+                const Text(
+                  'Certificate of Completion',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Congratulations! You have completed the course "${course.title}".',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.amber[700],
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.download),
+                  label: const Text('Download Certificate'),
+                  onPressed: () async {
+                      Navigator.of(context).pop();
+                      await _generateAndPrintCertificate(course);
+                  },
+                )
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close')
+            ),
+          ],
+        );
+      },
+    );
+  }
+  Future<void> _generateAndPrintCertificate(Course course) async {
+  final pdf = pw.Document();
+
+  try {
+    // Get current user from state
+    final username = _currentUser?.username?.isNotEmpty == true 
+        ? _currentUser!.username!
+        : 'Valued Learner';  // Fallback name
+
+    // Load certificate template
+    final ByteData imageData = await rootBundle.load('assets/images/certificate_template.png');
+    final Uint8List imageBytes = imageData.buffer.asUint8List();
+    final pw.ImageProvider templateImage = pw.MemoryImage(imageBytes);
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4.landscape,
+        build: (pw.Context context) {
+          return pw.Stack(
+            children: [
+              // Background image
+              pw.Positioned.fill(
+                child: pw.Image(templateImage, fit: pw.BoxFit.cover),
+              ),
+
+              // Content overlay
+              pw.Positioned(
+                bottom: 100,
+                left: 0,
+                right: 0,
+                child: pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      'Certificate of Completion',
+                      style: pw.TextStyle(
+                        fontSize: 40,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.deepPurple,
+                      ),
+                    ),
+                    pw.SizedBox(height: 30),
+                    pw.Text(
+                      'This certifies that',
+                      style: pw.TextStyle(
+                        fontSize: 22,
+                        color: PdfColors.grey800,
+                      ),
+                    ),
+                    pw.SizedBox(height: 15),
+                    pw.Text(
+                      username,
+                      style: pw.TextStyle(
+                        fontSize: 32,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 20),
+                    pw.Text(
+                      'has successfully completed the course',
+                      style: pw.TextStyle(
+                        fontSize: 22,
+                        color: PdfColors.grey800,
+                      ),
+                    ),
+                    pw.SizedBox(height: 25),
+                    pw.Text(
+                      course.title,
+                      style: pw.TextStyle(
+                        fontSize: 28,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.deepOrange,
+                      ),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                    pw.SizedBox(height: 30),
+                    pw.Text(
+                      'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
+                      style: pw.TextStyle(
+                        fontSize: 18,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    // Show print dialog
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: '${course.title}_Certificate',
+    );
+
+  } catch (e) {
+    print('Certificate generation error: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate certificate: ${e.toString()}'),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+}
+  Future<void> _loadCurrentUser() async {
+    try {
+      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+      await authViewModel.checkAuthStatus();
+      setState(() {
+        _currentUser = authViewModel.currentUser;
+      });
+    } catch (e) {
+      print('Error loading user: $e');
+    }
+  }
+
 }

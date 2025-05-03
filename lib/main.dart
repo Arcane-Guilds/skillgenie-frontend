@@ -125,7 +125,7 @@ void main() async {
         builder: (context, child) {
           // Initialize socket connection when app is built
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+            Provider.of<ChatViewModel>(context, listen: false);
             // Try to initialize socket connection
             //chatViewModel.refreshCurrentChat();
           });
@@ -236,7 +236,7 @@ class MyApp extends StatelessWidget {
         builder: (context, child) {
           // Initialize socket connection when app is built
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+            Provider.of<ChatViewModel>(context, listen: false);
             // Try to initialize socket connection
             //chatViewModel.refreshCurrentChat();
           });
@@ -277,7 +277,9 @@ class MyApp extends StatelessWidget {
                           // Instead use a Navigator to pop back or restart
                           Navigator.of(context, rootNavigator: true).pop();
                         } catch (e) {
-                          print('Failed to navigate: $e');
+                          if (kDebugMode) {
+                            print('Failed to navigate: $e');
+                          }
                         }
                       },
                       child: const Text('Go Back'),

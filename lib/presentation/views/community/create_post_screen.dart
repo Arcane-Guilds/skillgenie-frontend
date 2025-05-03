@@ -69,11 +69,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     try {
       final viewModel = Provider.of<CommunityViewModel>(context, listen: false);
-      final post = await viewModel.createPost(
-        _contentController.text.trim(),
-        _selectedImages,
-        title: _titleController.text.trim(),
-      );
 
       if (mounted) {
         await viewModel.loadPosts();

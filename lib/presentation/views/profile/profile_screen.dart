@@ -39,7 +39,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
-  bool _isLoading = false;
   File? _imageFile;
   bool _isUploadingImage = false;
   double _uploadProgress = 0;
@@ -54,7 +53,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _initControllers();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadInitialData();
+      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+      if (profileViewModel.currentProfile == null) {
+         _loadInitialData();
+      }
     });
   }
 
@@ -90,28 +92,23 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
 
     try {
-      setState(() => _isLoading = true);
-
       if (!authViewModel.isAuthenticated) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (!mounted) return;
-        if (!authViewModel.isAuthenticated) {
-          context.go('/login');
-          return;
-        }
+         print("User not authenticated, redirecting...");
+         if(mounted) context.go('/login');
+         return;
       }
 
       final profile = await profileViewModel.getUserProfile(forceRefresh: true);
-      if (!mounted) return;
-
-      await profileViewModel.fetchUserBadgeCount();
-      await _loadUserPosts(profile!.id);
+      
+      if (profile != null && mounted) {
+        await profileViewModel.fetchUserBadgeCount();
+        await _loadUserPosts(profile.id);
+      }
 
     } catch (e) {
-      if (mounted) _showErrorSnackBar(e.toString());
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+      print("Error in _loadInitialData: $e");
+      if (mounted) _showErrorSnackBar(profileViewModel.errorMessage ?? e.toString());
+    } 
   }
 
   void _showErrorSnackBar(String message) {
@@ -369,6 +366,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildPostCard(Post post) {
+    // Get the current user ID for checking authorship
+    final currentUserId = Provider.of<AuthViewModel>(context, listen: false).user?.id;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -390,13 +390,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Use null-safe access for author avatar
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: kPrimaryBlue.withOpacity(0.1),
-                  backgroundImage: post.author.avatar != null
-                      ? NetworkImage(post.author.avatar!)
+                  backgroundImage: post.author?.avatar != null && post.author!.avatar!.isNotEmpty
+                      ? NetworkImage(post.author!.avatar!) // Safe now due to check
                       : null,
-                  child: post.author.avatar == null
+                  child: (post.author?.avatar == null || post.author!.avatar!.isEmpty)
                       ? const Icon(Icons.person, color: kPrimaryBlue)
                       : null,
                 ),
@@ -405,14 +406,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Use null-safe access for author username
                       Text(
-                        post.author.username,
+                        post.author?.username ?? 'Unknown User',
                         style: Theme.of(context).textTheme.titleMedium!.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      // Use null-safe access for createdAt
                       Text(
-                        _formatDate(post.createdAt),
+                        post.createdAt != null ? _formatDate(post.createdAt!) : 'Date unknown', // Safe now
                         style: Theme.of(context).textTheme.bodySmall!.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         ),
@@ -420,7 +423,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ],
                   ),
                 ),
-                if (post.author.id == Provider.of<AuthViewModel>(context, listen: false).user?.id)
+                // Check author ID safely
+                if (currentUserId != null && post.author?.id == currentUserId)
                   PopupMenuButton<String>(
                     icon: Icon(
                       Icons.more_vert,
@@ -461,8 +465,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            // Provide default value for title
             child: Text(
-              post.title,
+              post.title ?? 'Untitled Post',
               style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -470,23 +475,28 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            // Provide default value for content
             child: Text(
-              post.content,
+              post.content ?? 'No content',
               style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
               ),
             ),
           ),
-          if (post.images.isNotEmpty) ...[
+          // Check images list safely
+          if (post.images?.isNotEmpty == true) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: SizedBox(
                 height: 200,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: post.images.length,
+                  // Use null-aware length check
+                  itemCount: post.images?.length ?? 0,
                   itemBuilder: (context, imageIndex) {
-                    final transformedUrl = CloudinaryConstants.getPostImageUrl(post.images[imageIndex]);
+                    // Safe access to image URL
+                    final imageUrl = post.images![imageIndex]; // Safe due to isNotEmpty check
+                    final transformedUrl = CloudinaryConstants.getPostImageUrl(imageUrl);
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ClipRRect(
@@ -521,9 +531,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Row(
               children: [
                 _buildActionButton(
-                  icon: post.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                  label: post.likeCount.toString(),
-                  color: post.isLiked ? kPrimaryBlue : null,
+                  icon: post.isLiked == true ? Icons.thumb_up : Icons.thumb_up_outlined,
+                  label: (post.likeCount ?? 0).toString(), // Default to 0
+                  color: post.isLiked == true ? kPrimaryBlue : null,
                   onTap: () {
                     final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
                     communityViewModel.togglePostLike(post.id);
@@ -531,8 +541,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
                 _buildActionButton(
                   icon: Icons.comment_outlined,
-                  label: post.commentCount.toString(),
-                  onTap: () => _navigateToPostDetail(post.id),
+                  label: (post.commentCount ?? 0).toString(), // Default to 0
+                  onTap: () => _navigateToPostDetail(post.id), // Assume post.id is non-null if post exists
                 ),
                 const Spacer(),
                 _buildActionButton(
@@ -824,6 +834,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    // Use context.watch for view models to react to state changes
+    final authViewModel = context.watch<AuthViewModel>();
+    final profileViewModel = context.watch<ProfileViewModel>();
+    // Also watch CommunityViewModel if its status is needed directly here
+    final communityViewModel = context.watch<CommunityViewModel>(); 
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -851,333 +867,383 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
         ],
       ),
-      body: Consumer2<AuthViewModel, ProfileViewModel>(
-        builder: (context, authViewModel, profileViewModel, _) {
-          if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
-              ),
-            );
-          }
+      body: Builder( // Use Builder to ensure context is correct for ScaffoldMessenger
+        builder: (context) {
+           // --- Loading State --- 
+           // Show loading if profile is loading OR if profile is loaded but user posts are still initial/loading
+           final bool isProfileLoading = profileViewModel.isLoading || (authViewModel.isLoading && !authViewModel.authChecked);
+           final bool isPostsLoading = profileViewModel.currentProfile != null && 
+                                       (communityViewModel.userPostsStatus == CommunityStatus.initial || 
+                                        communityViewModel.userPostsStatus == CommunityStatus.loading);
 
-          final user = profileViewModel.currentProfile;
-          if (user == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('No profile data available'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadInitialData,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryBlue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
+           if (isProfileLoading || isPostsLoading) {
+             // If profile is loaded but posts aren't, trigger post loading *here* if not already loading
+             if (profileViewModel.currentProfile != null && 
+                 communityViewModel.userPostsStatus == CommunityStatus.initial) {
+                  print("Build method triggering _loadUserPosts");
+                  // Use addPostFrameCallback to avoid calling setState during build
+                  WidgetsBinding.instance.addPostFrameCallback((_) { 
+                     if(mounted) { // Check mounted again inside callback
+                        _loadUserPosts(profileViewModel.currentProfile!.id);
+                     }
+                  });
+             }
+             
+             return const Center(
+               child: CircularProgressIndicator(
+                 valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
+               ),
+             );
+           }
+          
+           // --- Error State --- 
+           // Prioritize profileViewModel error, fallback to authViewModel error
+           // Also consider communityViewModel error if posts failed to load
+           final String? profileError = profileViewModel.errorMessage ?? authViewModel.error;
+           final String? postsError = communityViewModel.userPostsStatus == CommunityStatus.error 
+                                      ? communityViewModel.errorMessage 
+                                      : null;
+           final String? displayError = profileError ?? postsError;
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              await _loadInitialData();
-            },
-            color: kPrimaryBlue,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 24),
-                  // Profile picture
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Hero(
-                        tag: 'profile_image',
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Container(
-                            height: 120,
-                            width: 120,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(60),
-                              child: _buildProfileImage(user),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: kPrimaryBlue,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // User name
-                  Text(
-                    user.username,
-                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // User bio (replace email)
-                  Text(
-                    (user.bio != null && user.bio!.trim().isNotEmpty)
-                        ? user.bio!
-                        : 'No bio set.',
-                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
-                      _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TabBar(
-                      controller: _tabController,
-                      labelColor: kPrimaryBlue,
-                      unselectedLabelColor: Colors.grey,
-                      indicatorColor: kPrimaryBlue,
-                      tabs: const [
-                        Tab(icon: Icon(Icons.list), text: 'Posts'),
-                        Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 500, // or MediaQuery.of(context).size.height * 0.6, etc.
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        // Tab 1: User Posts
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildUserPosts(),
-                        ),
-                        // Tab 2: Achievements & Analytics
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              // Achievements button
-                              Material(
-                                elevation: 4,
-                                borderRadius: BorderRadius.circular(18),
-                                color: Colors.white,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(18),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => AchievementsScreen(userId: user.id),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(18),
-                                      gradient: LinearGradient(
-                                        colors: [Colors.amber.shade200, Colors.amber.shade400],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
-                                        const SizedBox(width: 16),
-                                        const Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Achievements',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                            SizedBox(height: 2),
-                                            Text(
-                                              'View your badges and milestones',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              // Analytics button
-                              Material(
-                                elevation: 4,
-                                borderRadius: BorderRadius.circular(18),
-                                color: kPrimaryBlue,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(18),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => AnalyticsScreen(userId: user.id),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                    decoration: const BoxDecoration(
-                                      borderRadius: BorderRadius.all(Radius.circular(18)),
-                                      gradient: LinearGradient(
-                                        colors: [kPrimaryBlue, Colors.lightBlueAccent],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.insights, color: Colors.white, size: 32),
-                                        SizedBox(width: 16),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'View Analytics',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            SizedBox(height: 2),
-                                            Text(
-                                              'Track your learning progress',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.white70,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              // Take Quiz button
-                              Material(
-                                elevation: 4,
-                                borderRadius: BorderRadius.circular(18),
-                                color: Colors.deepPurpleAccent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(18),
-                                  onTap: () async {
-                                    final prefs = await SharedPreferences.getInstance();
-                                    final String? userJson = prefs.getString("user");
-                                    if (userJson != null) {
-                                      final user = User.fromJson(jsonDecode(userJson));
-                                      if (!mounted) return;
-                                      context.push('/quiz/${user.id}');
-                                    } else {
-                                      if (!mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('User ID not found')),
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(18),
-                                      gradient: LinearGradient(
-                                        colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.quiz, color: Colors.white, size: 32),
-                                        SizedBox(width: 16),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Take Quiz',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            SizedBox(height: 2),
-                                            Text(
-                                              'Get personalized course ',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.white70,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          );
-        },
+           // Show error if profile failed OR if posts failed
+           if (displayError != null && (profileViewModel.currentProfile == null || postsError != null) ) {
+             return Center(
+               child: Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   Text('Error: $displayError'), // Show specific error
+                   const SizedBox(height: 16),
+                   ElevatedButton(
+                     onPressed: () {
+                       // Clear errors and retry initial data load
+                       profileViewModel.clearError();
+                       authViewModel.clearError(); 
+                       communityViewModel.resetError(); // Add resetError to CommunityViewModel if needed
+                       _loadInitialData(); // Retry the whole sequence
+                     },
+                     style: ElevatedButton.styleFrom(
+                       backgroundColor: kPrimaryBlue,
+                       foregroundColor: Colors.white,
+                     ),
+                     child: const Text('Retry'),
+                   ),
+                 ],
+               ),
+             );
+           }
+
+           // --- No Profile Data State --- 
+           final user = profileViewModel.currentProfile;
+           if (user == null) {
+             return Center(
+               child: Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   const Text('No profile data available.'),
+                   const SizedBox(height: 16),
+                   ElevatedButton(
+                     onPressed: _loadInitialData,
+                     style: ElevatedButton.styleFrom(
+                       backgroundColor: kPrimaryBlue,
+                       foregroundColor: Colors.white,
+                     ),
+                     child: const Text('Reload Profile'),
+                   ),
+                 ],
+               ),
+             );
+           }
+          
+           // --- Profile Data Loaded State --- 
+           // User is non-null here
+           return RefreshIndicator(
+             onRefresh: () async {
+               await _loadInitialData();
+             },
+             color: kPrimaryBlue,
+             child: SingleChildScrollView(
+               physics: const AlwaysScrollableScrollPhysics(),
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.center,
+                 children: [
+                   const SizedBox(height: 24),
+                   Stack(
+                     clipBehavior: Clip.none,
+                     children: [
+                       Hero(
+                         tag: 'profile_image',
+                         child: GestureDetector(
+                           onTap: _pickImage,
+                           child: Container(
+                             height: 120,
+                             width: 120,
+                             decoration: BoxDecoration(
+                               shape: BoxShape.circle,
+                               border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
+                             ),
+                             child: ClipRRect(
+                               borderRadius: BorderRadius.circular(60),
+                               child: _buildProfileImage(user),
+                             ),
+                           ),
+                         ),
+                       ),
+                       Positioned(
+                         bottom: 0,
+                         right: 0,
+                         child: Container(
+                           padding: const EdgeInsets.all(4),
+                           decoration: const BoxDecoration(
+                             color: kPrimaryBlue,
+                             shape: BoxShape.circle,
+                           ),
+                           child: const Icon(
+                             Icons.camera_alt,
+                             color: Colors.white,
+                             size: 20,
+                           ),
+                         ),
+                       ),
+                     ],
+                   ),
+                   const SizedBox(height: 16),
+                   Text(
+                     user.username,
+                     style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                       fontWeight: FontWeight.bold,
+                     ),
+                   ),
+                   const SizedBox(height: 8),
+                   Text(
+                     user.bio?.trim().isNotEmpty == true 
+                         ? user.bio!
+                         : 'No bio set.',
+                     style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                       fontStyle: FontStyle.italic,
+                     ),
+                   ),
+                   const SizedBox(height: 24),
+                   Row(
+                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                     children: [
+                       _buildStatCard(context, 'Streak', '${user.streak ?? 0} days', Icons.local_fire_department),
+                       _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
+                     ],
+                   ),
+                   const SizedBox(height: 16),
+                   Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 16),
+                     child: TabBar(
+                       controller: _tabController,
+                       labelColor: kPrimaryBlue,
+                       unselectedLabelColor: Colors.grey,
+                       indicatorColor: kPrimaryBlue,
+                       tabs: const [
+                         Tab(icon: Icon(Icons.list), text: 'Posts'),
+                         Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
+                       ],
+                     ),
+                   ),
+                   SizedBox(
+                     height: 500,
+                     child: TabBarView(
+                       controller: _tabController,
+                       children: [
+                         Padding(
+                           padding: const EdgeInsets.symmetric(horizontal: 16),
+                           child: _buildUserPosts(),
+                         ),
+                         Padding(
+                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                           child: Column(
+                             mainAxisAlignment: MainAxisAlignment.start,
+                             children: [
+                               Material(
+                                 elevation: 4,
+                                 borderRadius: BorderRadius.circular(18),
+                                 color: Colors.white,
+                                 child: InkWell(
+                                   borderRadius: BorderRadius.circular(18),
+                                   onTap: () {
+                                     Navigator.push(
+                                       context,
+                                       MaterialPageRoute(
+                                         builder: (_) => AchievementsScreen(userId: user.id),
+                                       ),
+                                     );
+                                   },
+                                   child: Container(
+                                     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                     decoration: BoxDecoration(
+                                       borderRadius: BorderRadius.circular(18),
+                                       gradient: LinearGradient(
+                                         colors: [Colors.amber.shade200, Colors.amber.shade400],
+                                         begin: Alignment.topLeft,
+                                         end: Alignment.bottomRight,
+                                       ),
+                                     ),
+                                     child: Row(
+                                       mainAxisAlignment: MainAxisAlignment.center,
+                                       children: [
+                                         Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
+                                         const SizedBox(width: 16),
+                                         const Column(
+                                           crossAxisAlignment: CrossAxisAlignment.start,
+                                           children: [
+                                             Text(
+                                               'Achievements',
+                                               style: TextStyle(
+                                                 fontWeight: FontWeight.bold,
+                                                 fontSize: 18,
+                                                 color: Colors.black87,
+                                               ),
+                                             ),
+                                             SizedBox(height: 2),
+                                             Text(
+                                               'View your badges and milestones',
+                                               style: TextStyle(
+                                                 fontSize: 13,
+                                                 color: Colors.black54,
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ],
+                                     ),
+                                   ),
+                                 ),
+                               ),
+                               const SizedBox(height: 24),
+                               Material(
+                                 elevation: 4,
+                                 borderRadius: BorderRadius.circular(18),
+                                 color: kPrimaryBlue,
+                                 child: InkWell(
+                                   borderRadius: BorderRadius.circular(18),
+                                   onTap: () {
+                                     Navigator.push(
+                                       context,
+                                       MaterialPageRoute(
+                                         builder: (_) => AnalyticsScreen(userId: user.id),
+                                       ),
+                                     );
+                                   },
+                                   child: Container(
+                                     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                     decoration: const BoxDecoration(
+                                       borderRadius: BorderRadius.all(Radius.circular(18)),
+                                       gradient: LinearGradient(
+                                         colors: [kPrimaryBlue, Colors.lightBlueAccent],
+                                         begin: Alignment.topLeft,
+                                         end: Alignment.bottomRight,
+                                       ),
+                                     ),
+                                     child: const Row(
+                                       mainAxisAlignment: MainAxisAlignment.center,
+                                       children: [
+                                         Icon(Icons.insights, color: Colors.white, size: 32),
+                                         SizedBox(width: 16),
+                                         Column(
+                                           crossAxisAlignment: CrossAxisAlignment.start,
+                                           children: [
+                                             Text(
+                                               'View Analytics',
+                                               style: TextStyle(
+                                                 fontWeight: FontWeight.bold,
+                                                 fontSize: 18,
+                                                 color: Colors.white,
+                                               ),
+                                             ),
+                                             SizedBox(height: 2),
+                                             Text(
+                                               'Track your learning progress',
+                                               style: TextStyle(
+                                                 fontSize: 13,
+                                                 color: Colors.white70,
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ],
+                                     ),
+                                   ),
+                                 ),
+                               ),
+                               const SizedBox(height: 24),
+                               Material(
+                                 elevation: 4,
+                                 borderRadius: BorderRadius.circular(18),
+                                 color: Colors.deepPurpleAccent,
+                                 child: InkWell(
+                                   borderRadius: BorderRadius.circular(18),
+                                   onTap: () async {
+                                     final prefs = await SharedPreferences.getInstance();
+                                     final String? userJson = prefs.getString("user");
+                                     if (userJson != null) {
+                                       final user = User.fromJson(jsonDecode(userJson));
+                                       if (!mounted) return;
+                                       context.push('/quiz/${user.id}');
+                                     } else {
+                                       if (!mounted) return;
+                                       ScaffoldMessenger.of(context).showSnackBar(
+                                         const SnackBar(content: Text('User ID not found')),
+                                       );
+                                     }
+                                   },
+                                   child: Container(
+                                     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                     decoration: BoxDecoration(
+                                       borderRadius: BorderRadius.circular(18),
+                                       gradient: LinearGradient(
+                                         colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
+                                         begin: Alignment.topLeft,
+                                         end: Alignment.bottomRight,
+                                       ),
+                                     ),
+                                     child: const Row(
+                                       mainAxisAlignment: MainAxisAlignment.center,
+                                       children: [
+                                         Icon(Icons.quiz, color: Colors.white, size: 32),
+                                         SizedBox(width: 16),
+                                         Column(
+                                           crossAxisAlignment: CrossAxisAlignment.start,
+                                           children: [
+                                             Text(
+                                               'Take Quiz',
+                                               style: TextStyle(
+                                                 fontWeight: FontWeight.bold,
+                                                 fontSize: 18,
+                                                 color: Colors.white,
+                                               ),
+                                             ),
+                                             SizedBox(height: 2),
+                                             Text(
+                                               'Get personalized course ',
+                                               style: TextStyle(
+                                                 fontSize: 13,
+                                                 color: Colors.white70,
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ],
+                                     ),
+                                   ),
+                                 ),
+                               ),
+                             ],
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
+                   const SizedBox(height: 24),
+                 ],
+               ),
+             ),
+           );
+        }
       ),
     );
   }

@@ -340,4 +340,12 @@ class AuthViewModel extends ChangeNotifier {
       throw Exception(_error);
     }
   }
+
+  /// Clears the current error message.
+  void clearError() {
+    if (_error != null) {
+      _error = null;
+      notifyListeners();
+    }
+  }
 }

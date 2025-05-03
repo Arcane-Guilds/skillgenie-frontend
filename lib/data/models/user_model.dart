@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class User {
   final String id;
@@ -119,5 +121,35 @@ class User {
       totalXP: totalXP ?? this.totalXP,
       dailyProgress: dailyProgress ?? this.dailyProgress,
     );
+  }
+
+  static Future<bool> updateCoins(String userId, int amount) async {
+    try {
+      final backendUrl = dotenv.env['API_BASE_URL'] ?? '';
+      if (backendUrl.isEmpty) {
+        print('Error: API URL not configured');
+        return false;
+      }
+
+      final response = await http.post(
+        Uri.parse('$backendUrl/user/$userId/add-coins'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'amount': amount,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Failed to update coins: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error updating coins: $e');
+      return false;
+    }
   }
 }

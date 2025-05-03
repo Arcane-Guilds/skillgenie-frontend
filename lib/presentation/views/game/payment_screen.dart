@@ -8,7 +8,6 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:js/js.dart';
-import 'package:js/js_util.dart';
 import 'dart:async';
 import 'dart:js_util' as js_util;
 

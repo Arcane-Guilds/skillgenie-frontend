@@ -234,18 +234,18 @@ path: '/forgot-password',
 builder: (context, state) => const ForgotPasswordScreen(),
 ),
 GoRoute(
-path: '/verify-otp',
-builder: (context, state) {
-final email = (state.extra as Map<String, dynamic>)['email'] as String;
-return OtpVerificationScreen(email: email);
-},
+  path: '/otp-verification/:email', // Expects email parameter
+  builder: (context, state) {
+    final email = state.pathParameters['email'] ?? ''; // Extract email
+    return OtpVerificationScreen(email: email);
+  },
 ),
 GoRoute(
-path: '/reset-password',
-builder: (context, state) {
-final email = (state.extra as Map<String, dynamic>)['email'] as String;
-return ResetPasswordScreen(email: email);
-},
+  path: '/reset-password/:email', // Expects email parameter
+  builder: (context, state) {
+    final email = state.pathParameters['email'] ?? ''; // Extract email
+    return ResetPasswordScreen(email: email);
+  },
 ),
 GoRoute(
 path: '/settings',

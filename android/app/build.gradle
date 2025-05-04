@@ -1,7 +1,6 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -9,36 +8,49 @@ android {
     namespace = "com.example.frontend"
     compileSdk = 35
     ndkVersion = flutter.ndkVersion
+    buildToolsVersion = "34.0.0"  // Add build tools version
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17  // Update to Java 17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = JavaVersion.VERSION_17.toString()  // Match Java 17
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.frontend"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 24
-        targetSdk = 34
+        minSdk = 24  // Good for printing package
+        targetSdk = 35  // Match compileSdk version
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true  // Add multidex support
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
+            // Add these optimizations
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+
+    // Add packaging options
+    packagingOptions {
+        pickFirst '**/libc++_shared.so'
+        exclude 'META-INF/proguard/androidx-annotations.pro'
     }
 }
 
 flutter {
     source = "../.."
+}
+
+// Add this dependency section
+dependencies {
+    implementation "androidx.multidex:multidex:2.0.1"  // Multidex dependency
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"  // Explicit Kotlin version
 }

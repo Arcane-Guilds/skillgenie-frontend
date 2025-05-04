@@ -204,6 +204,13 @@ class FriendRepository {
   Future<List<User>> searchUsers(String query) async {
     try {
       _logger.i('Searching users with query: $query');
+      
+      // Validate query length before calling API
+      if (query.isEmpty || query.length < 2) {
+        _logger.w('Search query too short, returning empty list.');
+        return [];
+      }
+      
       final headers = await _getAuthHeaders();
       final response = await _client.get(
         Uri.parse('${ApiConstants.baseUrl}/user/search?q=$query'),
@@ -316,6 +323,29 @@ class FriendRepository {
     } catch (e) {
       _logger.e('Error checking existing chats: $e');
       return null; // Return null if there's an error, to allow chat creation
+    }
+  }
+
+  // Fetch suggested friends from the backend
+  Future<List<User>> getSuggestedFriends() async {
+    try {
+      _logger.i('Fetching suggested friends from API');
+      final headers = await _getAuthHeaders();
+      
+      // Call the suggestions endpoint
+      final response = await _client.get(
+        Uri.parse('${ApiConstants.baseUrl}/friends/suggestions'),
+        headers: headers,
+      );
+
+      _handleApiError(response);
+
+      final List<dynamic> data = jsonDecode(response.body);
+      _logger.i('Successfully fetched ${data.length} suggested friends');
+      return data.map((json) => User.fromJson(json)).toList();
+    } catch (e) {
+      _logger.e('Error fetching suggested friends: $e');
+      rethrow; // Rethrow the error to be handled by the ViewModel
     }
   }
 

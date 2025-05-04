@@ -146,7 +146,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final success = await User.updateCoins(userId, widget.coins);
 
         if (!success) {
-          throw Exception('Failed to add coins to user balance');
+          // Show error but don't throw exception - payment was successful
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment successful but there was an issue updating your coins. Please contact support.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 5),
+            ),
+          );
+          // Still return success since payment was processed
+          Navigator.pop(context, widget.coins);
+          return;
         }
 
         if (!mounted) return;

@@ -178,14 +178,24 @@ class User {
         }),
       );
 
-      if (response.statusCode == 200) {
-        return true;
+      print('Coin update response: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Parse the response to verify the update
+        final responseData = json.decode(response.body);
+        if (responseData['coins'] != null) {
+          print('Coins updated successfully. New balance: ${responseData['coins']}');
+          return true;
+        } else {
+          print('Response did not contain updated coin balance');
+          return false;
+        }
       } else {
-        print('Failed to update coins: ${response.body}');
+        print('Failed to update coins. Status: ${response.statusCode}, Body: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('Error updating coins: $e');
+      print('Exception while updating coins: $e');
       return false;
     }
   }

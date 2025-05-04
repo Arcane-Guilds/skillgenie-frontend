@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/ui_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class GamesScreen extends StatefulWidget {
   const GamesScreen({super.key});
@@ -42,6 +43,22 @@ class GamesScreen extends StatefulWidget {
 class _GamesScreenState extends State<GamesScreen> {
   bool petEquipped = false;
   bool hatEquipped = false;
+  bool hangmanBought = false;
+  bool jumbleBought = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGameUnlocks();
+  }
+
+  Future<void> _loadGameUnlocks() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      hangmanBought = prefs.getBool('hangmanBought') ?? false;
+      jumbleBought = prefs.getBool('jumbleBought') ?? false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,20 +190,25 @@ class _GamesScreenState extends State<GamesScreen> {
     Color color,
     Widget page,
   ) {
+    bool isLocked = false;
+    if (title == 'Hangman') isLocked = !hangmanBought;
+    if (title == 'Word Jumble') isLocked = !jumbleBought;
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
-        onTap: () {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Opening $title...")));
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => page),
-          );
-        },
+        onTap: isLocked
+            ? null
+            : () {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text("Opening $title...")));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => page),
+                );
+              },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(20),
@@ -240,11 +262,26 @@ class _GamesScreenState extends State<GamesScreen> {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                color: AppTheme.textSecondaryColor,
-                size: 20,
-              ),
+              isLocked
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Locked',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.arrow_forward_ios,
+                      color: AppTheme.textSecondaryColor,
+                      size: 20,
+                    ),
             ],
           ),
         ),
@@ -260,9 +297,16 @@ class _GamesScreenState extends State<GamesScreen> {
       ),
       child: InkWell(
         onTap: () {
-          final randomGame = GamesScreen.gamesList[Random().nextInt(GamesScreen.gamesList.length)];
+          // Only pick from unlocked games
+          final unlockedGames = [
+            {'title': 'WikiCross', 'page': const SearchRoute()},
+            if (hangmanBought) {'title': 'Hangman', 'page': HomeGameScreen()},
+            if (jumbleBought) {'title': 'Word Jumble', 'page': const Game()},
+          ];
+          if (unlockedGames.isEmpty) return;
+          final randomGame = unlockedGames[Random().nextInt(unlockedGames.length)];
           ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Surprise! Opening ${randomGame['title']}...")));
+              .showSnackBar(SnackBar(content: Text("Surprise! Opening \\${randomGame['title']}...")));
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => randomGame['page'] as Widget),
@@ -326,7 +370,6 @@ class _GamesScreenState extends State<GamesScreen> {
                 color: AppTheme.textSecondaryColor,
                 size: 20,
               ),
-
             ],
           ),
         ),

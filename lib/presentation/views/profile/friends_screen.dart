@@ -5,10 +5,10 @@ import '../../../presentation/viewmodels/friend_viewmodel.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/friend_model.dart';
 import '../../../presentation/viewmodels/chat_viewmodel.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../../../core/theme/app_theme.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../widgets/avatar_widget.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -51,26 +51,19 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   // Handle tab changes with throttling to prevent excessive API calls
   void _handleTabChange() {
     if (!_tabController.indexIsChanging) {
-      print('Tab changed to: ${_tabController.index}');
       final now = DateTime.now();
       
       if (_tabController.index == 0) {
         // Only reload friends if it's been at least 30 seconds since last load
         if (now.difference(_lastFriendsLoad).inSeconds > 30) {
-          print('Loading friends data (tab change)');
           _lastFriendsLoad = now;
           Provider.of<FriendViewModel>(context, listen: false).loadFriends();
-        } else {
-          print('Skipping friends reload - loaded recently');
         }
       } else if (_tabController.index == 1) {
         // Only reload requests if it's been at least 30 seconds since last load  
         if (now.difference(_lastRequestsLoad).inSeconds > 30) {
-          print('Loading friend requests (tab change)');
           _lastRequestsLoad = now;
           Provider.of<FriendViewModel>(context, listen: false).loadFriendRequests();
-        } else {
-          print('Skipping requests reload - loaded recently');
         }
       }
     }
@@ -78,7 +71,6 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
 
   // Load initial data only once
   Future<void> _loadInitialData() async {
-    print('Initial data loading - friends and requests');
     final friendViewModel = Provider.of<FriendViewModel>(context, listen: false);
     
     _initialDataLoaded = true;
@@ -99,55 +91,107 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('Friends'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Friends'),
-            Tab(text: 'Requests'),
-            Tab(text: 'Add Friends'),
-          ],
+        title: const Text(
+          'Friends',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: AppTheme.primaryColor,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: AppTheme.primaryColor,
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: Colors.grey,
+              indicatorSize: TabBarIndicatorSize.label,
+              indicator: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppTheme.primaryColor,
+                    width: 3.0,
+                  ),
+                ),
+              ),
+              dividerHeight: 0,
+              tabs: const [
+                Tab(text: 'Friends'),
+                Tab(text: 'Requests'),
+                Tab(text: 'Add Friends'),
+              ],
+            ),
+          ),
         ),
       ),
-      body: Consumer<FriendViewModel>(
-        builder: (context, friendViewModel, child) {
-          if (!_initialDataLoaded) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+        ),
+        child: Consumer<FriendViewModel>(
+          builder: (context, friendViewModel, child) {
+            if (!_initialDataLoaded) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                ),
+              );
+            }
 
-          if (friendViewModel.errorMessage != null &&
-              friendViewModel.friends.isEmpty &&
-              friendViewModel.friendRequests == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error: ${friendViewModel.errorMessage}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      _lastFriendsLoad = DateTime.now();
-                      _lastRequestsLoad = DateTime.now();
-                      friendViewModel.loadFriends();
-                      friendViewModel.loadFriendRequests();
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+            if (friendViewModel.errorMessage != null &&
+                friendViewModel.friends.isEmpty &&
+                friendViewModel.friendRequests == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: AppTheme.errorColor, size: 64),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error: ${friendViewModel.errorMessage}',
+                      style: const TextStyle(color: AppTheme.errorColor),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _lastFriendsLoad = DateTime.now();
+                        _lastRequestsLoad = DateTime.now();
+                        friendViewModel.loadFriends();
+                        friendViewModel.loadFriendRequests();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildFriendsTab(friendViewModel),
+                _buildRequestsTab(friendViewModel),
+                _buildAddFriendsTab(friendViewModel),
+              ],
             );
-          }
-
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildFriendsTab(friendViewModel),
-              _buildRequestsTab(friendViewModel),
-              _buildAddFriendsTab(friendViewModel),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -168,7 +212,11 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     }
     
     if (viewModel.isLoading && viewModel.friends.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+        ),
+      );
     }
     
     if (viewModel.friends.isEmpty) {
@@ -176,23 +224,40 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.people, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
+            const GenieAvatar(
+              state: AvatarState.idle,
+              size: 100,
+              message: "No friends yet!",
+            ),
+            const SizedBox(height: 24),
             const Text(
               'You don\'t have any friends yet',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Go to "Add Friends" to find new people',
-              style: TextStyle(color: Colors.grey),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Connect with other learners to share your progress and challenge each other',
+                style: TextStyle(color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.person_add),
+              label: const Text('Find Friends'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              onPressed: () => _tabController.animateTo(2),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _tabController.animateTo(2),
-              child: const Text('Add Friends'),
-            ),
-            const SizedBox(height: 8),
             if (viewModel.errorMessage != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -203,12 +268,13 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 ),
               ),
             const SizedBox(height: 8),
-            TextButton(
+            TextButton.icon(
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Refresh'),
               onPressed: () {
                 _lastFriendsLoad = DateTime.now();
                 viewModel.loadFriends();
               },
-              child: const Text('Refresh'),
             ),
           ],
         ),
@@ -216,19 +282,124 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     }
 
     return RefreshIndicator(
+      color: AppTheme.primaryColor,
       onRefresh: () {
         _lastFriendsLoad = DateTime.now();
         return viewModel.loadFriends();
       },
       child: ListView.builder(
+        padding: const EdgeInsets.only(top: 16),
         itemCount: viewModel.friends.length,
         itemBuilder: (context, index) {
           final friend = viewModel.friends[index];
-          return _buildUserListTile(
-            user: friend,
-            trailing: IconButton(
-              icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-              onPressed: () => _showRemoveFriendDialog(friend),
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 2,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => _showUserOptions(friend),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    // User avatar
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                      backgroundImage: friend.avatar != null && friend.avatar!.isNotEmpty
+                          ? (friend.avatar!.startsWith('http')
+                          ? NetworkImage(friend.avatar!)
+                          : AssetImage('assets/images/${friend.avatar}.png'))
+                          : null,
+                      child: friend.avatar == null || friend.avatar!.isEmpty
+                          ? Text(
+                              friend.username.isNotEmpty 
+                                  ? friend.username[0].toUpperCase() 
+                                  : '?',
+                              style: TextStyle(
+                                fontSize: 24, 
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            )
+                          : null,
+                    ),
+                    
+                    const SizedBox(width: 16),
+                    
+                    // Friend info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            friend.username,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            friend.email,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Action buttons
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Chat button
+                        Material(
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(30),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(30),
+                            onTap: () => _startChatWithUser(friend),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.chat_bubble_outline,
+                                color: AppTheme.primaryColor,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(width: 8),
+                        
+                        // Remove button
+                        Material(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(30),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(30),
+                            onTap: () => _showRemoveFriendDialog(friend),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.person_remove_outlined,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         },
@@ -328,67 +499,334 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   }
 
   Widget _buildAddFriendsTab(FriendViewModel viewModel) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search users',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        viewModel.clearSearchResults();
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                  ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          // Search Box
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search for users',
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _searchController.clear();
+                          viewModel.clearSearchResults();
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              textInputAction: TextInputAction.search,
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  viewModel.searchUsers(value);
+                }
+              },
+              onChanged: (value) {
+                // Clear results if search field is cleared
+                if (value.isEmpty) {
+                  viewModel.clearSearchResults();
+                }
+              },
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Search Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.search),
+              label: const Text('Search'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () {
-                  if (_searchController.text.isNotEmpty) {
-                    viewModel.searchUsers(_searchController.text);
-                  }
-                },
-                child: const Text('Search'),
-              ),
-            ],
+              onPressed: () {
+                if (_searchController.text.isNotEmpty) {
+                  FocusScope.of(context).unfocus(); // Hide keyboard
+                  viewModel.searchUsers(_searchController.text);
+                }
+              },
+            ),
           ),
-        ),
-        Expanded(
-          child: viewModel.isLoading && viewModel.searchResults.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : viewModel.searchResults.isEmpty
-                  ? const Center(
-                      child: Text('Search for users to add as friends'),
-                    )
-                  : ListView.builder(
-                      itemCount: viewModel.searchResults.length,
-                      itemBuilder: (context, index) {
-                        final user = viewModel.searchResults[index];
-                        return _buildUserListTile(
-                          user: user,
-                          trailing: ElevatedButton(
-                            onPressed: () => viewModel.sendFriendRequest(user.id),
-                            child: const Text('Send Request'),
-                          ),
-                        );
-                      },
+          
+          const SizedBox(height: 24),
+          
+          // Results Area
+          Expanded(
+            child: viewModel.isLoading && viewModel.searchResults.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
                     ),
+                  )
+                : viewModel.searchResults.isEmpty
+                    ? _buildEmptySearchResults()
+                    : _buildSearchResultsList(viewModel),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptySearchResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const GenieAvatar(
+            state: AvatarState.idle,
+            size: 100,
+            message: "Find your friends!",
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _searchController.text.isEmpty
+                ? 'Search for users to add as friends'
+                : 'No users found matching "${_searchController.text}"',
+            style: const TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Try searching by username or email',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildSearchResultsList(FriendViewModel viewModel) {
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: viewModel.searchResults.length,
+      itemBuilder: (context, index) {
+        final user = viewModel.searchResults[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // User avatar
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                  backgroundImage: user.avatar != null && user.avatar!.isNotEmpty
+                      ? (user.avatar!.startsWith('http')
+                      ? NetworkImage(user.avatar!)
+                      : AssetImage('assets/images/${user.avatar}.png'))
+                      : null,
+                  child: user.avatar == null || user.avatar!.isEmpty
+                      ? Text(
+                          user.username.isNotEmpty 
+                              ? user.username[0].toUpperCase() 
+                              : '?',
+                          style: TextStyle(
+                            fontSize: 24, 
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                          ),
+                        )
+                      : null,
+                ),
+                
+                const SizedBox(width: 16),
+                
+                // User info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.username,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        user.email,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Add Friend Button
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.person_add_outlined, size: 18),
+                  label: const Text('Add'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: BorderSide(color: AppTheme.primaryColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () => _handleSendFriendRequest(viewModel, user),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  Future<void> _handleSendFriendRequest(FriendViewModel viewModel, User user) async {
+    // Show loading indicator in snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text('Sending request to ${user.username}...'),
+          ],
         ),
-      ],
+        duration: const Duration(seconds: 1),
+      ),
+    );
+    
+    try {
+      await viewModel.sendFriendRequest(user.id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Friend request sent to ${user.username}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Switch to requests tab to see the sent request
+        _tabController.animateTo(1);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sending friend request: ${viewModel.errorMessage ?? e}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
+  void _showRemoveFriendDialog(User friend) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Remove Friend'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundImage: friend.avatar != null && friend.avatar!.isNotEmpty
+                  ? (friend.avatar!.startsWith('http')
+                  ? NetworkImage(friend.avatar!)
+                  : AssetImage('assets/images/${friend.avatar}.png'))
+                  : null,
+              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+              child: friend.avatar == null || friend.avatar!.isEmpty
+                  ? Text(
+                      friend.username.isNotEmpty ? friend.username[0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Are you sure you want to remove ${friend.username} from your friends?',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'This action cannot be undone.',
+              style: TextStyle(color: Colors.red, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.person_remove, size: 18),
+            label: const Text('Remove'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            onPressed: () {
+              final viewModel = Provider.of<FriendViewModel>(context, listen: false);
+              viewModel.removeFriend(friend.id);
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${friend.username} has been removed from your friends'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -399,7 +837,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     return ListTile(
       leading: CircleAvatar(
         backgroundImage: user.avatar != null
+            ? (user.avatar!.startsWith('http')
             ? NetworkImage(user.avatar!)
+            : AssetImage('assets/images/${user.avatar}.png'))
             : null,
         child: user.avatar == null
             ? Text(user.username.isNotEmpty ? user.username[0].toUpperCase() : '?')
@@ -433,7 +873,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     return ListTile(
       leading: CircleAvatar(
         backgroundImage: user.avatar != null
+            ? (user.avatar!.startsWith('http')
             ? NetworkImage(user.avatar!)
+            : AssetImage('assets/images/${user.avatar}.png'))
             : null,
         child: user.avatar == null
             ? Text(user.username.isNotEmpty ? user.username[0].toUpperCase() : '?')
@@ -456,30 +898,6 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               ],
             )
           : const Text('Pending'),
-    );
-  }
-
-  void _showRemoveFriendDialog(User friend) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Remove Friend'),
-        content: Text('Are you sure you want to remove ${friend.username} from your friends?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final viewModel = Provider.of<FriendViewModel>(context, listen: false);
-              viewModel.removeFriend(friend.id);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -594,7 +1012,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             CircleAvatar(
               radius: 40,
               backgroundImage: user.avatar != null
+                  ? (user.avatar!.startsWith('http')
                   ? NetworkImage(user.avatar!)
+                  : AssetImage('assets/images/${user.avatar}.png'))
                   : null,
               child: user.avatar == null
                   ? Text(

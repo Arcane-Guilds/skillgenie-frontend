@@ -407,7 +407,7 @@ int _getTabIndex(String location) {
       index = 2;
     } else if (location.startsWith('/community') || location.startsWith('/notifications')) {
       index = 3;
-    } else if (location.startsWith('/profile')) {
+    } else if (location.startsWith('/profile') || location.startsWith('/friends')) {
       index = 4;
     }
   } catch (e) {

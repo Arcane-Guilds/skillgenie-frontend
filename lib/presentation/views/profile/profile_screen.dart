@@ -55,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
       if (profileViewModel.currentProfile == null) {
-         _loadInitialData();
+        _loadInitialData();
       }
     });
   }
@@ -73,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Future<void> _loadUserPosts(String userId) async {
     if (!mounted) return;
-    
+
     final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
     try {
       await communityViewModel.loadUserPosts(userId);
@@ -93,13 +93,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     try {
       if (!authViewModel.isAuthenticated) {
-         print("User not authenticated, redirecting...");
-         if(mounted) context.go('/login');
-         return;
+        print("User not authenticated, redirecting...");
+        if(mounted) context.go('/login');
+        return;
       }
 
       final profile = await profileViewModel.getUserProfile(forceRefresh: true);
-      
+
       if (profile != null && mounted) {
         await profileViewModel.fetchUserBadgeCount();
         await _loadUserPosts(profile.id);
@@ -108,12 +108,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     } catch (e) {
       print("Error in _loadInitialData: $e");
       if (mounted) _showErrorSnackBar(profileViewModel.errorMessage ?? e.toString());
-    } 
+    }
   }
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -266,11 +266,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     return Consumer<CommunityViewModel>(
       builder: (context, communityViewModel, _) {
         final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-        
+
         if (communityViewModel.userPostsStatus == CommunityStatus.loading) {
           return const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue)));
         }
-        
+
         if (communityViewModel.userPostsStatus == CommunityStatus.error) {
           return Column(
             children: [
@@ -347,13 +347,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   backgroundColor: kPrimaryBlue,
                   child: const Icon(Icons.add),
                 ).animate()
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: 0.3, end: 0),
+                    .fadeIn(duration: 500.ms)
+                    .slideY(begin: 0.3, end: 0),
               ],
             ),
           );
         }
-        
+
         return ListView.builder(
           itemCount: communityViewModel.userPosts.length,
           itemBuilder: (context, index) {
@@ -558,8 +558,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ],
       ),
     ).animate()
-     .fadeIn(duration: 600.ms)
-     .moveY(begin: 20, end: 0, duration: 600.ms, curve: Curves.easeOutQuad);
+        .fadeIn(duration: 600.ms)
+        .moveY(begin: 20, end: 0, duration: 600.ms, curve: Curves.easeOutQuad);
   }
 
   Widget _buildActionButton({
@@ -593,7 +593,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildStatCard(BuildContext context, String title, String value, IconData icon) {
     const isWeb = kIsWeb;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -635,26 +635,26 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   // For wider screens - stats in a row with better spacing and larger elements
   Widget _buildWideStatsLayout(BuildContext context, User user) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildWebStatCard(
-          context, 
-          'Streak', 
-          '${user.streakDays} days', 
-          Icons.local_fire_department,
-          Colors.orange.shade700,
-          screenWidth
+            context,
+            'Streak',
+            '${user.streakDays} days',
+            Icons.local_fire_department,
+            Colors.orange.shade700,
+            screenWidth
         ),
         const SizedBox(width: 24),
         _buildWebStatCard(
-          context, 
-          'Badges', 
-          '${user.earnedBadges.length ?? 0}', 
-          Icons.emoji_events,
-          Colors.amber.shade400,
-          screenWidth
+            context,
+            'Badges',
+            '${user.earnedBadges.length ?? 0}',
+            Icons.emoji_events,
+            Colors.amber.shade400,
+            screenWidth
         ),
       ],
     );
@@ -664,21 +664,21 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildWebStatCard(BuildContext context, String title, String value, IconData icon, Color iconColor, double screenWidth) {
     // Dynamic sizing based on screen width
     final cardWidth = screenWidth > 1600 ? 220.0 :
-                     screenWidth > 1200 ? 180.0 :
-                     screenWidth > 992 ? 160.0 : 140.0;
-    
+    screenWidth > 1200 ? 180.0 :
+    screenWidth > 992 ? 160.0 : 140.0;
+
     final iconSize = screenWidth > 1600 ? 60.0 :
-                    screenWidth > 1200 ? 50.0 :
-                    screenWidth > 992 ? 45.0 : 40.0;
-                    
+    screenWidth > 1200 ? 50.0 :
+    screenWidth > 992 ? 45.0 : 40.0;
+
     final valueFontSize = screenWidth > 1600 ? 36.0 :
-                         screenWidth > 1200 ? 32.0 :
-                         screenWidth > 992 ? 28.0 : 24.0;
-                         
+    screenWidth > 1200 ? 32.0 :
+    screenWidth > 992 ? 28.0 : 24.0;
+
     final titleFontSize = screenWidth > 1600 ? 18.0 :
-                         screenWidth > 1200 ? 16.0 :
-                         screenWidth > 992 ? 15.0 : 14.0;
-    
+    screenWidth > 1200 ? 16.0 :
+    screenWidth > 992 ? 15.0 : 14.0;
+
     return Container(
       width: cardWidth,
       padding: EdgeInsets.all(screenWidth > 1200 ? 24 : 20),
@@ -732,25 +732,25 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildNormalStatsLayout(BuildContext context, User user) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildWebStatCard(
-          context, 
-          'Streak', 
-          '${user.streakDays} days', 
-          Icons.local_fire_department,
-          Colors.orange.shade700,
-          screenWidth
+            context,
+            'Streak',
+            '${user.streakDays} days',
+            Icons.local_fire_department,
+            Colors.orange.shade700,
+            screenWidth
         ),
         _buildWebStatCard(
-          context, 
-          'Badges', 
-          '${user.earnedBadges.length ?? 0}', 
-          Icons.emoji_events,
-          Colors.amber.shade400,
-          screenWidth
+            context,
+            'Badges',
+            '${user.earnedBadges.length ?? 0}',
+            Icons.emoji_events,
+            Colors.amber.shade400,
+            screenWidth
         ),
       ],
     );
@@ -799,12 +799,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               try {
                 final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
                 await communityViewModel.deletePost(postId);
-                
+
                 if (mounted) {
                   setState(() {
                     communityViewModel.userPosts.removeWhere((post) => post.id == postId);
                   });
-                  
+
                   _showSuccessSnackBar('Post deleted successfully');
                 }
               } catch (e) {
@@ -838,7 +838,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final authViewModel = context.watch<AuthViewModel>();
     final profileViewModel = context.watch<ProfileViewModel>();
     // Also watch CommunityViewModel if its status is needed directly here
-    final communityViewModel = context.watch<CommunityViewModel>(); 
+    final communityViewModel = context.watch<CommunityViewModel>();
 
     return Scaffold(
       appBar: AppBar(
@@ -868,382 +868,383 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ],
       ),
       body: Builder( // Use Builder to ensure context is correct for ScaffoldMessenger
-        builder: (context) {
-           // --- Loading State --- 
-           // Show loading if profile is loading OR if profile is loaded but user posts are still initial/loading
-           final bool isProfileLoading = profileViewModel.isLoading || (authViewModel.isLoading && !authViewModel.authChecked);
-           final bool isPostsLoading = profileViewModel.currentProfile != null && 
-                                       (communityViewModel.userPostsStatus == CommunityStatus.initial || 
-                                        communityViewModel.userPostsStatus == CommunityStatus.loading);
+          builder: (context) {
+            // --- Loading State ---
+            // Show loading if profile is loading OR if profile is loaded but user posts are still initial/loading
+            final bool isProfileLoading = profileViewModel.isLoading || (authViewModel.isLoading && !authViewModel.authChecked);
+            final bool isPostsLoading = profileViewModel.currentProfile != null &&
+                (communityViewModel.userPostsStatus == CommunityStatus.initial ||
+                    communityViewModel.userPostsStatus == CommunityStatus.loading);
 
-           if (isProfileLoading || isPostsLoading) {
-             // If profile is loaded but posts aren't, trigger post loading *here* if not already loading
-             if (profileViewModel.currentProfile != null && 
-                 communityViewModel.userPostsStatus == CommunityStatus.initial) {
-                  print("Build method triggering _loadUserPosts");
-                  // Use addPostFrameCallback to avoid calling setState during build
-                  WidgetsBinding.instance.addPostFrameCallback((_) { 
-                     if(mounted) { // Check mounted again inside callback
-                        _loadUserPosts(profileViewModel.currentProfile!.id);
-                     }
-                  });
-             }
-             
-             return const Center(
-               child: CircularProgressIndicator(
-                 valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
-               ),
-             );
-           }
-          
-           // --- Error State --- 
-           // Prioritize profileViewModel error, fallback to authViewModel error
-           // Also consider communityViewModel error if posts failed to load
-           final String? profileError = profileViewModel.errorMessage ?? authViewModel.error;
-           final String? postsError = communityViewModel.userPostsStatus == CommunityStatus.error 
-                                      ? communityViewModel.errorMessage 
-                                      : null;
-           final String? displayError = profileError ?? postsError;
+            if (isProfileLoading || isPostsLoading) {
+              // If profile is loaded but posts aren't, trigger post loading *here* if not already loading
+              if (profileViewModel.currentProfile != null &&
+                  communityViewModel.userPostsStatus == CommunityStatus.initial) {
+                print("Build method triggering _loadUserPosts");
+                // Use addPostFrameCallback to avoid calling setState during build
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if(mounted) { // Check mounted again inside callback
+                    _loadUserPosts(profileViewModel.currentProfile!.id);
+                  }
+                });
+              }
 
-           // Show error if profile failed OR if posts failed
-           if (displayError != null && (profileViewModel.currentProfile == null || postsError != null) ) {
-             return Center(
-               child: Column(
-                 mainAxisAlignment: MainAxisAlignment.center,
-                 children: [
-                   Text('Error: $displayError'), // Show specific error
-                   const SizedBox(height: 16),
-                   ElevatedButton(
-                     onPressed: () {
-                       // Clear errors and retry initial data load
-                       profileViewModel.clearError();
-                       authViewModel.clearError(); 
-                       communityViewModel.resetError(); // Add resetError to CommunityViewModel if needed
-                       _loadInitialData(); // Retry the whole sequence
-                     },
-                     style: ElevatedButton.styleFrom(
-                       backgroundColor: kPrimaryBlue,
-                       foregroundColor: Colors.white,
-                     ),
-                     child: const Text('Retry'),
-                   ),
-                 ],
-               ),
-             );
-           }
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
+                ),
+              );
+            }
 
-           // --- No Profile Data State --- 
-           final user = profileViewModel.currentProfile;
-           if (user == null) {
-             return Center(
-               child: Column(
-                 mainAxisAlignment: MainAxisAlignment.center,
-                 children: [
-                   const Text('No profile data available.'),
-                   const SizedBox(height: 16),
-                   ElevatedButton(
-                     onPressed: _loadInitialData,
-                     style: ElevatedButton.styleFrom(
-                       backgroundColor: kPrimaryBlue,
-                       foregroundColor: Colors.white,
-                     ),
-                     child: const Text('Reload Profile'),
-                   ),
-                 ],
-               ),
-             );
-           }
-          
-           // --- Profile Data Loaded State --- 
-           // User is non-null here
-           return RefreshIndicator(
-             onRefresh: () async {
-               await _loadInitialData();
-             },
-             color: kPrimaryBlue,
-             child: SingleChildScrollView(
-               physics: const AlwaysScrollableScrollPhysics(),
-               child: Column(
-                 crossAxisAlignment: CrossAxisAlignment.center,
-                 children: [
-                   const SizedBox(height: 24),
-                   Stack(
-                     clipBehavior: Clip.none,
-                     children: [
-                       Hero(
-                         tag: 'profile_image',
-                         child: GestureDetector(
-                           onTap: _pickImage,
-                           child: Container(
-                             height: 120,
-                             width: 120,
-                             decoration: BoxDecoration(
-                               shape: BoxShape.circle,
-                               border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
-                             ),
-                             child: ClipRRect(
-                               borderRadius: BorderRadius.circular(60),
-                               child: _buildProfileImage(user),
-                             ),
-                           ),
-                         ),
-                       ),
-                       Positioned(
-                         bottom: 0,
-                         right: 0,
-                         child: Container(
-                           padding: const EdgeInsets.all(4),
-                           decoration: const BoxDecoration(
-                             color: kPrimaryBlue,
-                             shape: BoxShape.circle,
-                           ),
-                           child: const Icon(
-                             Icons.camera_alt,
-                             color: Colors.white,
-                             size: 20,
-                           ),
-                         ),
-                       ),
-                     ],
-                   ),
-                   const SizedBox(height: 16),
-                   Text(
-                     user.username,
-                     style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                       fontWeight: FontWeight.bold,
-                     ),
-                   ),
-                   const SizedBox(height: 8),
-                   Text(
-                     user.bio?.trim().isNotEmpty == true 
-                         ? user.bio!
-                         : 'No bio set.',
-                     style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                       fontStyle: FontStyle.italic,
-                     ),
-                   ),
-                   const SizedBox(height: 24),
-                   Row(
-                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                     children: [
-                       _buildStatCard(context, 'Streak', '${user.streak ?? 0} days', Icons.local_fire_department),
-                       _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
-                     ],
-                   ),
-                   const SizedBox(height: 16),
-                   Padding(
-                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                     child: TabBar(
-                       controller: _tabController,
-                       labelColor: kPrimaryBlue,
-                       unselectedLabelColor: Colors.grey,
-                       indicatorColor: kPrimaryBlue,
-                       tabs: const [
-                         Tab(icon: Icon(Icons.list), text: 'Posts'),
-                         Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
-                       ],
-                     ),
-                   ),
-                   SizedBox(
-                     height: 500,
-                     child: TabBarView(
-                       controller: _tabController,
-                       children: [
-                         Padding(
-                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                           child: _buildUserPosts(),
-                         ),
-                         Padding(
-                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                           child: Column(
-                             mainAxisAlignment: MainAxisAlignment.start,
-                             children: [
-                               Material(
-                                 elevation: 4,
-                                 borderRadius: BorderRadius.circular(18),
-                                 color: Colors.white,
-                                 child: InkWell(
-                                   borderRadius: BorderRadius.circular(18),
-                                   onTap: () {
-                                     Navigator.push(
-                                       context,
-                                       MaterialPageRoute(
-                                         builder: (_) => AchievementsScreen(userId: user.id),
-                                       ),
-                                     );
-                                   },
-                                   child: Container(
-                                     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                     decoration: BoxDecoration(
-                                       borderRadius: BorderRadius.circular(18),
-                                       gradient: LinearGradient(
-                                         colors: [Colors.amber.shade200, Colors.amber.shade400],
-                                         begin: Alignment.topLeft,
-                                         end: Alignment.bottomRight,
-                                       ),
-                                     ),
-                                     child: Row(
-                                       mainAxisAlignment: MainAxisAlignment.center,
-                                       children: [
-                                         Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
-                                         const SizedBox(width: 16),
-                                         const Column(
-                                           crossAxisAlignment: CrossAxisAlignment.start,
-                                           children: [
-                                             Text(
-                                               'Achievements',
-                                               style: TextStyle(
-                                                 fontWeight: FontWeight.bold,
-                                                 fontSize: 18,
-                                                 color: Colors.black87,
-                                               ),
-                                             ),
-                                             SizedBox(height: 2),
-                                             Text(
-                                               'View your badges and milestones',
-                                               style: TextStyle(
-                                                 fontSize: 13,
-                                                 color: Colors.black54,
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ],
-                                     ),
-                                   ),
-                                 ),
-                               ),
-                               const SizedBox(height: 24),
-                               Material(
-                                 elevation: 4,
-                                 borderRadius: BorderRadius.circular(18),
-                                 color: kPrimaryBlue,
-                                 child: InkWell(
-                                   borderRadius: BorderRadius.circular(18),
-                                   onTap: () {
-                                     Navigator.push(
-                                       context,
-                                       MaterialPageRoute(
-                                         builder: (_) => AnalyticsScreen(userId: user.id),
-                                       ),
-                                     );
-                                   },
-                                   child: Container(
-                                     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                     decoration: const BoxDecoration(
-                                       borderRadius: BorderRadius.all(Radius.circular(18)),
-                                       gradient: LinearGradient(
-                                         colors: [kPrimaryBlue, Colors.lightBlueAccent],
-                                         begin: Alignment.topLeft,
-                                         end: Alignment.bottomRight,
-                                       ),
-                                     ),
-                                     child: const Row(
-                                       mainAxisAlignment: MainAxisAlignment.center,
-                                       children: [
-                                         Icon(Icons.insights, color: Colors.white, size: 32),
-                                         SizedBox(width: 16),
-                                         Column(
-                                           crossAxisAlignment: CrossAxisAlignment.start,
-                                           children: [
-                                             Text(
-                                               'View Analytics',
-                                               style: TextStyle(
-                                                 fontWeight: FontWeight.bold,
-                                                 fontSize: 18,
-                                                 color: Colors.white,
-                                               ),
-                                             ),
-                                             SizedBox(height: 2),
-                                             Text(
-                                               'Track your learning progress',
-                                               style: TextStyle(
-                                                 fontSize: 13,
-                                                 color: Colors.white70,
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ],
-                                     ),
-                                   ),
-                                 ),
-                               ),
-                               const SizedBox(height: 24),
-                               Material(
-                                 elevation: 4,
-                                 borderRadius: BorderRadius.circular(18),
-                                 color: Colors.deepPurpleAccent,
-                                 child: InkWell(
-                                   borderRadius: BorderRadius.circular(18),
-                                   onTap: () async {
-                                     final prefs = await SharedPreferences.getInstance();
-                                     final String? userJson = prefs.getString("user");
-                                     if (userJson != null) {
-                                       final user = User.fromJson(jsonDecode(userJson));
-                                       if (!mounted) return;
-                                       context.push('/quiz/${user.id}');
-                                     } else {
-                                       if (!mounted) return;
-                                       ScaffoldMessenger.of(context).showSnackBar(
-                                         const SnackBar(content: Text('User ID not found')),
-                                       );
-                                     }
-                                   },
-                                   child: Container(
-                                     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                     decoration: BoxDecoration(
-                                       borderRadius: BorderRadius.circular(18),
-                                       gradient: LinearGradient(
-                                         colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
-                                         begin: Alignment.topLeft,
-                                         end: Alignment.bottomRight,
-                                       ),
-                                     ),
-                                     child: const Row(
-                                       mainAxisAlignment: MainAxisAlignment.center,
-                                       children: [
-                                         Icon(Icons.quiz, color: Colors.white, size: 32),
-                                         SizedBox(width: 16),
-                                         Column(
-                                           crossAxisAlignment: CrossAxisAlignment.start,
-                                           children: [
-                                             Text(
-                                               'Take Quiz',
-                                               style: TextStyle(
-                                                 fontWeight: FontWeight.bold,
-                                                 fontSize: 18,
-                                                 color: Colors.white,
-                                               ),
-                                             ),
-                                             SizedBox(height: 2),
-                                             Text(
-                                               'Get personalized course ',
-                                               style: TextStyle(
-                                                 fontSize: 13,
-                                                 color: Colors.white70,
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ],
-                                     ),
-                                   ),
-                                 ),
-                               ),
-                             ],
-                           ),
-                         ),
-                       ],
-                     ),
-                   ),
-                   const SizedBox(height: 24),
-                 ],
-               ),
-             ),
-           );
-        }
+            // --- Error State ---
+            // Prioritize profileViewModel error, fallback to authViewModel error
+            // Also consider communityViewModel error if posts failed to load
+            final String? profileError = profileViewModel.errorMessage ?? authViewModel.error;
+            final String? postsError = communityViewModel.userPostsStatus == CommunityStatus.error
+                ? communityViewModel.errorMessage
+                : null;
+            final String? displayError = profileError ?? postsError;
+
+            // Show error if profile failed OR if posts failed
+            if (displayError != null && (profileViewModel.currentProfile == null || postsError != null) ) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Error: $displayError'), // Show specific error
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Clear errors and retry initial data load
+                        profileViewModel.clearError();
+                        authViewModel.clearError();
+                        communityViewModel.resetError(); // Add resetError to CommunityViewModel if needed
+                        _loadInitialData(); // Retry the whole sequence
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryBlue,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // --- No Profile Data State ---
+            final user = profileViewModel.currentProfile;
+            if (user == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('No profile data available.'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadInitialData,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryBlue,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Reload Profile'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // --- Profile Data Loaded State ---
+            // User is non-null here
+            return RefreshIndicator(
+              onRefresh: () async {
+                await _loadInitialData();
+              },
+              color: kPrimaryBlue,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 24),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Hero(
+                          tag: 'profile_image',
+                          child: GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              height: 120,
+                              width: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(60),
+                                child: _buildProfileImage(user),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: kPrimaryBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      user.username,
+                      style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      user.bio?.trim().isNotEmpty == true
+                          ? user.bio!
+                          : 'No bio set.',
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatCard(context, 'Streak', '${user.streak ?? 0} days', Icons.local_fire_department),
+                        _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TabBar(
+                        controller: _tabController,
+                        labelColor: kPrimaryBlue,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: kPrimaryBlue,
+                        dividerHeight: 0,
+                        tabs: const [
+                          Tab(icon: Icon(Icons.list), text: 'Posts'),
+                          Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 500,
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildUserPosts(),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Material(
+                                  elevation: 4,
+                                  borderRadius: BorderRadius.circular(18),
+                                  color: Colors.white,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(18),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => AchievementsScreen(userId: user.id),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(18),
+                                        gradient: LinearGradient(
+                                          colors: [Colors.amber.shade200, Colors.amber.shade400],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
+                                          const SizedBox(width: 16),
+                                          const Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Achievements',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                              SizedBox(height: 2),
+                                              Text(
+                                                'View your badges and milestones',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Material(
+                                  elevation: 4,
+                                  borderRadius: BorderRadius.circular(18),
+                                  color: kPrimaryBlue,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(18),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => AnalyticsScreen(userId: user.id),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                      decoration: const BoxDecoration(
+                                        borderRadius: BorderRadius.all(Radius.circular(18)),
+                                        gradient: LinearGradient(
+                                          colors: [kPrimaryBlue, Colors.lightBlueAccent],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.insights, color: Colors.white, size: 32),
+                                          SizedBox(width: 16),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'View Analytics',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              SizedBox(height: 2),
+                                              Text(
+                                                'Track your learning progress',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Material(
+                                  elevation: 4,
+                                  borderRadius: BorderRadius.circular(18),
+                                  color: Colors.deepPurpleAccent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(18),
+                                    onTap: () async {
+                                      final prefs = await SharedPreferences.getInstance();
+                                      final String? userJson = prefs.getString("user");
+                                      if (userJson != null) {
+                                        final user = User.fromJson(jsonDecode(userJson));
+                                        if (!mounted) return;
+                                        context.push('/quiz/${user.id}');
+                                      } else {
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('User ID not found')),
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(18),
+                                        gradient: LinearGradient(
+                                          colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.quiz, color: Colors.white, size: 32),
+                                          SizedBox(width: 16),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Take Quiz',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              SizedBox(height: 2),
+                                              Text(
+                                                'Get personalized course ',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            );
+          }
       ),
     );
   }
@@ -1296,42 +1297,42 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildFacebookStyleWebLayout(BuildContext context, User user) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     // Dynamic content width based on screen size with limits for very large screens
     final contentWidth = screenWidth > 1800 ? 1600.0 :
-                        screenWidth > 1600 ? 1400.0 :
-                        screenWidth > 1200 ? 1100.0 : 
-                        screenWidth > 992 ? screenWidth * 0.85 : 
-                        screenWidth * 0.95;
-    
+    screenWidth > 1600 ? 1400.0 :
+    screenWidth > 1200 ? 1100.0 :
+    screenWidth > 992 ? screenWidth * 0.85 :
+    screenWidth * 0.95;
+
     // Adjust cover height for a better experience on smaller screens
     final coverHeight = screenWidth > 1600 ? 400.0 :
-                       screenWidth > 1200 ? 350.0 :
-                       screenWidth > 992 ? 300.0 : 250.0;
-    
+    screenWidth > 1200 ? 350.0 :
+    screenWidth > 992 ? 300.0 : 250.0;
+
     // Larger profile image on web                   
     final profileImageSize = screenWidth > 1600 ? 200.0 :
-                           screenWidth > 1200 ? 180.0 :
-                           screenWidth > 992 ? 160.0 : 140.0;
-    
+    screenWidth > 1200 ? 180.0 :
+    screenWidth > 992 ? 160.0 : 140.0;
+
     // Responsive column layout ratio that changes with screen size                    
     final leftColumnRatio = screenWidth > 1600 ? 0.28 :
-                          screenWidth > 1200 ? 0.3 :
-                          screenWidth > 992 ? 0.35 : 0.4;
-    
+    screenWidth > 1200 ? 0.3 :
+    screenWidth > 992 ? 0.35 : 0.4;
+
     // Font size adjustments based on screen size
     final headlineFontSize = screenWidth > 1600 ? 34.0 :
-                           screenWidth > 1200 ? 30.0 :
-                           screenWidth > 992 ? 28.0 : 24.0;
-                           
+    screenWidth > 1200 ? 30.0 :
+    screenWidth > 992 ? 28.0 : 24.0;
+
     final subtitleFontSize = screenWidth > 1600 ? 20.0 :
-                           screenWidth > 1200 ? 18.0 :
-                           screenWidth > 992 ? 16.0 : 14.0;
-    
+    screenWidth > 1200 ? 18.0 :
+    screenWidth > 992 ? 16.0 : 14.0;
+
     // Card padding based on screen size
     final cardPadding = screenWidth > 1200 ? 30.0 :
-                       screenWidth > 992 ? 24.0 : 16.0;
-    
+    screenWidth > 992 ? 24.0 : 16.0;
+
     return Column(
       children: [
         // Facebook-style cover image
@@ -1380,7 +1381,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ],
               ),
             ),
-            
+
             // Profile info bar that overlaps cover photo at bottom
             Container(
               width: contentWidth,
@@ -1438,9 +1439,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(width: screenWidth > 992 ? 30 : 24),
-                  
+
                   // User name and basic info
                   Expanded(
                     child: Padding(
@@ -1485,7 +1486,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       ),
                     ),
                   ),
-                  
+
                   // Action buttons aligned with name
                   Padding(
                     padding: EdgeInsets.only(bottom: screenWidth > 992 ? 80 : 70),
@@ -1508,8 +1509,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             elevation: 3,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                             padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth > 992 ? 20 : 16, 
-                              vertical: screenWidth > 992 ? 14 : 12
+                                horizontal: screenWidth > 992 ? 20 : 16,
+                                vertical: screenWidth > 992 ? 14 : 12
                             ),
                             textStyle: TextStyle(
                               fontSize: screenWidth > 992 ? 16 : 14,
@@ -1536,9 +1537,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
           ],
         ),
-        
+
         SizedBox(height: screenWidth > 992 ? 80 : 70),
-        
+
         // Main content area
         Container(
           width: contentWidth,
@@ -1560,9 +1561,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   ],
                 ),
               ),
-              
+
               SizedBox(width: screenWidth > 992 ? 30 : 20),
-              
+
               // Right area - Posts
               Expanded(
                 child: Column(
@@ -1576,7 +1577,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ],
           ),
         ),
-        
+
         const SizedBox(height: 60),
       ],
     );
@@ -1585,11 +1586,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildInfoCard(BuildContext context, User user) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     // Card padding based on screen size
     final cardPadding = screenWidth > 1200 ? 30.0 :
-                       screenWidth > 992 ? 24.0 : 16.0;
-    
+    screenWidth > 992 ? 24.0 : 16.0;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -1623,14 +1624,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             Divider(thickness: isWideScreen ? 1.5 : 1.2),
             SizedBox(height: isWideScreen ? 20 : 12),
-            
+
             // Bio info
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, 
-                  size: isWideScreen ? 26 : 22, 
-                  color: Colors.grey.shade600
+                Icon(Icons.info_outline,
+                    size: isWideScreen ? 26 : 22,
+                    color: Colors.grey.shade600
                 ),
                 SizedBox(width: isWideScreen ? 16 : 12),
                 Expanded(
@@ -1645,13 +1646,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ],
             ),
             SizedBox(height: isWideScreen ? 24 : 16),
-            
+
             // Email info
             Row(
               children: [
-                Icon(Icons.email_outlined, 
-                  size: isWideScreen ? 26 : 22, 
-                  color: Colors.grey.shade600
+                Icon(Icons.email_outlined,
+                    size: isWideScreen ? 26 : 22,
+                    color: Colors.grey.shade600
                 ),
                 SizedBox(width: isWideScreen ? 16 : 12),
                 Expanded(
@@ -1674,11 +1675,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildStatsCard(BuildContext context, User user) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     // Card padding based on screen size
     final cardPadding = screenWidth > 1200 ? 30.0 :
-                       screenWidth > 992 ? 24.0 : 16.0;
-    
+    screenWidth > 992 ? 24.0 : 16.0;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -1698,12 +1699,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             Divider(thickness: isWideScreen ? 1.5 : 1.2),
             SizedBox(height: isWideScreen ? 20 : 12),
-            
+
             // Responsive layout for stats based on screen width
-            screenWidth > 1400 
+            screenWidth > 1400
                 ? _buildWideStatsLayout(context, user)
                 : _buildNormalStatsLayout(context, user),
-            
+
             SizedBox(height: isWideScreen ? 30 : 20),
             // View analytics button
             Center(
@@ -1775,11 +1776,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildFriendsCard(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     // Card padding based on screen size
     final cardPadding = screenWidth > 1200 ? 30.0 :
-                       screenWidth > 992 ? 24.0 : 16.0;
-    
+    screenWidth > 992 ? 24.0 : 16.0;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -1817,15 +1818,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             Divider(thickness: isWideScreen ? 1.5 : 1.2),
             SizedBox(height: isWideScreen ? 20 : 12),
-            
+
             // PLACEHOLDER: Friends list would go here - sample placeholders
             if (screenWidth > 1200)
               _buildWideScreenFriendsPlaceholder()
             else
               _buildNormalScreenFriendsPlaceholder(),
-              
+
             SizedBox(height: isWideScreen ? 30 : 20),
-            
+
             // Add friend button
             Center(
               child: OutlinedButton.icon(
@@ -1888,7 +1889,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildFriendPlaceholder(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     return Column(
       children: [
         CircleAvatar(
@@ -1912,15 +1913,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       ],
     );
   }
-  
+
   Widget _buildCreatePostCard(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     // Card padding based on screen size
     final cardPadding = screenWidth > 1200 ? 30.0 :
-                       screenWidth > 992 ? 24.0 : 16.0;
-    
+    screenWidth > 992 ? 24.0 : 16.0;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -1962,8 +1963,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: isWideScreen ? 24 : 20, 
-                        vertical: isWideScreen ? 20 : 16
+                          horizontal: isWideScreen ? 24 : 20,
+                          vertical: isWideScreen ? 20 : 16
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
@@ -1991,12 +1992,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   // For wider screens - buttons in a row with more space
   Widget _buildWidePostActions() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: isWideScreen ? 12 : 8),
       child: Row(
@@ -2011,12 +2012,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   // For narrower screens - buttons fit to content
   Widget _buildNormalPostActions() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: isWideScreen ? 12 : 8),
       child: Row(
@@ -2028,12 +2029,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   // Helper for post action buttons
   Widget _buildPostActionButton(IconData icon, Color iconColor, String label) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
-    
+
     return TextButton.icon(
       onPressed: () {
         Navigator.push(
@@ -2051,9 +2052,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         });
       },
       icon: Icon(
-        icon, 
-        color: iconColor,
-        size: isWideScreen ? 26 : 22
+          icon,
+          color: iconColor,
+          size: isWideScreen ? 26 : 22
       ),
       label: Text(
         label,
@@ -2065,8 +2066,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       style: TextButton.styleFrom(
         foregroundColor: Colors.black87,
         padding: EdgeInsets.symmetric(
-          horizontal: isWideScreen ? 20 : 16, 
-          vertical: isWideScreen ? 14 : 10
+            horizontal: isWideScreen ? 20 : 16,
+            vertical: isWideScreen ? 14 : 10
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isWideScreen ? 12 : 8),

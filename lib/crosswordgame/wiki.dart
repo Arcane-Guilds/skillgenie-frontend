@@ -25,14 +25,14 @@ Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target
   List <int> pool = [];
   if (pageid != -1)
   {
-    var original_page = await GetArticle(client, pageid, true, russian, max_len);
+    var original_page = await GetArticleWithRetry(client, pageid, true, russian, max_len);
     pool.addAll(original_page.links);
   }
   pool += start_pool;
   pool.shuffle();
   for (int i = 0; i < recursive_target && i < pool.length; i++)
   {
-    var new_page = await GetArticle(client, pool[i], true, russian, max_len);
+    var new_page = await GetArticleWithRetry(client, pool[i], true, russian, max_len);
     pool.addAll(new_page.links);
   }
   pool.shuffle();
@@ -46,7 +46,7 @@ Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target
       i--;
       continue;
     }
-    var new_page = await GetArticle(client, pool[i], false, russian, max_len);
+    var new_page = await GetArticleWithRetry(client, pool[i], false, russian, max_len);
     bool add = true;
     for (var p in result)
     {
@@ -78,9 +78,28 @@ Stream<List <Gen_Word>> RequestPool(int pageid, int target, int recursive_target
   client.close();
 }
 
+Future<WikiPage> GetArticleWithRetry(
+  http.Client client,
+  int pageid,
+  bool recursive,
+  bool russian,
+  int max_len,
+  {int retries = 3}
+) async {
+  for (int attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await GetArticle(client, pageid, recursive, russian, max_len);
+    } catch (e) {
+      if (attempt == retries - 1) rethrow;
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+  throw Exception('Failed to fetch article after $retries attempts');
+}
+
 Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, bool russian, int max_len) async  //Получить название и содержание статьи
 {
-  String query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?format=json&origin=*&action=query&prop=extracts&exchars=500&exintro&explaintext&redirects=1&pageids=$pageid';
+  String query = '${russian ? 'https://ru.wikipedia.org' : 'https://en.wikipedia.org'}/w/api.php?format=json&origin=*&action=query&prop=extractsgpllimit&exchars=500&exintro&explaintext&redirects=1&pageids=$pageid&=50';
   var uri = Uri.parse(query);
   var response = await client.get(uri);
   if ((response).statusCode != 200)
@@ -92,9 +111,11 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
   var res2 = res1['pages'];
   var result = res2[(res2 as Map<String, dynamic>).keys.last];
   
+  // Null-safe extraction with default values
+  String new_title = CheckWord(result['title'] ?? '', max_len);
+  String extract = result['extract'] ?? '';
+
   bool priority = false;
-  //Проверка слова
-  var new_title = CheckWord(result['title'], max_len);
   if (new_title != '')
   {
     priority = true;
@@ -142,12 +163,12 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
     return WikiPage(content: '', title: result['title'], links: links, priority: priority);
   }
 
-  var full_description = CleanText(result['extract'], new_title, true);
+  var full_description = CleanText(extract, new_title, true);
   if (full_description[0] == 0) //Если в описании нету вхождения названия
   {
-   full_description = CleanText(result['title'] + ' - ' + full_description[1], new_title, false);
+   full_description = CleanText((result['title'] ?? '') + ' - ' + full_description[1], new_title, false);
   }
-  var full_desc = full_description[1] as String;
+  var full_desc = full_description[1] as String? ?? '';
   String short_desc;
   if (full_desc.indexOf('.') == full_desc.lastIndexOf('.')) //Если описание состоит из всего одного предложения
   {
@@ -178,7 +199,7 @@ Future <WikiPage> GetArticle(http.Client client, int pageid, bool recursive, boo
   var picture = '';
   if (pic_result.containsKey('thumbnail'))
   {
-    picture = pic_result['thumbnail']['source'];
+    picture = pic_result['thumbnail']['source'] ?? '';
   }
   return WikiPage(title: new_title, content: short_desc, ext_content: full_desc, 
                   links: links, priority: priority, picture: picture);

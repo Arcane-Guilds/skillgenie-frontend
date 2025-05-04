@@ -4,12 +4,14 @@ import 'package:skillGenie/presentation/views/home/home_content.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/painting.dart';
+import 'package:provider/provider.dart';
+import 'package:skillGenie/presentation/views/game/MarketplaceScreen.dart';
+import 'package:skillGenie/presentation/views/news/news_screen.dart';
 
 import '../../../data/models/user_model.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../../widgets/avatar_widget.dart';
 /* */ import '../chatbot/lesson_view.dart'; /* */
-import '../game/MarketplaceScreen.dart';
 
 const Color kPrimaryBlue = Color(0xFF29B6F6);
 
@@ -249,6 +251,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: kPrimaryBlue),
             onPressed: () {},
+          ),
+
+          // News button
+          IconButton(
+            icon: const Icon(Icons.newspaper_outlined, color: kPrimaryBlue),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NewsScreen()),
+              );
+            },
           ),
 
           // Marketplace button right next to notifications

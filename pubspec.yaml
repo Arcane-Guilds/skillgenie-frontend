@@ -100,8 +100,8 @@ dependencies:
   json_annotation: ^4.8.1
   flutter_stripe: ^11.5.0
   js: ^0.6.7
-
-  
+  confetti: ^0.7.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

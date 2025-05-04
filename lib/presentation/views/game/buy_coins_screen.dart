@@ -13,6 +13,7 @@ class BuyCoinsScreen extends StatelessWidget {
       {'coins': 100, 'price': 0.99},
       {'coins': 500, 'price': 3.99},
       {'coins': 1200, 'price': 8.99},
+      {'coins': 10000, 'price': 49.99},
     ];
 
     return Scaffold(

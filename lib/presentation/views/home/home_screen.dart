@@ -3,11 +3,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:skillGenie/presentation/views/home/home_content.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter/painting.dart';
 
 import '../../../data/models/user_model.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../../widgets/avatar_widget.dart';
-import '../chatbot/lesson_view.dart';
+/* */ import '../chatbot/lesson_view.dart'; /* */
 import '../game/MarketplaceScreen.dart';
 
 const Color kPrimaryBlue = Color(0xFF29B6F6);
@@ -25,6 +26,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String _welcomeMessage = "Welcome back!";
   bool _isLoading = true;
   User? _user;
+  bool catEquipped = false;
+  Key? catGifKey;
 
   @override
   void initState() {
@@ -36,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     _loadUserData();
     _setWelcomeMessage();
+    _loadCatEquipped();
   }
 
   @override
@@ -74,6 +78,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
+  Future<void> _loadCatEquipped() async {
+    final prefs = await SharedPreferences.getInstance();
+    final equipped = prefs.getBool('catEquipped') ?? false;
+    setState(() {
+      catEquipped = equipped;
+      catGifKey = equipped ? UniqueKey() : null;
+    });
+    if (equipped) {
+      PaintingBinding.instance.imageCache.clear();
+    }
+  }
+
   void _showBottomMenu() {
     showModalBottomSheet(
       context: context,
@@ -92,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()));
               },
             ),
+            /* */
             ListTile(
               leading: const Icon(Icons.school_outlined),
               title: const Text("Lesson in a video"),
@@ -100,12 +117,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Navigator.push(context, MaterialPageRoute(builder: (_) => LessonView()));
               },
             ),
+            /* */
             ListTile(
               leading: const Icon(Icons.shopping_cart_outlined),
               title: const Text("Marketplace"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MarketplaceScreen()));
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
+                );
+                if (result != null && result is bool) {
+                  setState(() {
+                    catEquipped = result;
+                    catGifKey = result ? UniqueKey() : null;
+                  });
+                  if (result) {
+                    PaintingBinding.instance.imageCache.clear();
+                  }
+                }
               },
             ),
           ],
@@ -159,6 +189,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ],
             ),
           ),
+          // Cat gif overlay (bottom left)
+          if (catEquipped)
+            Positioned(
+              bottom: 16,
+              left: 16,
+              child: Image.asset(
+                'assets/images/cat.gif',
+                key: catGifKey,
+                width: 80,
+                height: 80,
+              ),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -212,11 +254,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           // Marketplace button right next to notifications
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined, color: kPrimaryBlue),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
               );
+              if (result != null && result is bool) {
+                setState(() {
+                  catEquipped = result;
+                  catGifKey = result ? UniqueKey() : null;
+                });
+                if (result) {
+                  PaintingBinding.instance.imageCache.clear();
+                }
+              }
             },
           ),
 

@@ -24,7 +24,7 @@ import 'presentation/viewmodels/reclamation_viewmodel.dart';
 // Stripe import
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 
-import 'web_imports.dart' if (dart.library.io) 'mobile_imports.dart';
+// import 'web_imports.dart' if (dart.library.io) 'mobile_imports.dart';  // Comment out web imports
 
 class AppErrorHandler {
   static void handleError(Object error, StackTrace stackTrace) {
@@ -59,9 +59,9 @@ void main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    if (kIsWeb) {
-      configureApp();
-    }
+    // if (kIsWeb) {  // Comment out web configuration
+    //   configureApp();
+    // }
 
     // Load .env file
     await dotenv.load(fileName: ".env");

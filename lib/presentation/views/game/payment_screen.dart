@@ -10,7 +10,7 @@ import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'payment_handler.dart';
-import 'web_payment_handler.dart';
+// import 'web_payment_handler.dart';  // Comment out web handler
 import 'mobile_payment_handler.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -33,9 +33,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     // Create the appropriate handler implementation based on platform
-    _paymentHandler = kIsWeb
-        ? WebPaymentHandlerImpl()
-        : MobilePaymentHandlerImpl();
+    _paymentHandler = MobilePaymentHandlerImpl();  // Always use mobile handler for now
     _checkConfiguration();
     _initializeStripe();
   }

@@ -1684,7 +1684,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                 color: Colors.white,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               'Track your learning journey',
                               style: TextStyle(

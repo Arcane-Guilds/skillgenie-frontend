@@ -36,7 +36,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   int _exerciseIndex = 0;
   final TextEditingController _codeController = TextEditingController();
   String? _selectedQuizAnswer;
-  List<Map<String, String>> _chatMessages = [];
+  final List<Map<String, String>> _chatMessages = [];
   final TextEditingController _chatController = TextEditingController();
   bool _isChatOpen = false;
   bool _isSending = false;
@@ -216,7 +216,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                     color: isUser ? Colors.blue[100] : Colors.grey[200],
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Text(msg['content'] ?? '', style: TextStyle(color: Colors.black)),
+                                  child: Text(msg['content'] ?? '', style: const TextStyle(color: Colors.black)),
                                 ),
                               ),
                             ],
@@ -240,7 +240,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                     color: Colors.grey[200],
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Text(_streamingBotMessage, style: TextStyle(color: Colors.black)),
+                                  child: Text(_streamingBotMessage, style: const TextStyle(color: Colors.black)),
                                 ),
                               ),
                             ],
@@ -330,8 +330,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openChat,
         backgroundColor: Colors.blue,
-        child: const Icon(Icons.chat),
         tooltip: 'Ask SkillGenie',
+        child: const Icon(Icons.chat),
       ),
       body: Consumer<CourseViewModel>(
         builder: (context, courseViewModel, child) {

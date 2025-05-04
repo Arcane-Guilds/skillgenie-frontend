@@ -3,7 +3,6 @@ import 'package:logging/logging.dart';
 import '../../core/constants/profile_constants.dart';
 import '../models/user_model.dart';
 import '../models/api_exception.dart';
-import '../models/community/post.dart';
 import 'api_client.dart';
 
 /// Remote data source for profile-related API calls

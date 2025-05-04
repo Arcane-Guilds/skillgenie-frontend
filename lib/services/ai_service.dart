@@ -22,8 +22,7 @@ class AIService {
     try {
       // Create a prompt that includes the learning context
       final String contextPrompt = 
-          "User question: $userQuestion\n" "Learning style: $learningStyle\n" "Skill: $selectedSkill\n" +
-          "Skill level: $skillLevel\n\n" +
+          "User question: $userQuestion\n" "Learning style: $learningStyle\n" "Skill: $selectedSkill\n" "Skill level: $skillLevel\n\n" +
           "Provide a personalized learning response based on these parameters.";
       
       // Use the Gemini model through the remote data source

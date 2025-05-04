@@ -545,7 +545,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
   }
 
   Widget _buildExerciseItem(CourseExercise exercise, CourseLevel parentLevel, CourseChapter parentChapter, Course course, int levelIndex, String chapterTitle, String exerciseType) {
-    final progressKey = 'L${levelIndex + 1}C${chapterTitle}E${exerciseType}';
+    final progressKey = 'L${levelIndex + 1}C${chapterTitle}E$exerciseType';
     final isCompleted = course.progress[progressKey] == 1;
     final isLocked = parentLevel.levelNumber > course.currentLevel;
     
@@ -744,8 +744,8 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
 
   try {
     // Get current user from state
-    final username = _currentUser?.username?.isNotEmpty == true 
-        ? _currentUser!.username!
+    final username = _currentUser?.username.isNotEmpty == true 
+        ? _currentUser!.username
         : 'Valued Learner';  // Fallback name
 
     // Load certificate template
@@ -784,7 +784,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
                     pw.SizedBox(height: 30),
                     pw.Text(
                       'This certifies that',
-                      style: pw.TextStyle(
+                      style: const pw.TextStyle(
                         fontSize: 22,
                         color: PdfColors.grey800,
                       ),
@@ -801,7 +801,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
                     pw.SizedBox(height: 20),
                     pw.Text(
                       'has successfully completed the course',
-                      style: pw.TextStyle(
+                      style: const pw.TextStyle(
                         fontSize: 22,
                         color: PdfColors.grey800,
                       ),
@@ -819,7 +819,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
                     pw.SizedBox(height: 30),
                     pw.Text(
                       'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
-                      style: pw.TextStyle(
+                      style: const pw.TextStyle(
                         fontSize: 18,
                         color: PdfColors.grey600,
                       ),

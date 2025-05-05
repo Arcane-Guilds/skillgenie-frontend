@@ -341,6 +341,31 @@ class FriendViewModel extends ChangeNotifier {
     }
   }
   
+  // Cancel a sent friend request
+  Future<void> cancelFriendRequest(String requestId) async {
+    try {
+      _setLoading(true);
+      _clearError();
+      
+      await _friendRepository.cancelFriendRequest(requestId);
+      
+      // Remove the cancelled request from the local list
+      if (_friendRequests != null) {
+        _friendRequests!.sent.removeWhere((request) => request.id == requestId);
+        notifyListeners(); // Update UI immediately
+      }
+      
+      // Optional: Refresh list from server in background to ensure consistency
+      // _lastRequestsApiCall = DateTime(1970); 
+      // loadFriendRequests(); 
+      
+    } catch (e) {
+      _setError('Failed to cancel friend request: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+  
   // Helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;

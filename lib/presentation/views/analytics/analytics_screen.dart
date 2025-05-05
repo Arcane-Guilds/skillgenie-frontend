@@ -7,6 +7,9 @@ import '../../../core/utils/ui_utils.dart';
 import 'package:intl/intl.dart';
 import '../../../data/datasources/analytics_remote_datasource.dart';
 import '../../../data/datasources/api_client.dart';
+import '../../../data/models/analytics_model.dart';
+import '../../../data/repositories/analytics_repository.dart';
+import '../../viewmodels/analytics_viewmodel.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   final String userId;

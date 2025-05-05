@@ -73,27 +73,27 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           // Update avatar state based on loading state
           if (viewModel.isLoading) {
             _avatarState = AvatarState.thinking;
-          } else if (viewModel.chatHistory.isNotEmpty && 
-                    !viewModel.chatHistory.last.isPrompt) {
+          } else if (viewModel.chatHistory.isNotEmpty &&
+              !viewModel.chatHistory.last.isPrompt) {
             _avatarState = AvatarState.explaining;
           } else if (!_isConnected) {
             _avatarState = AvatarState.idle;
           } else {
             _avatarState = AvatarState.idle;
           }
-          
+
           // Scroll to bottom when a new message is added
           if (viewModel.chatHistory.isNotEmpty) {
             _scrollToBottom();
           }
-          
+
           return Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
             appBar: AppBar(
               elevation: 0,
               backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              title: const Text("SkillGenie Assistant", 
-                style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text("SkillGenie Assistant",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
@@ -108,57 +108,57 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     color: Theme.of(context).colorScheme.primary,
                     backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                   ),
-                  
+
                 if (!_isConnected)
                   _buildNetworkErrorBanner(context),
-                  
+
                 if (viewModel.errorMessage != null)
                   _buildErrorBanner(context, viewModel.errorMessage!),
-                
+
                 // Avatar section at the top
-                  Container(
+                Container(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: GenieAvatar(
                     state: _avatarState,
-                    message: viewModel.isLoading 
-                        ? "Thinking..." 
-                        : !_isConnected 
-                            ? "I'm having trouble connecting to the internet..."
-                            : null,
+                    message: viewModel.isLoading
+                        ? "Thinking..."
+                        : !_isConnected
+                        ? "I'm having trouble connecting to the internet..."
+                        : null,
                     size: 120,
                   ),
                 ).animate().fadeIn(duration: 500.ms),
-                  
+
                 Expanded(
                   child: viewModel.chatHistory.isEmpty && !viewModel.isLoading
                       ? _buildEmptyState(context)
                       : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: viewModel.chatHistory.length,
                     itemBuilder: (context, index) {
                       final message = viewModel.chatHistory[index];
-                            final isLastAiResponse = !message.isPrompt && 
-                                                   index == viewModel.chatHistory.length - 1 && 
-                                                   viewModel.showTypingAnimation;
-                            
+                      final isLastAiResponse = !message.isPrompt &&
+                          index == viewModel.chatHistory.length - 1 &&
+                          viewModel.showTypingAnimation;
+
                       return _buildChatMessage(
-                              context,
+                        context,
                         isPrompt: message.isPrompt,
                         message: message.message,
                         date: DateFormat('hh:mm a').format(message.time),
                         imagePath: message.imagePath,
-                              animateText: isLastAiResponse,
-                              onAnimationComplete: () {
-                                if (isLastAiResponse) {
-                                  viewModel.setTypingAnimationComplete();
-                                }
-                              },
+                        animateText: isLastAiResponse,
+                        onAnimationComplete: () {
+                          if (isLastAiResponse) {
+                            viewModel.setTypingAnimationComplete();
+                          }
+                        },
                       );
                     },
                   ),
                 ),
-                
+
                 _buildInputBar(context, viewModel),
               ],
             ),
@@ -218,9 +218,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildInputBar(BuildContext context, ChatbotViewModel viewModel) {
     final bool isDisabled = viewModel.isLoading || !_isConnected;
-    
+
     return Container(
-                  padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
@@ -231,13 +231,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ),
         ],
       ),
-                  child: Row(
-                    children: [
-                      // Button to pick an image from the gallery
-                      IconButton(
+      child: Row(
+        children: [
+          // Button to pick an image from the gallery
+          IconButton(
             icon: Icon(
               Icons.photo,
-              color: isDisabled 
+              color: isDisabled
                   ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
                   : Theme.of(context).colorScheme.primary,
               size: 28,
@@ -249,20 +249,20 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             begin: const Offset(1, 1),
             end: const Offset(1.1, 1.1),
           ),
-          
-                      Expanded(
-                        flex: 20,
-                        child: TextField(
-                          controller: _promptController,
+
+          Expanded(
+            flex: 20,
+            child: TextField(
+              controller: _promptController,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16,
               ),
-                          decoration: InputDecoration(
+              decoration: InputDecoration(
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide(
                     color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                   ),
@@ -297,17 +297,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               },
             ),
           ),
-          
-                      const SizedBox(width: 10),
-          
-                      GestureDetector(
+
+          const SizedBox(width: 10),
+
+          GestureDetector(
             onTap: isDisabled ? null : () {
-                                final message = _promptController.text.trim();
-                                if (message.isNotEmpty) {
-                                  viewModel.sendTextMessage(message);
-                                  _promptController.clear();
-                                }
-                              },
+              final message = _promptController.text.trim();
+              if (message.isNotEmpty) {
+                viewModel.sendTextMessage(message);
+                _promptController.clear();
+              }
+            },
             child: Container(
               height: 48,
               width: 48,
@@ -315,24 +315,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: isDisabled
-                    ? [Colors.grey.shade300, Colors.grey.shade400]
-                    : [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
-                      ],
+                      ? [Colors.grey.shade300, Colors.grey.shade400]
+                      : [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.secondary,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                boxShadow: isDisabled 
-                    ? [] 
+                boxShadow: isDisabled
+                    ? []
                     : [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                      ),
-                    ],
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
+                ],
+              ),
               child: Icon(
                 Icons.send,
                 color: isDisabled ? Colors.grey.shade500 : Colors.white,
@@ -340,9 +340,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
             ),
           ).animate()
-            .scaleXY(end: 1.05, duration: 300.ms)
-            .then(delay: 100.ms)
-            .scaleXY(end: 1.0, duration: 300.ms),
+              .scaleXY(end: 1.05, duration: 300.ms)
+              .then(delay: 100.ms)
+              .scaleXY(end: 1.0, duration: 300.ms),
         ],
       ),
     );
@@ -350,14 +350,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   /// Widget for displaying chat messages
   Widget _buildChatMessage(
-    BuildContext context, {
-    required bool isPrompt,
-    required String message,
-    required String date,
-    String? imagePath,
-    bool animateText = false,
-    VoidCallback? onAnimationComplete,
-  }) {
+      BuildContext context, {
+        required bool isPrompt,
+        required String message,
+        required String date,
+        String? imagePath,
+        bool animateText = false,
+        VoidCallback? onAnimationComplete,
+      }) {
     return Container(
       margin: EdgeInsets.only(
         top: 8,
@@ -369,22 +369,22 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         crossAxisAlignment: isPrompt ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           if (!isPrompt && !animateText)
-            // For regular assistant messages
+          // For regular assistant messages
             AvatarWithMessage(
               message: message,
               state: AvatarState.explaining,
             )
           else if (!isPrompt && animateText)
-            // For animated typing assistant messages
+          // For animated typing assistant messages
             _buildAnimatedAssistantMessage(context, message, onAnimationComplete)
           else
-            // For user messages
+          // For user messages
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isPrompt 
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.surface,
+                color: isPrompt
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20).copyWith(
                   bottomRight: isPrompt ? const Radius.circular(0) : null,
                   bottomLeft: !isPrompt ? const Radius.circular(0) : null,
@@ -401,31 +401,31 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (imagePath != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-              child: Image.file(
-                File(imagePath),
-                width: 200,
-                height: 200,
-                fit: BoxFit.cover,
+                        child: Image.file(
+                          File(imagePath),
+                          width: 200,
+                          height: 200,
+                          fit: BoxFit.cover,
                         ),
-              ),
-            ),
-          Text(
-            message,
-            style: TextStyle(
+                      ),
+                    ),
+                  Text(
+                    message,
+                    style: TextStyle(
                       fontSize: 16,
-                      color: isPrompt 
-                        ? Colors.white 
-                        : Theme.of(context).colorScheme.onSurface,
+                      color: isPrompt
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
               ),
             ),
-            
+
           Padding(
             padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
             child: Text(
@@ -440,13 +440,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ),
     ).animate().fadeIn(duration: 300.ms).slide(begin: const Offset(0, 0.1), end: const Offset(0, 0));
   }
-  
+
   /// Builds an animated typing effect for the assistant messages
   Widget _buildAnimatedAssistantMessage(
-    BuildContext context, 
-    String message,
-    VoidCallback? onAnimationComplete,
-  ) {
+      BuildContext context,
+      String message,
+      VoidCallback? onAnimationComplete,
+      ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -483,12 +483,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-          Text(
+                Text(
                   'SkillGenie',
-            style: TextStyle(
+                  style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
-              fontSize: 14,
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 4),

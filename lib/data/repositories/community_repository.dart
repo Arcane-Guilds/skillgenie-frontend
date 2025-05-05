@@ -17,7 +17,7 @@ class CommunityRepository {
     try {
       final url = '${ApiConstants.baseUrl}/${CommunityConstants.allPosts}';
       print('Requesting posts from: $url');
-      
+
       final response = await client.get(
         Uri.parse(url),
         headers: {
@@ -27,7 +27,7 @@ class CommunityRepository {
       );
 
       print('Response status code: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
         try {
           // Parse the response body with error handling
@@ -36,21 +36,21 @@ class CommunityRepository {
             print('Empty response body');
             return {'posts': []};
           }
-          
+
           final data = json.decode(responseBody) as Map<String, dynamic>;
           print('Response data preview: ${data.toString().substring(0, min(100, data.toString().length))}...');
-          
+
           // Ensure the 'posts' field exists and is a List
           if (!data.containsKey('posts')) {
             print('Response does not contain posts field');
             return {'posts': []};
           }
-          
+
           if (data['posts'] is! List) {
             print('Posts field is not a List: ${data['posts'].runtimeType}');
             return {'posts': []};
           }
-          
+
           return data;
         } catch (parseError) {
           print('Error parsing response: $parseError');
@@ -85,11 +85,11 @@ class CommunityRepository {
   }
 
   Future<Map<String, dynamic>> getCommentsForPost(
-    String token,
-    String postId, {
-    int page = 1,
-    int limit = 20,
-  }) async {
+      String token,
+      String postId, {
+        int page = 1,
+        int limit = 20,
+      }) async {
     try {
       final response = await client.get(
         Uri.parse('${ApiConstants.baseUrl}/community/posts/$postId/comments'),
@@ -115,95 +115,51 @@ class CommunityRepository {
     }
   }
 
-  Future<Post> createPost(String token, String content, List<String> imagePaths) async {
-    print('Creating post with content: $content, imagePaths: $imagePaths');
-
+  Future<Post> createPost(String token, String content, List<String> imagePaths, {String? title}) async {
     try {
-      // If we have images, use multipart request
-      if (imagePaths.isNotEmpty) {
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.posts}'),
-        );
+      final url = '${ApiConstants.baseUrl}/${CommunityConstants.posts}';
 
-        // Add authorization header
-        request.headers.addAll({
-          'Authorization': 'Bearer $token',
-        });
+      // Create multipart request
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.headers['Authorization'] = 'Bearer $token';
 
-        // Extract title from first paragraph of content (up to 50 chars)
-        final lines = content.split('\n');
-        String title = lines.isNotEmpty 
-            ? lines[0].substring(0, min(50, lines[0].length))
-            : '';
-
-        // Add text fields
+      // Add content and title
+      request.fields['content'] = content;
+      if (title != null && title.isNotEmpty) {
         request.fields['title'] = title;
-        request.fields['content'] = content;
+      }
 
-        // Add image files
-        for (var i = 0; i < imagePaths.length; i++) {
-          final imagePath = imagePaths[i];
-          final file = File(imagePath);
-          if (await file.exists()) {
-            request.files.add(
-              await http.MultipartFile.fromPath(
-                'images', 
-                imagePath,
-                filename: 'image_${i + 1}.jpg',
-              ),
-            );
-          }
-        }
-
-        // Send the request
-        final streamedResponse = await request.send();
-        final response = await http.Response.fromStream(streamedResponse);
-
-        if (response.statusCode == 201) {
-          final data = json.decode(response.body);
-          return Post.fromJson(data);
-        } else {
-          final errorData = json.decode(response.body);
-          print('Error creating post: $errorData');
-          throw Exception('Failed to create post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
-        }
-      } else {
-        // No images, use regular JSON request
-        final response = await client.post(
-          Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.posts}'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: json.encode({
-            'title': content.split('\n')[0].substring(0, min(50, content.split('\n')[0].length)),
-            'content': content,
-            'images': [],
-          }),
-        );
-
-        if (response.statusCode == 201) {
-          final data = json.decode(response.body);
-          return Post.fromJson(data);
-        } else {
-          final errorData = json.decode(response.body);
-          print('Error creating post: $errorData');
-          throw Exception('Failed to create post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+      // Add images
+      for (final imagePath in imagePaths) {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          request.files.add(
+            await http.MultipartFile.fromPath('images', imagePath),
+          );
         }
       }
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 201) {
+        final data = json.decode(responseBody);
+        return Post.fromJson(data);
+      } else {
+        throw Exception('Failed to create post: ${response.statusCode} - $responseBody');
+      }
     } catch (e) {
-      print('Exception in createPost: $e');
-      throw Exception('Failed to create post: $e');
+      print('Error in createPost: $e');
+      rethrow;
     }
   }
 
   Future<Comment> createComment(
-    String token,
-    String postId,
-    String content, {
-    String? parentCommentId,
-  }) async {
+      String token,
+      String postId,
+      String content, {
+        String? parentCommentId,
+      }) async {
     final requestData = {
       'postId': postId,
       'content': content,
@@ -231,11 +187,11 @@ class CommunityRepository {
   }
 
   Future<Comment> replyToComment(
-    String token,
-    String postId,
-    String commentId,
-    String content,
-  ) async {
+      String token,
+      String postId,
+      String commentId,
+      String content,
+      ) async {
     final response = await client.post(
       Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.replyToComment}/$commentId/reply'),
       headers: {
@@ -271,7 +227,7 @@ class CommunityRepository {
       );
 
       print('Like post response: ${response.statusCode} - ${response.body}');
-      
+
       if (response.statusCode == 201) {
         try {
           final data = json.decode(response.body) as Map<String, dynamic>;
@@ -304,7 +260,7 @@ class CommunityRepository {
       );
 
       print('Unlike post response: ${response.statusCode} - ${response.body}');
-      
+
       if (response.statusCode == 200) {
         try {
           final data = json.decode(response.body) as Map<String, dynamic>;
@@ -337,7 +293,7 @@ class CommunityRepository {
       );
 
       print('Like comment response: ${response.statusCode} - ${response.body}');
-      
+
       if (response.statusCode == 201) {
         try {
           final data = json.decode(response.body) as Map<String, dynamic>;
@@ -370,7 +326,7 @@ class CommunityRepository {
       );
 
       print('Unlike comment response: ${response.statusCode} - ${response.body}');
-      
+
       if (response.statusCode == 200) {
         try {
           final data = json.decode(response.body) as Map<String, dynamic>;
@@ -439,7 +395,7 @@ class CommunityRepository {
       );
 
       print('Like reply response: ${response.statusCode} - ${response.body}');
-      
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         try {
           final data = json.decode(response.body) as Map<String, dynamic>;
@@ -468,7 +424,7 @@ class CommunityRepository {
       );
 
       print('Unlike reply response: ${response.statusCode} - ${response.body}');
-      
+
       if (response.statusCode == 200) {
         try {
           final data = json.decode(response.body) as Map<String, dynamic>;
@@ -490,7 +446,7 @@ class CommunityRepository {
     try {
       final url = '${ApiConstants.baseUrl}/community/posts/user/$userId';
       print('Requesting user posts from: $url');
-      
+
       final response = await client.get(
         Uri.parse(url),
         headers: {
@@ -500,7 +456,7 @@ class CommunityRepository {
       );
 
       print('Response status code: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
         try {
           final String responseBody = response.body;
@@ -508,20 +464,20 @@ class CommunityRepository {
             print('Empty response body');
             return {'posts': [], 'total': 0};
           }
-          
+
           final data = json.decode(responseBody) as Map<String, dynamic>;
           print('Response data preview: ${data.toString().substring(0, min(100, data.toString().length))}...');
-          
+
           if (!data.containsKey('posts')) {
             print('Response does not contain posts field');
             return {'posts': [], 'total': 0};
           }
-          
+
           if (data['posts'] is! List) {
             print('Posts field is not a List: ${data['posts'].runtimeType}');
             return {'posts': [], 'total': 0};
           }
-          
+
           return data;
         } catch (parseError) {
           print('Error parsing response: $parseError');
@@ -554,7 +510,7 @@ class CommunityRepository {
         // Add text fields
         request.fields['content'] = content;
         request.fields['title'] = title;
-        
+
         // Add existing images if any
         if (existingImages != null) {
           request.fields['existingImages'] = json.encode(existingImages);

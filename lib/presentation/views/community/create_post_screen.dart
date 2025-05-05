@@ -69,7 +69,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     try {
       final viewModel = Provider.of<CommunityViewModel>(context, listen: false);
-       await viewModel.createPost(
+      await viewModel.createPost(
         _contentController.text.trim(),
         _selectedImages,
         title: _titleController.text.trim(),
@@ -77,7 +77,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       if (mounted) {
         await viewModel.loadPosts();
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -85,7 +85,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate back to community screen
         Navigator.pop(context);
       }
@@ -163,9 +163,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Content field
             Container(
               decoration: BoxDecoration(
@@ -194,9 +194,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Image preview
             if (_selectedImages.isNotEmpty) ...[
               SizedBox(
@@ -247,7 +247,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            
+
             // Add photo button
             Container(
               decoration: BoxDecoration(
@@ -292,18 +292,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         foregroundColor: Colors.white,
         icon: _isLoading
             ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        )
             : const Icon(Icons.add),
         label: Text(_isLoading ? 'Posting...' : 'Post'),
       ).animate()
-        .fadeIn(duration: 500.ms)
-        .slideY(begin: 0.3, end: 0),
+          .fadeIn(duration: 500.ms)
+          .slideY(begin: 0.3, end: 0),
     );
   }
 } 

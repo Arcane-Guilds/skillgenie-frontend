@@ -9,19 +9,24 @@ class FriendViewModel extends ChangeNotifier {
   List<User> _friends = [];
   FriendRequests? _friendRequests;
   List<User> _searchResults = [];
+  List<User>? _suggestedFriends;
   bool _isLoading = false;
+  bool _isLoadingSuggestions = false;
   String? _errorMessage;
   
   // Throttling variables
   DateTime _lastFriendsApiCall = DateTime(1970);
   DateTime _lastRequestsApiCall = DateTime(1970);
+  DateTime _lastSuggestionsApiCall = DateTime(1970);
   bool _friendsRefreshQueued = false;
   
   // Getters
   List<User> get friends => _friends;
   FriendRequests? get friendRequests => _friendRequests;
   List<User> get searchResults => _searchResults;
+  List<User>? get suggestedFriends => _suggestedFriends;
   bool get isLoading => _isLoading;
+  bool get isLoadingSuggestions => _isLoadingSuggestions;
   String? get errorMessage => _errorMessage;
   
   // Constructor
@@ -300,6 +305,62 @@ class FriendViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _setError('Failed to remove friend: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+  
+  // Load suggested friends with throttling and error handling
+  Future<void> loadSuggestedFriends() async {
+    // Skip if already loading suggestions or if called too recently
+    if (_isLoadingSuggestions || _shouldThrottle(_lastSuggestionsApiCall, minIntervalSeconds: 10)) {
+      print('Skipping/Throttling loadSuggestedFriends.');
+      return;
+    }
+
+    try {
+      _isLoadingSuggestions = true;
+      _suggestedFriends = null; // Clear previous suggestions
+      _clearError(); // Clear previous errors before loading
+      notifyListeners();
+
+      _lastSuggestionsApiCall = DateTime.now();
+      print('Loading suggested friends...');
+      
+      final suggestions = await _friendRepository.getSuggestedFriends();
+      _suggestedFriends = suggestions;
+      
+      print('Suggested friends loaded: ${_suggestedFriends?.length ?? 0} suggestions');
+    } catch (e) {
+      print('Error loading suggested friends: $e');
+      _setError('Failed to load suggestions: $e');
+      _suggestedFriends = []; // Set to empty list on error to avoid null issues
+    } finally {
+      _isLoadingSuggestions = false;
+      notifyListeners();
+    }
+  }
+  
+  // Cancel a sent friend request
+  Future<void> cancelFriendRequest(String requestId) async {
+    try {
+      _setLoading(true);
+      _clearError();
+      
+      await _friendRepository.cancelFriendRequest(requestId);
+      
+      // Remove the cancelled request from the local list
+      if (_friendRequests != null) {
+        _friendRequests!.sent.removeWhere((request) => request.id == requestId);
+        notifyListeners(); // Update UI immediately
+      }
+      
+      // Optional: Refresh list from server in background to ensure consistency
+      // _lastRequestsApiCall = DateTime(1970); 
+      // loadFriendRequests(); 
+      
+    } catch (e) {
+      _setError('Failed to cancel friend request: $e');
     } finally {
       _setLoading(false);
     }

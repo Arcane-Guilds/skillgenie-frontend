@@ -103,32 +103,80 @@ class SecureStorage {
   
   // Get user ID
   Future<String?> getUserId() async {
+    print('[SecureStorage] Attempting to get userId');
+    
     // Try secure storage first
     String? userId = await _secureStorage.read(key: userIdKey);
+    if (userId != null && userId.isNotEmpty) {
+      print('[SecureStorage] Found userId in secure storage: $userId');
+      return userId;
+    }
     
     // Fallback to shared prefs
-    if (userId == null) {
-      userId = _prefs.getString(userIdKey);
-      
-      // If we still don't have a userId, try to extract it from the user object
-      if (userId == null) {
-        final userJson = _prefs.getString("user");
-        if (userJson != null) {
-          try {
-            final Map<String, dynamic> userMap = json.decode(userJson);
-            userId = userMap['id'] as String?;
-            if (userId != null) {
-              // Save for next time
-              await setUserId(userId);
-            }
-          } catch (e) {
-            print('Error parsing user JSON: $e');
-          }
+    userId = _prefs.getString(userIdKey);
+    if (userId != null && userId.isNotEmpty) {
+      print('[SecureStorage] Found userId in shared preferences: $userId');
+      // Save to secure storage for next time
+      await _secureStorage.write(key: userIdKey, value: userId);
+      return userId;
+    }
+    
+    // If we still don't have a userId, try to extract it from the user object
+    final userJson = _prefs.getString("user");
+    if (userJson != null) {
+      try {
+        print('[SecureStorage] Attempting to extract userId from user JSON object');
+        final Map<String, dynamic> userMap = json.decode(userJson);
+        userId = userMap['id'] ?? userMap['_id'];
+        if (userId != null) {
+          print('[SecureStorage] Extracted userId from user object: $userId');
+          // Save for next time
+          await setUserId(userId);
+          return userId;
         }
+      } catch (e) {
+        print('[SecureStorage] Error parsing user JSON: $e');
       }
     }
     
-    return userId;
+    // Last resort: try to extract user ID from the JWT token
+    try {
+      print('[SecureStorage] Attempting to extract userId from JWT token');
+      final token = await getToken();
+      if (token != null && token.isNotEmpty) {
+        // JWT token is in the format: header.payload.signature
+        final parts = token.split('.');
+        if (parts.length == 3) {
+          // Decode the payload (middle part)
+          String normalizedPayload = parts[1];
+          // Add padding if needed
+          while (normalizedPayload.length % 4 != 0) {
+            normalizedPayload += '=';
+          }
+          // Replace URL-safe characters
+          normalizedPayload = normalizedPayload.replaceAll('-', '+').replaceAll('_', '/');
+          
+          final decodedBytes = base64Decode(normalizedPayload);
+          final payloadJson = utf8.decode(decodedBytes);
+          final payload = json.decode(payloadJson);
+          
+          // JWT usually has user ID as 'sub', 'id', '_id', or 'userId'
+          userId = payload['_id'] ?? payload['id'] ?? payload['sub'] ?? payload['userId'];
+          
+          if (userId != null) {
+            print('[SecureStorage] Extracted userId from JWT token: $userId');
+            // Save it for future use
+            await setUserId(userId);
+            return userId;
+          }
+        }
+      }
+    } catch (e) {
+      print('[SecureStorage] Error extracting userId from JWT: $e');
+    }
+    
+    print('[SecureStorage] WARNING: Could not retrieve userId from any source');
+    return null;
   }
   
   // Delete user ID

@@ -106,7 +106,7 @@ class _ReclamationScreenState extends State<ReclamationScreen> {
                         shape: BoxShape.circle,
                       ),
                       padding: const EdgeInsets.all(18),
-                      child: Icon(Icons.report_problem, color: kPrimaryBlue, size: 40),
+                      child: const Icon(Icons.report_problem, color: kPrimaryBlue, size: 40),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -140,13 +140,13 @@ class _ReclamationScreenState extends State<ReclamationScreen> {
                             controller: _subjectController,
                             decoration: InputDecoration(
                               labelText: 'Subject',
-                              prefixIcon: Icon(Icons.title, color: kPrimaryBlue),
+                              prefixIcon: const Icon(Icons.title, color: kPrimaryBlue),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: kPrimaryBlue, width: 2),
+                                borderSide: const BorderSide(color: kPrimaryBlue, width: 2),
                               ),
                             ),
                             validator: (value) {
@@ -161,13 +161,13 @@ class _ReclamationScreenState extends State<ReclamationScreen> {
                             controller: _messageController,
                             decoration: InputDecoration(
                               labelText: 'Message',
-                              prefixIcon: Icon(Icons.message, color: kPrimaryBlue),
+                              prefixIcon: const Icon(Icons.message, color: kPrimaryBlue),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: kPrimaryBlue, width: 2),
+                                borderSide: const BorderSide(color: kPrimaryBlue, width: 2),
                               ),
                             ),
                             maxLines: 5,

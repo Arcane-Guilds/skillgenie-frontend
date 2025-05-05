@@ -24,7 +24,7 @@ class QuizPage extends StatelessWidget {
         }
 
         if (quizVM.isGeneratingEvaluation) {
-          return _buildEvaluationLoading(context);
+          return _buildLoadingScreen();
         }
 
         if (quizVM.errorMessage != null) {
@@ -93,31 +93,6 @@ class QuizPage extends StatelessWidget {
             SizedBox(height: 24),
             Text(
               'Getting ready for your learning journey...',
-              style: TextStyle(
-                fontSize: 18,
-                color: AppTheme.textSecondaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEvaluationLoading(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GenieAvatar(
-              state: AvatarState.thinking,
-              size: 120,
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Generating your personalized evaluation...',
               style: TextStyle(
                 fontSize: 18,
                 color: AppTheme.textSecondaryColor,

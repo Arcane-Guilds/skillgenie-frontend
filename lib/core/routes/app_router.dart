@@ -234,18 +234,18 @@ path: '/forgot-password',
 builder: (context, state) => const ForgotPasswordScreen(),
 ),
 GoRoute(
-path: '/verify-otp',
-builder: (context, state) {
-final email = (state.extra as Map<String, dynamic>)['email'] as String;
-return OtpVerificationScreen(email: email);
-},
+  path: '/otp-verification/:email', // Expects email parameter
+  builder: (context, state) {
+    final email = state.pathParameters['email'] ?? ''; // Extract email
+    return OtpVerificationScreen(email: email);
+  },
 ),
 GoRoute(
-path: '/reset-password',
-builder: (context, state) {
-final email = (state.extra as Map<String, dynamic>)['email'] as String;
-return ResetPasswordScreen(email: email);
-},
+  path: '/reset-password/:email', // Expects email parameter
+  builder: (context, state) {
+    final email = state.pathParameters['email'] ?? ''; // Extract email
+    return ResetPasswordScreen(email: email);
+  },
 ),
 GoRoute(
 path: '/settings',
@@ -407,7 +407,7 @@ int _getTabIndex(String location) {
       index = 2;
     } else if (location.startsWith('/community') || location.startsWith('/notifications')) {
       index = 3;
-    } else if (location.startsWith('/profile')) {
+    } else if (location.startsWith('/profile') || location.startsWith('/friends')) {
       index = 4;
     }
   } catch (e) {

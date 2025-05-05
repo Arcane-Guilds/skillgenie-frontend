@@ -1,17 +1,15 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:skillGenie/core/theme/app_theme.dart';
 import 'package:skillGenie/presentation/widgets/avatar_widget.dart';
+import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../viewmodels/reminder_viewmodel.dart';
-import '../../../core/constants/cloudinary_constants.dart';
 import '../../../core/errors/error_handler.dart';
-import '../../../data/models/user_model.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,7 +22,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameFormKey = GlobalKey<FormState>();
   final _bioFormKey = GlobalKey<FormState>();
-  bool _isLoading = false;
   File? _imageFile;
   bool _isUploadingImage = false;
   double _uploadProgress = 0;
@@ -53,11 +50,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Provider.of<ProfileViewModel>(context, listen: false);
     try {
       final profile = await profileViewModel.getUserProfile();
-      if (mounted) {
+      if (mounted && profile != null) {
         setState(() {
-          _usernameController.text = profile!.username;
+          _usernameController.text = profile.username;
           _bioController.text = profile.bio ?? '';
         });
+      } else if (mounted && profileViewModel.errorMessage != null) {
+        _showErrorSnackBar(profileViewModel.errorMessage!);
       }
     } catch (e) {
       if (mounted) {
@@ -211,11 +210,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool hasSpecialChar = false;
     bool passwordsMatch = false;
 
+    // Store a global navigatorKey for safer navigation
+    final navigatorKey = GlobalKey<NavigatorState>();
+
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (builderContext, setState) {
             void validatePassword(String password) {
               setState(() {
                 hasMinLength = password.length >= 8;
@@ -236,11 +238,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24)),
-              title: Row(
+              title: const Row(
                 children: [
                   Icon(Icons.lock_reset, color: AppTheme.primaryColor),
-                  const SizedBox(width: 10),
-                  const Text('Change Password'),
+                  SizedBox(width: 10),
+                  Text('Change Password'),
                 ],
               ),
               content: Form(
@@ -288,16 +290,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Enter new password';
+                          }
                           if (!hasMinLength) return 'At least 8 characters';
-                          if (!hasUppercase)
+                          if (!hasUppercase) {
                             return 'At least one uppercase letter';
-                          if (!hasLowercase)
+                          }
+                          if (!hasLowercase) {
                             return 'At least one lowercase letter';
+                          }
                           if (!hasNumber) return 'At least one number';
-                          if (!hasSpecialChar)
+                          if (!hasSpecialChar) {
                             return 'At least one special character';
+                          }
                           return null;
                         },
                       ),
@@ -338,10 +344,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Confirm your password';
-                          if (value != newPasswordController.text)
+                          }
+                          if (value != newPasswordController.text) {
                             return 'Passwords do not match';
+                          }
                           return null;
                         },
                       ),
@@ -357,32 +365,99 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton.icon(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      Navigator.of(context).pop();
-                      setState(() => _isLoading = true);
-                      try {
-                        final profileViewModel = Provider.of<ProfileViewModel>(
-                            context,
-                            listen: false);
-                        await profileViewModel.updatePassword(
-                          currentPasswordController.text,
-                          newPasswordController.text,
+                      // 1. Store necessary data locally to avoid widget references
+                      final currentPassword = currentPasswordController.text;
+                      final newPassword = newPasswordController.text;
+
+                      // 2. Close dialog first to avoid UI issues
+                      Navigator.of(dialogContext).pop();
+
+                      // 3. Get a stable BuildContext reference from the current screen
+                      final stableContext = context;
+
+                      // 4. Helper function to show a message on the stable context
+                      void showMessage(String message, bool isError) {
+                        if (!mounted) return;
+
+                        final snackBar = SnackBar(
+                          content: Text(message),
+                          backgroundColor: isError ? Colors.red : Colors.green,
+                          behavior: SnackBarBehavior.floating,
                         );
+
+                        ScaffoldMessenger.of(stableContext).showSnackBar(snackBar);
+                      }
+
+                      try {
+                        // 5. Show a loading dialog using the stable context
+                        showDialog(
+                          context: stableContext,
+                          barrierDismissible: false,
+                          builder: (loadingContext) => const AlertDialog(
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(height: 16),
+                                Text('Updating password...'),
+                              ],
+                            ),
+                          ),
+                        );
+
+                        // 6. Get ProfileViewModel without using BuildContext
+                        final profileViewModel = Provider.of<ProfileViewModel>(
+                            stableContext,
+                            listen: false);
+
+                        // 7. Execute the password change
+                        await profileViewModel.updatePassword(
+                          currentPassword,
+                          newPassword,
+                        );
+
+                        // 8. Password change was successful
                         if (mounted) {
-                          _showSuccessSnackBar(
-                              'Password updated successfully!');
+                          // 9. Close the loading dialog (if still shown)
+                          Navigator.of(stableContext).pop();
+
+                          // 10. Show success message
+                          showMessage('Password updated successfully! Please log in again.', false);
+
+                          // 11. Navigate directly without delay
+                          // By using WidgetsBinding we trigger navigation in the next frame
+                          // after the current UI update completes
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              // Navigate to login screen
+                              GoRouter.of(stableContext).go('/login');
+                            }
+                          });
                         }
                       } catch (e) {
+                        // 12. Handle error
                         if (mounted) {
-                          _showErrorSnackBar('Failed to update password: $e');
+                          // Close the loading dialog if it's showing
+                          Navigator.of(stableContext).pop();
+
+                          // Log error for debugging
+                          print('Error during password change: $e');
+
+                          // Extract meaningful error message
+                          final errorMessage = e.toString().contains('401')
+                              ? 'Current password is incorrect.'
+                              : e.toString().contains('503')
+                                  ? 'Server is currently unavailable. Please try again later.'
+                                  : 'Failed to update password: $e';
+
+                          showMessage(errorMessage, true);
                         }
-                      } finally {
-                        if (mounted) setState(() => _isLoading = false);
                       }
                     }
                   },
@@ -452,7 +527,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
               try {
-                setState(() => _isLoading = true);
                 final profileViewModel =
                     Provider.of<ProfileViewModel>(context, listen: false);
                 await profileViewModel.logout();
@@ -461,7 +535,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               } catch (e) {
                 if (mounted) {
-                  setState(() => _isLoading = false);
                   _showErrorSnackBar('Failed to logout. Please try again.');
                 }
               }
@@ -482,7 +555,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showDeleteAccountConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Row(
           children: [
             Icon(Icons.delete_forever, color: Colors.red),
@@ -515,32 +588,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
-          ElevatedButton.icon(
+          TextButton(
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext); // Close confirmation dialog FIRST
+
+              final profileViewModel = context.read<ProfileViewModel>();
+              final stableContext = context; // Store context
+
               try {
-                setState(() => _isLoading = true);
-                final profileViewModel =
-                    Provider.of<ProfileViewModel>(context, listen: false);
                 await profileViewModel.deleteAccount();
-                if (mounted) {
-                  context.go('/login');
+
+                // If deleteAccount succeeds, pop the loading dialog.
+                if (stableContext.mounted) {
+                   Navigator.of(stableContext).pop(); // Pop loading dialog
                 }
+
               } catch (e) {
-                if (mounted) {
-                  setState(() => _isLoading = false);
-                  _showErrorSnackBar(
-                      'Failed to delete account. Please try again.');
+                // Pop loading dialog on error
+                if (stableContext.mounted) {
+                  Navigator.of(stableContext).pop();
+                }
+
+                // Show error message
+                if (stableContext.mounted) {
+                  ScaffoldMessenger.of(stableContext).showSnackBar(
+                    SnackBar(
+                      content: Text(profileViewModel.errorMessage?? 'Failed to delete account: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               }
             },
-            icon: const Icon(Icons.delete_forever),
-            label: const Text('Delete Account'),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red, foregroundColor: Colors.white),
           ),
         ],
         shape: RoundedRectangleBorder(
@@ -720,7 +803,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (_usernameFormKey.currentState!.validate()) {
                 Navigator.pop(context);
                 try {
-                  setState(() => _isLoading = true);
                   final profileViewModel =
                       Provider.of<ProfileViewModel>(context, listen: false);
                   await profileViewModel
@@ -732,10 +814,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (mounted) {
                     _showErrorSnackBar(
                         'Failed to update username: ${e.toString()}');
-                  }
-                } finally {
-                  if (mounted) {
-                    setState(() => _isLoading = false);
                   }
                 }
               }
@@ -800,7 +878,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (_bioFormKey.currentState!.validate()) {
                 Navigator.pop(context);
                 try {
-                  setState(() => _isLoading = true);
                   final profileViewModel =
                       Provider.of<ProfileViewModel>(context, listen: false);
                   await profileViewModel.updateBio(_bioController.text.trim());
@@ -810,10 +887,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 } catch (e) {
                   if (mounted) {
                     _showErrorSnackBar('Failed to update bio: ${e.toString()}');
-                  }
-                } finally {
-                  if (mounted) {
-                    setState(() => _isLoading = false);
                   }
                 }
               }
@@ -833,7 +906,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showEditProfileDialog() {
+
+  void _showEditProfileDialog(User user) {
     final usernameController = TextEditingController(text: _usernameController.text);
     final bioController = TextEditingController(text: _bioController.text);
     File? tempImageFile = _imageFile;
@@ -859,11 +933,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         radius: 48,
                         backgroundImage: tempImageFile != null
                             ? FileImage(tempImageFile)
-                            : null,
+                            : _imageFile != null
+                                ? FileImage(_imageFile!)
+                                : user.avatar != null && user.avatar!.isNotEmpty
+                                    ? (user.avatar!.startsWith('http')
+                                        ? NetworkImage(user.avatar ?? '')
+                                        : AssetImage('assets/images/${user.avatar}.png'))
+                                    : null,
                         backgroundColor: Colors.grey[200],
-                        child: tempImageFile == null
-                            ? const Icon(Icons.person, size: 48, color: Colors.grey)
-                            : null,
                       ),
                       const Positioned(
                         bottom: 0,
@@ -927,8 +1004,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                       
                       Navigator.pop(context);
-                      setState(() => _isLoading = true);
-                      
+
                       try {
                         final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
                         String? imageUrl;
@@ -936,11 +1012,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         // First, handle image upload if needed
                         if (tempImageFile != null) {
                           try {
+                            // Keep local image uploading state
+                            setState(() => _isUploadingImage = true);
                             imageUrl = await profileViewModel.uploadProfileImageAndGetUrl(tempImageFile);
                           } catch (e) {
-                            setState(() => _isLoading = false);
-                            _showErrorSnackBar('Failed to upload image: $e');
+                            if (mounted) {
+                               setState(() => _isUploadingImage = false); // Reset image specific state
+                               _showErrorSnackBar('Failed to upload image: $e');
+                            }
                             return;
+                          } finally {
+                             if (mounted) {
+                               setState(() => _isUploadingImage = false); // Reset image specific state
+                             }
                           }
                         }
                         
@@ -955,21 +1039,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           updateData['avatar'] = imageUrl;
                         }
                         
-                        // Send direct update with validated data, not through the updateProfile wrapper
+                        // Send direct update with validated data
                         await profileViewModel.updateProfile(updateData);
                         
-                        // Update local state
-                        setState(() {
-                          _usernameController.text = usernameController.text.trim();
-                          _bioController.text = bioController.text.trim();
-                          _imageFile = tempImageFile;
-                        });
-                        
-                        _showSuccessSnackBar('Profile updated successfully!');
+                        // Update local state after successful profile update
+                        if (mounted) {
+                           setState(() {
+                             _usernameController.text = usernameController.text.trim();
+                             _bioController.text = bioController.text.trim();
+                             _imageFile = tempImageFile; // Update screen's _imageFile if temp was used
+                           });
+                           _showSuccessSnackBar('Profile updated successfully!');
+                        }
                       } catch (e) {
-                        _showErrorSnackBar('Failed to update profile: $e');
-                      } finally {
-                        setState(() => _isLoading = false);
+                         if (mounted) {
+                            _showErrorSnackBar('Failed to update profile: $e');
+                         }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -1003,12 +1088,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text(
+          'Settings',
+          style: TextStyle(color: Colors.white), // Make sure the title is also white
+        ),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white), // <-- This sets the back button color
       ),
-      body: _isLoading
+
+      body: profileViewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -1038,21 +1127,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onTap: _pickImage,
                             child: CircleAvatar(
                               radius: 40,
+                              backgroundColor: Colors.grey[200],
                               backgroundImage: _imageFile != null
                                   ? FileImage(_imageFile!)
-                                  : (user?.avatar != null &&
-                                          user!.avatar!.isNotEmpty
-                                      ? NetworkImage(user.avatar!)
-                                      : null) as ImageProvider<Object>?,
+                                  : user?.avatar != null && user!.avatar!.isNotEmpty
+                                      ? (user.avatar!.startsWith('http')
+                                          ? NetworkImage(user.avatar!)
+                                          : AssetImage('assets/images/${user.avatar}.png'))
+                                      : null,
                               child: _imageFile == null &&
-                                      (user?.avatar == null ||
-                                          user!.avatar!.isEmpty)
-                                  ? const Icon(Icons.person,
-                                      size: 40, color: Colors.grey)
+                                  (user?.avatar == null || user!.avatar!.isEmpty)
+                                  ? const Icon(Icons.person, size: 40, color: Colors.grey)
                                   : null,
-                              backgroundColor: Colors.grey[200],
                             ),
                           ),
+
                           const SizedBox(width: 24),
                           Expanded(
                             child: Column(
@@ -1076,7 +1165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: _showEditProfileDialog,
+                            onPressed: () => _showEditProfileDialog(user!),
                           ),
                         ],
                       ),

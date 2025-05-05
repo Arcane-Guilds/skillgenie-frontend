@@ -22,28 +22,6 @@ class Chat {
     this.unreadCount = 0,
   });
 
-  Chat copyWith({
-    String? id,
-    List<User>? participants,
-    String? name,
-    bool? isGroupChat,
-    String? admin,
-    DateTime? lastActivity,
-    Message? lastMessage,
-    int? unreadCount,
-  }) {
-    return Chat(
-      id: id ?? this.id,
-      participants: participants ?? this.participants,
-      name: name ?? this.name,
-      isGroupChat: isGroupChat ?? this.isGroupChat,
-      admin: admin ?? this.admin,
-      lastActivity: lastActivity ?? this.lastActivity,
-      lastMessage: lastMessage ?? this.lastMessage,
-      unreadCount: unreadCount ?? this.unreadCount,
-    );
-  }
-
   factory Chat.fromJson(Map<String, dynamic> json) {
     return Chat(
       id: json['_id'],
@@ -116,26 +94,6 @@ class Message {
     required this.createdAt,
   });
 
-  Message copyWith({
-    String? id,
-    String? chatId,
-    User? sender,
-    String? content,
-    List<String>? readBy,
-    bool? isSystemMessage,
-    DateTime? createdAt,
-  }) {
-    return Message(
-      id: id ?? this.id,
-      chatId: chatId ?? this.chatId,
-      sender: sender ?? this.sender,
-      content: content ?? this.content,
-      readBy: readBy ?? this.readBy,
-      isSystemMessage: isSystemMessage ?? this.isSystemMessage,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
       id: json['_id'],
@@ -149,4 +107,4 @@ class Message {
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
-}
+} 

@@ -40,6 +40,10 @@ import '../../presentation/viewmodels/friend_viewmodel.dart';
 import '../services/notification_service.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../presentation/viewmodels/chat_viewmodel.dart';
+import '../services/reclamation_socket_service.dart';
+import '../../presentation/viewmodels/reclamation_viewmodel.dart';
+import 'rating_service.dart';
+import '../../presentation/viewmodels/rating_viewmodel.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -58,7 +62,7 @@ Future<void> setupServiceLocator() async {
 
   // Data sources
   serviceLocator.registerSingleton<ApiClient>(ApiClient());
-  
+
   // Auth data sources
   serviceLocator.registerSingleton<AuthRemoteDataSource>(
     AuthRemoteDataSource(apiClient: serviceLocator<ApiClient>()),
@@ -66,7 +70,7 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerSingleton<AuthLocalDataSource>(
     AuthLocalDataSource(prefs: serviceLocator<SharedPreferences>()),
   );
-  
+
   // Profile data sources
   serviceLocator.registerSingleton<ProfileRemoteDataSource>(
     ProfileRemoteDataSource(apiClient: serviceLocator<ApiClient>()),
@@ -74,7 +78,7 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerSingleton<ProfileLocalDataSource>(
     ProfileLocalDataSource(prefs: serviceLocator<SharedPreferences>()),
   );
-  
+
   // Chatbot data sources
   serviceLocator.registerSingleton<ChatbotRemoteDataSource>(
     ChatbotRemoteDataSource(apiKey: ChatbotConstants.apiKey),
@@ -107,36 +111,35 @@ Future<void> setupServiceLocator() async {
       storageService: serviceLocator<StorageService>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<ChatbotRepository>(
     ChatbotRepository(
       remoteDataSource: serviceLocator<ChatbotRemoteDataSource>(),
       localDataSource: serviceLocator<ChatbotLocalDataSource>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<QuizRepository>(
     QuizRepository(
       client: serviceLocator<http.Client>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<CourseRepository>(
     CourseRepository(
       client: serviceLocator<http.Client>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<GameRepository>(
     GameRepository(),
   );
-  
+
   serviceLocator.registerSingleton<MediaGeneratorRepository>(
     MediaGeneratorRepository(
       flutterTts: serviceLocator<FlutterTts>(),
     ),
   );
-
 
   serviceLocator.registerSingleton<CommunityRepository>(
     CommunityRepository(
@@ -169,6 +172,19 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+  // Register ReclamationSocketService
+  serviceLocator.registerSingleton<ReclamationSocketService>(
+    ReclamationSocketService(
+      serviceLocator<SecureStorage>(),
+      serviceLocator<NotificationService>(),
+    ),
+  );
+
+  // Register RatingService
+  serviceLocator.registerLazySingleton<RatingService>(
+    () => RatingService(serviceLocator<ApiClient>()),
+  );
+
   // ViewModels
   serviceLocator.registerFactory<AuthViewModel>(() {
     final viewModel = AuthViewModel(
@@ -178,38 +194,34 @@ Future<void> setupServiceLocator() async {
     return viewModel;
   });
 
-  serviceLocator.registerFactory<SignUpViewModel>(() => 
-    SignUpViewModel(
-      authRepository: serviceLocator<AuthRepository>(),
-    )
+  serviceLocator.registerFactory<SignUpViewModel>(() => SignUpViewModel(
+        authRepository: serviceLocator<AuthRepository>(),
+      ));
+
+  serviceLocator.registerFactory<ProfileViewModel>(
+    () => ProfileViewModel(
+      profileRepository: serviceLocator<ProfileRepository>(),
+      authViewModel: serviceLocator<AuthViewModel>(),
+    ),
   );
 
-  serviceLocator.registerFactory<ProfileViewModel>(() =>
-      ProfileViewModel(
-        profileRepository: serviceLocator<ProfileRepository>(),
-        authViewModel: serviceLocator<AuthViewModel>(),
-      ),
+  serviceLocator.registerFactory<ChatbotViewModel>(
+    () => ChatbotViewModel(
+      chatbotRepository: serviceLocator<ChatbotRepository>(),
+    ),
   );
-  
-  serviceLocator.registerFactory<ChatbotViewModel>(() =>
-      ChatbotViewModel(
-        chatbotRepository: serviceLocator<ChatbotRepository>(),
-      ),
-  );
-  
+
   // Game ViewModels
-  serviceLocator.registerFactory<GameViewModel>(() => 
-    GameViewModel(
-      gameRepository: serviceLocator<GameRepository>(),
-    )
-  );
-  
+  serviceLocator.registerFactory<GameViewModel>(() => GameViewModel(
+        gameRepository: serviceLocator<GameRepository>(),
+      ));
+
   // Lesson ViewModel
-  serviceLocator.registerFactory<MediaGeneratorViewModel>(() =>
-      MediaGeneratorViewModel(
-        mediaGeneratorRepository: serviceLocator<MediaGeneratorRepository>(),
-    )
-  );
+  serviceLocator
+      .registerFactory<MediaGeneratorViewModel>(() => MediaGeneratorViewModel(
+            mediaGeneratorRepository:
+                serviceLocator<MediaGeneratorRepository>(),
+          ));
 
   // Register QuizViewModel factory
   serviceLocator.registerFactoryParam<QuizViewModel, String, void>(
@@ -220,23 +232,23 @@ Future<void> setupServiceLocator() async {
   );
 
   // Course ViewModel
-  serviceLocator.registerFactory<CourseViewModel>(() =>
-      CourseViewModel(
-        courseRepository: serviceLocator<CourseRepository>(),
-      ),
+  serviceLocator.registerFactory<CourseViewModel>(
+    () => CourseViewModel(
+      courseRepository: serviceLocator<CourseRepository>(),
+    ),
   );
 
   // Lab ViewModel
-  serviceLocator.registerFactory<LabViewModel>(() =>
-      LabViewModel(
-        labRepository: serviceLocator<LabRepository>(),
-      ),
+  serviceLocator.registerFactory<LabViewModel>(
+    () => LabViewModel(
+      labRepository: serviceLocator<LabRepository>(),
+    ),
   );
 
-  serviceLocator.registerFactory<FriendViewModel>(() =>
-      FriendViewModel(
-        friendRepository: serviceLocator<FriendRepository>(),
-      ),
+  serviceLocator.registerFactory<FriendViewModel>(
+    () => FriendViewModel(
+      friendRepository: serviceLocator<FriendRepository>(),
+    ),
   );
 
   serviceLocator.registerFactory<ReminderViewModel>(
@@ -253,12 +265,30 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
-  // Register ChatViewModel
-  serviceLocator.registerFactory<ChatViewModel>(() =>
-      ChatViewModel(
-        chatRepository: serviceLocator<ChatRepository>(),
-        secureStorage: serviceLocator<SecureStorage>(),
-      ),
+  serviceLocator.registerFactory<ChatViewModel>(
+    () => ChatViewModel(
+      chatRepository: serviceLocator<ChatRepository>(),
+      secureStorage: serviceLocator<SecureStorage>(),
+    ),
+  );
+
+  // Update ReclamationViewModel registration to include NotificationService
+  serviceLocator
+      .registerFactory<ReclamationViewModel>(() => ReclamationViewModel(
+            serviceLocator<AuthViewModel>(),
+            serviceLocator<ReclamationSocketService>(),
+            serviceLocator<http.Client>(),
+            serviceLocator<NotificationService>(),
+          
+   
+          ));
+  
+  // Register RatingViewModel
+  serviceLocator.registerFactory<RatingViewModel>(
+    () => RatingViewModel(
+      serviceLocator<RatingService>(),
+      serviceLocator<AuthViewModel>(),
+    ),
   );
 }
 

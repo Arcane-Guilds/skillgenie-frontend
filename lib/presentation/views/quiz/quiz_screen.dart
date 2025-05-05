@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/models/quiz_question.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../viewmodels/quiz_viewmodel.dart';
-import '../../widgets/avatar_widget.dart';
 
 class QuizPage extends StatelessWidget {
   final String userId;
@@ -18,7 +15,7 @@ class QuizPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<QuizViewModel>(
       builder: (context, quizVM, child) {
-        // Error handling at top of build method
+        // Add error handling at top of build method:
         if (quizVM.evaluationError != null) {
           return _buildErrorScreen(context, quizVM.evaluationError!);
         }
@@ -44,34 +41,20 @@ class QuizPage extends StatelessWidget {
         }
 
         return Scaffold(
-          backgroundColor: AppTheme.backgroundColor,
-          body: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: _buildProgressHeader(quizVM, context),
+          backgroundColor: const Color(0xFFF0F2F5),
+          body: Column(
+            children: [
+              _buildProgressHeader(quizVM),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  switchInCurve: Curves.easeInOutBack,
+                  child: _buildQuestionCard(quizVM, context),
                 ),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildQuestionCard(quizVM, context),
-                              _buildMotivationalMessage(quizVM, context),
-                            ],
-                          ),
-                        ),
-                      ),
-                      _buildNavigationButtons(quizVM, context),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+              _buildMotivationalMessage(quizVM),
+              _buildContinueButton(quizVM, context),
+            ],
           ),
         );
       },
@@ -81,7 +64,6 @@ class QuizPage extends StatelessWidget {
   // Loading Screen with Lottie Animation
   Widget _buildLoadingScreen() {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -93,12 +75,12 @@ class QuizPage extends StatelessWidget {
               fit: BoxFit.contain,
               repeat: true,
             ),
-            const SizedBox(height: 24),
-            Text(
+            const Text(
               'Getting ready for your learning journey...',
               style: TextStyle(
+                fontFamily: 'Comic Sans MS',
                 fontSize: 18,
-                color: AppTheme.textSecondaryColor,
+                color: Colors.grey,
               ),
             ),
           ],
@@ -109,7 +91,6 @@ class QuizPage extends StatelessWidget {
 
   Widget _buildEvaluationLoading(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -121,12 +102,12 @@ class QuizPage extends StatelessWidget {
               fit: BoxFit.contain,
               repeat: true,
             ),
-            const SizedBox(height: 24),
-            Text(
+            const Text(
               'Generating your personalized evaluation...',
               style: TextStyle(
+                fontFamily: 'Comic Sans MS',
                 fontSize: 18,
-                color: AppTheme.textSecondaryColor,
+                color: Colors.grey,
               ),
             ),
           ],
@@ -137,7 +118,6 @@ class QuizPage extends StatelessWidget {
 
   Widget _buildErrorScreen(BuildContext context, String message) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -154,6 +134,7 @@ class QuizPage extends StatelessWidget {
               child: Text(
                 message,
                 style: const TextStyle(
+                  fontFamily: 'Comic Sans MS',
                   fontSize: 18,
                   color: Colors.red,
                 ),
@@ -168,18 +149,18 @@ class QuizPage extends StatelessWidget {
                 await Provider.of<QuizViewModel>(context, listen: false).fetchQuizQuestions();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF0D08FF),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(25),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               ),
               child: const Text(
                 'Retry',
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Comic Sans MS',
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -189,145 +170,130 @@ class QuizPage extends StatelessWidget {
     );
   }
 
-  // Progress Header
-  Widget _buildProgressHeader(QuizViewModel quizVM, BuildContext context) {
+  // Progress Header with Lottie Avatar and Orange Progress Bar
+  Widget _buildProgressHeader(QuizViewModel quizVM) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.grey.withOpacity(0.1),
             blurRadius: 10,
-            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                'Skill Assessment',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimaryColor,
+              Container(
+                width: 50,
+                height: 50,
+                padding: const EdgeInsets.all(5),
+                child: Lottie.asset(
+                  'assets/images/avatar.json',
+                  animate: true,
+                  repeat: true,
                 ),
               ),
-              const Spacer(),
-              Text(
-                'Question ${quizVM.currentQuestionIndex + 1}/${quizVM.questions.length}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.textSecondaryColor,
+              const SizedBox(width: 10),
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: quizVM.progress,
+                  backgroundColor: Colors.grey[200],
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFFFF9500)),
+                  minHeight: 12,
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          LinearProgressIndicator(
-            value: quizVM.progress,
-            backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(10),
+          const SizedBox(height: 10),
+          Text(
+            '${(quizVM.progress * 100).toInt()}% Complete',
+            style: const TextStyle(
+              fontFamily: 'Comic Sans MS',
+              color: Color(0xFFFF9500),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Question Card
+  // Question Card with Lottie Feedback
   Widget _buildQuestionCard(QuizViewModel quizVM, BuildContext context) {
     final question = quizVM.currentQuestion!;
-    
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeOutBack,
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
+    return Transform.scale(
+      scale: 0.95,
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6, // Add max height
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                question.question,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Comic Sans MS',
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
-            child: Text(
-              question.question,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
-              ),
-              textAlign: TextAlign.left,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: question.options.asMap().entries.map((entry) {
-                final index = entry.key;
-                final option = entry.value;
-                return Animate(
-                  effects: [
-                    FadeEffect(
-                      duration: const Duration(milliseconds: 400),
-                      delay: Duration(milliseconds: index * 100),
-                    ),
-                    SlideEffect(
-                      begin: const Offset(0, 0.3),
-                      end: const Offset(0, 0),
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeOutQuad,
-                    ),
+            Expanded( // Add Expanded here
+              child: SingleChildScrollView( // Add scrollable content
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...question.options.map((option) => 
+                      _buildOptionButton(quizVM, question, option)),
+                    const SizedBox(height: 10), // Add bottom padding
                   ],
-                  child: _buildOptionButton(quizVM, question, option, context),
-                );
-              }).toList(),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   // Option Button with Animated Selection
-  Widget _buildOptionButton(QuizViewModel quizVM, QuizQuestion question, String option, BuildContext context) {
+  Widget _buildOptionButton(QuizViewModel quizVM, QuizQuestion question, String option) {
     final isSelected = quizVM.answers[question.id] == option;
     
     return GestureDetector(
       onTap: () {
         quizVM.setAnswer(question.id, option);
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? const Color(0xFF0D08FF).withOpacity(0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryColor : Colors.grey.withOpacity(0.3),
+            color: isSelected ? const Color(0xFF0D08FF) : Colors.grey.withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -338,26 +304,26 @@ class QuizPage extends StatelessWidget {
                 option,
                 style: TextStyle(
                   fontSize: 16,
-                  color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimaryColor,
+                  fontFamily: 'Comic Sans MS',
+                  color: isSelected ? const Color(0xFF0D08FF) : Colors.black87,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryColor : Colors.grey.withOpacity(0.1),
-                shape: BoxShape.circle,
+            if (isSelected)
+              Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0D08FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
-              child: isSelected 
-                ? const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 16,
-                  )
-                : null,
-            ),
           ],
         ),
       ),
@@ -365,7 +331,7 @@ class QuizPage extends StatelessWidget {
   }
 
   // Motivational Message
-  Widget _buildMotivationalMessage(QuizViewModel quizVM, BuildContext context) {
+  Widget _buildMotivationalMessage(QuizViewModel quizVM) {
     final messages = [
       "You're doing great! Keep going!",
       "Almost there! You're making excellent progress!",
@@ -377,67 +343,53 @@ class QuizPage extends StatelessWidget {
     final messageIndex = (quizVM.currentQuestionIndex % messages.length);
     
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Animate(
-        effects: const [
-          FadeEffect(
-            duration: Duration(milliseconds: 600),
-            delay: Duration(milliseconds: 400),
-          ),
-        ],
-        child: Container(
-          width: double.infinity,
-          alignment: Alignment.center,
-          child: GenieAvatar(
-            state: AvatarState.explaining,
-            message: messages[messageIndex],
-            size: 60,
-            onMessageComplete: () {
-              // Optional: Add any callback when the message animation completes
-            },
-          ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Text(
+        messages[messageIndex],
+        style: const TextStyle(
+          fontFamily: 'Comic Sans MS',
+          fontSize: 16,
+          color: Colors.grey,
+          fontStyle: FontStyle.italic,
         ),
+        textAlign: TextAlign.center,
       ),
     );
   }
 
-  // Navigation Buttons
-  Widget _buildNavigationButtons(QuizViewModel quizVM, BuildContext context) {
+  // Continue Button
+  Widget _buildContinueButton(QuizViewModel quizVM, BuildContext context) {
     final isLastQuestion = quizVM.currentQuestionIndex == quizVM.questions.length - 1;
     final hasAnswer = quizVM.answers.containsKey(quizVM.currentQuestion!.id);
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.all(20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (quizVM.currentQuestionIndex > 0)
-            OutlinedButton(
+            ElevatedButton(
               onPressed: () {
                 quizVM.previousQuestion();
               },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.textSecondaryColor,
-                side: BorderSide(color: AppTheme.textSecondaryColor.withOpacity(0.5)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[200],
+                foregroundColor: Colors.black87,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(25),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.arrow_back_ios,
-                    size: 16,
-                    color: AppTheme.textSecondaryColor,
-                  ),
-                  const SizedBox(width: 8),
+                  Icon(Icons.arrow_back_ios, size: 16),
+                  SizedBox(width: 5),
                   Text(
                     'Previous',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Comic Sans MS',
                     ),
                   ),
                 ],
@@ -480,29 +432,26 @@ class QuizPage extends StatelessWidget {
                   }
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              disabledBackgroundColor: Colors.grey.withOpacity(0.3),
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF0D08FF),
+              disabledBackgroundColor: Colors.grey,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(25),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isLastQuestion ? 'Submit' : 'Next',
+                  isLastQuestion ? 'Submit' : 'Continue',
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Comic Sans MS',
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(
-                  isLastQuestion ? Icons.check_circle_outline : Icons.arrow_forward_ios,
-                  size: 16,
-                ),
+                const SizedBox(width: 5),
+                const Icon(Icons.arrow_forward_ios, size: 16),
               ],
             ),
           ),

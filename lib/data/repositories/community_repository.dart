@@ -115,42 +115,86 @@ class CommunityRepository {
     }
   }
 
-  Future<Post> createPost(String token, String content, List<String> imagePaths, {String? title}) async {
+  Future<Post> createPost(String token, String content, List<String> imagePaths) async {
+    print('Creating post with content: $content, imagePaths: $imagePaths');
+
     try {
-      final url = '${ApiConstants.baseUrl}/${CommunityConstants.posts}';
-      
-      // Create multipart request
-      final request = http.MultipartRequest('POST', Uri.parse(url));
-      request.headers['Authorization'] = 'Bearer $token';
-      
-      // Add content and title
-      request.fields['content'] = content;
-      if (title != null && title.isNotEmpty) {
+      // If we have images, use multipart request
+      if (imagePaths.isNotEmpty) {
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.posts}'),
+        );
+
+        // Add authorization header
+        request.headers.addAll({
+          'Authorization': 'Bearer $token',
+        });
+
+        // Extract title from first paragraph of content (up to 50 chars)
+        final lines = content.split('\n');
+        String title = lines.isNotEmpty 
+            ? lines[0].substring(0, min(50, lines[0].length))
+            : '';
+
+        // Add text fields
         request.fields['title'] = title;
-      }
-      
-      // Add images
-      for (final imagePath in imagePaths) {
-        final file = File(imagePath);
-        if (await file.exists()) {
-          request.files.add(
-            await http.MultipartFile.fromPath('images', imagePath),
-          );
+        request.fields['content'] = content;
+
+        // Add image files
+        for (var i = 0; i < imagePaths.length; i++) {
+          final imagePath = imagePaths[i];
+          final file = File(imagePath);
+          if (await file.exists()) {
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'images', 
+                imagePath,
+                filename: 'image_${i + 1}.jpg',
+              ),
+            );
+          }
+        }
+
+        // Send the request
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 201) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error creating post: $errorData');
+          throw Exception('Failed to create post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
+        }
+      } else {
+        // No images, use regular JSON request
+        final response = await client.post(
+          Uri.parse('${ApiConstants.baseUrl}/${CommunityConstants.posts}'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({
+            'title': content.split('\n')[0].substring(0, min(50, content.split('\n')[0].length)),
+            'content': content,
+            'images': [],
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          final data = json.decode(response.body);
+          return Post.fromJson(data);
+        } else {
+          final errorData = json.decode(response.body);
+          print('Error creating post: $errorData');
+          throw Exception('Failed to create post: ${response.statusCode} - ${errorData['message'] ?? errorData}');
         }
       }
-      
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-      
-      if (response.statusCode == 201) {
-        final data = json.decode(responseBody);
-        return Post.fromJson(data);
-      } else {
-        throw Exception('Failed to create post: ${response.statusCode} - $responseBody');
-      }
     } catch (e) {
-      print('Error in createPost: $e');
-      rethrow;
+      print('Exception in createPost: $e');
+      throw Exception('Failed to create post: $e');
     }
   }
 

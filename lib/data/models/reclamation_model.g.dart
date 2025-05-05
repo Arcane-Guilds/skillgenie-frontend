@@ -1,3 +1,5 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
 part of 'reclamation_model.dart';
 
 // **************************************************************************
@@ -11,13 +13,14 @@ Reclamation _$ReclamationFromJson(Map<String, dynamic> json) => Reclamation(
       message: json['message'] as String?,
       status: json['status'] as String? ?? 'pending',
       adminResponse: json['adminResponse'] as String?,
-      handledBy: json['handledBy'] as String?,
+      handledById: json['handledById'] as String?,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] == null
           ? null
           : DateTime.parse(json['updatedAt'] as String),
+      isRead: json['isRead'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$ReclamationToJson(Reclamation instance) =>
@@ -28,7 +31,8 @@ Map<String, dynamic> _$ReclamationToJson(Reclamation instance) =>
       'message': instance.message,
       'status': instance.status,
       'adminResponse': instance.adminResponse,
-      'handledBy': instance.handledBy,
+      'handledById': instance.handledById,
       'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String()
+      'updatedAt': instance.updatedAt?.toIso8601String(),
+      'isRead': instance.isRead,
     };

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/models/community/post.dart';
 import '../../viewmodels/community_viewmodel.dart';
@@ -60,7 +59,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error picking image: ${e.toString()}'),
-            backgroundColor: AppTheme.errorColor,
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -82,8 +81,8 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
     if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please write something in your post'),
-          backgroundColor: AppTheme.errorColor,
+          content: Text('Content cannot be empty'),
+          backgroundColor: Colors.red,
         ),
       );
       return;
@@ -111,7 +110,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Post updated successfully!'),
+            content: Text('Post updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -120,8 +119,8 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error updating post: ${e.toString()}'),
-            backgroundColor: AppTheme.errorColor,
+            content: Text('Failed to update post: ${e.toString()}'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -135,90 +134,50 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surfaceColor.withOpacity(0.97),
       appBar: AppBar(
-        title: Text(
-          'Edit Post',
-          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryColor,
+        title: const Text('Edit Post'),
+        actions: [
+          TextButton(
+            onPressed: _isLoading ? null : _updatePost,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('Update'),
           ),
-        ),
-        centerTitle: false,
-        backgroundColor: AppTheme.surfaceColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-        ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Title field
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.all(16),
               ),
-              child: TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: 'Post title (optional)',
-                  hintStyle: TextStyle(
-                    color: AppTheme.textSecondaryColor.withOpacity(0.5),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-                maxLength: 100,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              maxLines: 1,
             ),
-            
             const SizedBox(height: 16),
-            
-            // Content field
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            TextField(
+              controller: _contentController,
+              decoration: const InputDecoration(
+                hintText: 'What\'s on your mind?',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.all(16),
               ),
-              child: TextField(
-                controller: _contentController,
-                decoration: InputDecoration(
-                  hintText: 'What\'s on your mind?',
-                  hintStyle: TextStyle(
-                    color: AppTheme.textSecondaryColor.withOpacity(0.5),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-                maxLines: 5,
-                maxLength: 1000,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+              maxLines: 5,
+              maxLength: 1000,
             ),
-            
             const SizedBox(height: 16),
-            
-            // Image preview
             if (_selectedImages.isNotEmpty) ...[
               SizedBox(
                 height: 120,
@@ -226,107 +185,63 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
                   scrollDirection: Axis.horizontal,
                   itemCount: _selectedImages.length,
                   itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              image: DecorationImage(
-                                image: _selectedImages[index].startsWith('http')
-                                    ? NetworkImage(_selectedImages[index])
-                                    : FileImage(File(_selectedImages[index])) as ImageProvider,
-                                fit: BoxFit.cover,
+                    return Stack(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: _selectedImages[index].startsWith('http')
+                                  ? NetworkImage(_selectedImages[index])
+                                  : FileImage(File(_selectedImages[index])) as ImageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 12,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: GestureDetector(
-                              onTap: () => _removeImage(index),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   },
                 ),
               ),
               const SizedBox(height: 16),
             ],
-            
-            // Add photo button
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            ElevatedButton.icon(
+              onPressed: _selectedImages.length >= 5 ? null : _pickImage,
+              icon: const Icon(Icons.add_photo_alternate),
+              label: Text(
+                _selectedImages.isEmpty
+                    ? 'Add Photos'
+                    : 'Add More Photos (${_selectedImages.length}/5)',
               ),
-              child: TextButton.icon(
-                onPressed: _selectedImages.length >= 5 ? null : _pickImage,
-                icon: Icon(
-                  Icons.add_photo_alternate,
-                  color: AppTheme.primaryColor,
-                ),
-                label: Text(
-                  _selectedImages.isEmpty
-                      ? 'Add Photos'
-                      : 'Add More Photos (${_selectedImages.length}/5)',
-                  style: TextStyle(
-                    color: AppTheme.textPrimaryColor,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isLoading ? null : _updatePost,
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        icon: _isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Icon(Icons.save),
-        label: Text(_isLoading ? 'Updating...' : 'Update'),
-      ).animate()
-        .fadeIn(duration: 500.ms)
-        .slideY(begin: 0.3, end: 0),
     );
   }
 } 

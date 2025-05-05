@@ -1,12 +1,5 @@
 import 'package:flutter/material.dart';
-import 'buy_coins_screen.dart';
-
-// Global state for coins and purchases
-class MarketState {
-  static int coins = 100;
-  static bool petBought = false;
-  static bool hatBought = false;
-}
+import 'buy_coins_screen.dart'; // <--- Make sure you import it
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -16,36 +9,23 @@ class MarketplaceScreen extends StatefulWidget {
 }
 
 class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  int coins = 100;
+  bool petBought = false;
+  bool hatBought = false;
+  String? equippedPetPath;
+
   @override
   Widget build(BuildContext context) {
-    final coins = MarketState.coins;
-    final petBought = MarketState.petBought;
-    final hatBought = MarketState.hatBought;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Marketplace'),
         backgroundColor: Colors.deepPurple,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add, size: 28),
-            onPressed: () async {
-              final bought = await Navigator.push<int>(
-                context,
-                MaterialPageRoute(builder: (_) => const BuyCoinsScreen()),
-              );
-              if (bought != null) {
-                setState(() {
-                  MarketState.coins += bought;
-                });
-              }
-            },
-          ),
           Padding(
-            padding: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Center(
               child: Text(
-                '\u{1FA99} $coins',
+                '\u{1FA99} $coins', // coin emoji
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -63,21 +43,39 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BuyCoinsScreen()),
+                );
+              },
+              icon: const Icon(Icons.add_shopping_cart),
+              label: const Text('Buy Coins'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 30),
             const Text(
               'Pets',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 10),
             _buildItem(
-              name: 'Cat',
+              name: 'Cute Cat',
               cost: 50,
               bought: petBought,
-              leading: const Icon(Icons.pets, size: 40, color: Colors.white),
+              imagePath: 'assets/images/cat_pet.png', // make sure this asset exists
               onBuy: () {
-                if (MarketState.coins >= 50 && !petBought) {
+                if (coins >= 50 && !petBought) {
                   setState(() {
-                    MarketState.coins -= 50;
-                    MarketState.petBought = true;
+                    coins -= 50;
+                    petBought = true;
+                    equippedPetPath = 'assets/images/cat_pet.png';
                   });
                 }
               },
@@ -92,12 +90,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               name: 'Wizard Hat',
               cost: 30,
               bought: hatBought,
-              leading: const Icon(Icons.checkroom, size: 40, color: Colors.yellow),
+              imagePath: 'assets/images/hat.png',
               onBuy: () {
-                if (MarketState.coins >= 30 && !hatBought) {
+                if (coins >= 30 && !hatBought) {
                   setState(() {
-                    MarketState.coins -= 30;
-                    MarketState.hatBought = true;
+                    coins -= 30;
+                    hatBought = true;
                   });
                 }
               },
@@ -105,14 +103,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           ],
         ),
       ),
-      floatingActionButton: (petBought || hatBought)
+      floatingActionButton: equippedPetPath != null
           ? FloatingActionButton.extended(
-        onPressed: () => Navigator.pop(context, {
-          'pet': MarketState.petBought,
-          'hat': MarketState.hatBought,
-        }),
+        onPressed: () {
+          Navigator.pop(context, equippedPetPath);
+        },
+        label: const Text('Equip Pet'),
         icon: const Icon(Icons.check),
-        label: const Text('Equip'),
         backgroundColor: Colors.green,
       )
           : null,
@@ -123,19 +120,25 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     required String name,
     required int cost,
     required bool bought,
-    required Widget leading,
+    required String imagePath,
     required VoidCallback onBuy,
   }) {
     return Card(
       color: Colors.white.withOpacity(0.8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
-        leading: leading,
+        leading: Image.asset(imagePath, height: 40),
         title: Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         subtitle: Text('$cost coins'),
         trailing: bought
-            ? const Text('Bought', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
-            : ElevatedButton(onPressed: onBuy, child: const Text('Buy')),
+            ? const Text(
+          'Bought',
+          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+        )
+            : ElevatedButton(
+          onPressed: onBuy,
+          child: const Text('Buy'),
+        ),
       ),
     );
   }

@@ -3,20 +3,12 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skillGenie/presentation/viewmodels/chat_viewmodel.dart';
-
+import 'dart:io';
 import 'core/navigation/app_router.dart';
 import 'core/services/service_locator.dart';
-import 'core/storage/secure_storage.dart';
-import 'data/datasources/api_client.dart';  
-
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
-import 'data/repositories/auth_repository.dart';
-import 'data/repositories/chat_repository.dart';
-import 'data/repositories/course_repository.dart';
-import 'data/repositories/friend_repository.dart';
 import 'presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'presentation/viewmodels/profile_viewmodel.dart';
 import 'presentation/viewmodels/course_viewmodel.dart';
@@ -26,6 +18,8 @@ import 'presentation/viewmodels/friend_viewmodel.dart';
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'presentation/viewmodels/reclamation_viewmodel.dart';
+import 'utils/notification_helper.dart';
+import 'presentation/viewmodels/rating_viewmodel.dart';
 
 class AppErrorHandler {
   static void handleError(Object error, StackTrace stackTrace) {
@@ -65,6 +59,10 @@ void main() async {
   runZonedGuarded(() async {
     // Ensure Flutter is initialized
     WidgetsFlutterBinding.ensureInitialized();
+    NotificationHelper.initialize();
+
+    // Configure SSL certificate bypass for development
+    HttpOverrides.global = new DevHttpOverrides();
 
     // Load environment variables first
     await dotenv.load(fileName: ".env");
@@ -80,6 +78,16 @@ void main() async {
 
     runApp(const MyApp());
   }, AppErrorHandler.handleError);
+}
+
+// Development-only HTTP client that bypasses SSL certificate validation
+class DevHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -114,8 +122,10 @@ class MyApp extends StatelessWidget {
           create: (context) => serviceLocator<ChatViewModel>(),
         ),
         ChangeNotifierProvider(
-          create: (context) =>
-              ReclamationViewModel(context.read<AuthViewModel>()),
+          create: (context) => serviceLocator<ReclamationViewModel>(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => serviceLocator<RatingViewModel>(),
         ),
       ],
       child: MaterialApp.router(
@@ -126,13 +136,6 @@ class MyApp extends StatelessWidget {
         // Add restorationScopeId to help with state restoration
         restorationScopeId: 'app',
         builder: (context, child) {
-          // Initialize socket connection when app is built
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
-            // Try to initialize socket connection
-            //chatViewModel.refreshCurrentChat();
-          });
-          
           // Add error handling for widget errors
           ErrorWidget.builder = (FlutterErrorDetails details) {
             return Scaffold(

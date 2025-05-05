@@ -15,6 +15,7 @@ class ApiClient {
           baseUrl: ApiConstants.baseUrl,
           connectTimeout: const Duration(seconds: 15), // Increased timeout
           receiveTimeout: const Duration(seconds: 15), // Increased timeout
+          contentType: 'application/json', // Set content-type header
           validateStatus: (status) {
             // Allow the Dio client to return responses with any status code
             // so we can handle errors manually
@@ -50,7 +51,10 @@ class ApiClient {
   Future<Response> getData(String endpoint) async {
     try {
       _logger.info('GET request to: $endpoint');
-      Response response = await _dio.get(endpoint);
+      Response response = await _dio.get(
+        endpoint,
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
       _logger.info('GET response status: ${response.statusCode}');
       return response;
     } on DioException catch (e) {
@@ -69,8 +73,15 @@ class ApiClient {
   /// Sends a POST request to the API.
   Future<Response> postRequest(String url, Map<String, dynamic> data) async {
     try {
-      _logger.info('POST request to: $url');
-      Response response = await _dio.post(url, data: data);
+      _logger.info('POST request to: $url with data: $data');
+      Response response = await _dio.post(
+        url,
+        data: data,
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+          method: 'POST', // Explicitly set method
+        ),
+      );
       _logger.info('POST response status: ${response.statusCode}');
       return response;
     } on DioException catch (e) {

@@ -493,34 +493,43 @@ class CommunityViewModel extends ChangeNotifier {
   }
 
   // Create a new post
-  Future<Post> createPost(String content, List<String> imagePaths, {String? title}) async {
-    try {
-      _createPostStatus = CommunityStatus.loading;
-      notifyListeners();
+  Future<Post?> createPost(String content, List<String> images) async {
+    _createPostStatus = CommunityStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
 
+    try {
       final token = _authViewModel.tokens?.accessToken;
       if (token == null) {
-        throw Exception('Not authenticated');
+        _errorMessage = 'Not authenticated';
+        _createPostStatus = CommunityStatus.error;
+        notifyListeners();
+        return null;
       }
 
-      final post = await _communityRepository.createPost(
-        token,
-        content,
-        imagePaths,
-        title: title,
-      );
+      // Extract title from first paragraph of content
+      final lines = content.split('\n');
+      String title = lines[0];
+      
+      // Ensure content is at least the title if user didn't add more
+      String postContent = content;
+      
+      print('Creating post with title: $title, content: $postContent');
 
+      final newPost = await _communityRepository.createPost(token, postContent, images);
+      
       // Add the new post to the beginning of the list
-      _posts.insert(0, post);
-
+      _posts.insert(0, newPost);
       _createPostStatus = CommunityStatus.loaded;
+      
       notifyListeners();
-      return post;
+      return newPost;
     } catch (e) {
-      _createPostStatus = CommunityStatus.error;
+      print('Error in createPost: $e');
       _errorMessage = e.toString();
+      _createPostStatus = CommunityStatus.error;
       notifyListeners();
-      rethrow;
+      return null;
     }
   }
 

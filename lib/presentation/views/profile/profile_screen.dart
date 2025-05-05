@@ -4,10 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:skillGenie/data/models/community/post.dart';
 
 import '../../../data/models/user_model.dart';
-import '../../../data/models/community/post.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../../core/constants/cloudinary_constants.dart';
 import '../../viewmodels/community_viewmodel.dart';
@@ -15,18 +14,7 @@ import '../community/post_detail_screen.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../community/update_post_screen.dart';
 import '../community/create_post_screen.dart';
-import '../../widgets/common_widgets.dart';
-import '../analytics/analytics_screen.dart';
-
-// App-wide primary blue color
-const Color kPrimaryBlue = Color(0xFF29B6F6);
-
-extension UserStats on User {
-  int get streakDays => 0; // TODO: Implement streak days calculation
-  int get coins => 0; // TODO: Implement coins calculation
-  List<String> get earnedBadges => []; // TODO: Implement badges
-  String? get selectedSkill => null; // TODO: Implement selected skill
-}
+import '../../viewmodels/rating_viewmodel.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -49,10 +37,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _initControllers();
-    
+
     // Schedule the data loading after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialData();
+      // Load user's rating if it exists
+      // Provider.of<RatingViewModel>(context, listen: false).loadUserRating();
     });
   }
 
@@ -68,13 +58,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUserPosts(String userId) async {
     if (!mounted) return;
-    
-    final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+
+    final communityViewModel =
+        Provider.of<CommunityViewModel>(context, listen: false);
     try {
       await communityViewModel.loadUserPosts(userId);
     } catch (e) {
       print('Error loading user posts: $e');
       if (mounted) {
+        // Show error message in UI instead of just logging
         _showErrorSnackBar('Failed to load posts: ${e.toString()}');
       }
     }
@@ -84,11 +76,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
 
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+    final profileViewModel =
+        Provider.of<ProfileViewModel>(context, listen: false);
 
     try {
       setState(() => _isLoading = true);
 
+      // Check authentication
       if (!authViewModel.isAuthenticated) {
         await Future.delayed(const Duration(milliseconds: 500));
         if (!mounted) return;
@@ -98,16 +92,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
 
+      // Load profile
       final profile = await profileViewModel.getUserProfile(forceRefresh: true);
       if (!mounted) return;
 
       if (profile == null) {
-        // _showErrorSnackBar('Could not load profile data');
-        // return;
+        _showErrorSnackBar('Could not load profile data');
+        return;
       }
 
-      await _loadUserPosts(profile!.id);
-
+      // Load posts immediately after profile
+      await _loadUserPosts(profile.id); // Ensure this is awaited
     } catch (e) {
       if (mounted) _showErrorSnackBar(e.toString());
     } finally {
@@ -117,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -185,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     value: _uploadProgress,
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      kPrimaryBlue,
+                      Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -201,57 +196,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: _isUploadingImage
                     ? null
                     : () {
-                  setState(() => _imageFile = null);
-                  Navigator.pop(context);
-                },
-                child: Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
+                        setState(() => _imageFile = null);
+                        Navigator.pop(context);
+                      },
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: _isUploadingImage
                     ? null
                     : () async {
-                  setDialogState(() {
-                    _isUploadingImage = true;
-                  });
-
-                  try {
-                    final profileViewModel = Provider.of<ProfileViewModel>(
-                        context,
-                        listen: false
-                    );
-
-                    await profileViewModel.updateProfileImage(
-                      _imageFile!,
-                      onProgress: (progress) {
                         setDialogState(() {
-                          _uploadProgress = progress;
+                          _isUploadingImage = true;
                         });
-                      },
-                    );
 
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _showSuccessSnackBar('Profile picture updated successfully!');
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _showErrorSnackBar('Failed to update profile picture: ${e.toString()}');
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() {
-                        _isUploadingImage = false;
-                        _uploadProgress = 0;
-                        _imageFile = null;
-                      });
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryBlue,
-                  foregroundColor: Colors.white,
-                ),
+                        try {
+                          final profileViewModel =
+                              Provider.of<ProfileViewModel>(context,
+                                  listen: false);
+
+                          await profileViewModel.updateProfileImage(
+                            _imageFile!,
+                            onProgress: (progress) {
+                              setDialogState(() {
+                                _uploadProgress = progress;
+                              });
+                            },
+                          );
+
+                          if (mounted) {
+                            Navigator.pop(context);
+                            _showSuccessSnackBar(
+                                'Profile picture updated successfully!');
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            Navigator.pop(context);
+                            _showErrorSnackBar(
+                                'Failed to update profile picture: ${e.toString()}');
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isUploadingImage = false;
+                              _uploadProgress = 0;
+                              _imageFile = null;
+                            });
+                          }
+                        }
+                      },
                 child: const Text('Save'),
               ),
             ],
@@ -268,7 +260,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+      final profileViewModel =
+          Provider.of<ProfileViewModel>(context, listen: false);
       await profileViewModel.updateBio(_bioController.text.trim());
 
       if (mounted) {
@@ -289,345 +282,275 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildUserPosts() {
     return Consumer<CommunityViewModel>(
       builder: (context, communityViewModel, _) {
-        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-        
+        final profileViewModel =
+            Provider.of<ProfileViewModel>(context, listen: false);
+
         if (communityViewModel.userPostsStatus == CommunityStatus.loading) {
-          return Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue)));
+          return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (communityViewModel.userPostsStatus == CommunityStatus.error) {
           return Column(
             children: [
               Text(communityViewModel.errorMessage ?? 'Error loading posts'),
               ElevatedButton(
-                onPressed: () => _loadUserPosts(profileViewModel.currentProfile!.id),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryBlue,
-                  foregroundColor: Colors.white,
-                ),
+                onPressed: () =>
+                    _loadUserPosts(profileViewModel.currentProfile!.id),
                 child: const Text('Retry'),
               ),
             ],
           );
         }
 
+        // Show "Create First Post" button if user has no posts
         if (communityViewModel.userPosts.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: kPrimaryBlue.withOpacity(0.2),
-              ),
-            ),
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.post_add,
-                  size: 48,
-                  color: kPrimaryBlue.withOpacity(0.5),
+                  size: 64,
+                  color: Colors.grey,
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'No posts yet',
-                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                    fontWeight: FontWeight.bold,
+                const Text(
+                  'You haven\'t created any posts yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Share your learning journey with the community!',
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                FloatingActionButton(
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const CreatePostScreen(),
                       ),
-                    ).then((_) {
-                      _loadUserPosts(profileViewModel.currentProfile!.id);
-                    });
+                    );
                   },
-                  backgroundColor: kPrimaryBlue,
-                  child: const Icon(Icons.add),
-                ).animate()
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: 0.3, end: 0),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create Your First Post'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                  ),
+                ),
               ],
             ),
           );
         }
-        
+
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: communityViewModel.userPosts.length,
           itemBuilder: (context, index) {
             final post = communityViewModel.userPosts[index];
-            return _buildPostCard(post);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildPostCard(Post post) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: kPrimaryBlue.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: kPrimaryBlue.withOpacity(0.1),
-                  backgroundImage: post.author.avatar != null
-                      ? NetworkImage(post.author.avatar!)
-                      : null,
-                  child: post.author.avatar == null
-                      ? Icon(Icons.person, color: kPrimaryBlue)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: InkWell(
+                onTap: () => _navigateToPostDetail(post.id),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        post.author.username,
-                        style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: post.author.avatar != null
+                                ? NetworkImage(post.author.avatar!)
+                                : null,
+                            child: post.author.avatar == null
+                                ? const Icon(Icons.person)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  post.author.username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  _formatDate(post.createdAt),
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Add 3-dots menu for post actions
+                          if (post.author.id ==
+                              Provider.of<AuthViewModel>(context, listen: false)
+                                  .user
+                                  ?.id)
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _navigateToUpdatePost(post);
+                                } else if (value == 'delete') {
+                                  _showDeleteConfirmation(post.id);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Edit Post'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Delete Post'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
+                      const SizedBox(height: 12),
                       Text(
-                        _formatDate(post.createdAt),
-                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        post.content,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (post.images != null && post.images.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 200,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: post.images!.length,
+                            itemBuilder: (context, imageIndex) {
+                              // Transform the image URL using Cloudinary
+                              final transformedUrl =
+                                  CloudinaryConstants.getPostImageUrl(
+                                      post.images![imageIndex]);
+
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: CachedNetworkImage(
+                                    imageUrl: transformedUrl,
+                                    width: 200,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                      color: Colors.grey[300],
+                                      child: const Icon(
+                                        Icons.error_outline,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              final communityViewModel =
+                                  Provider.of<CommunityViewModel>(context,
+                                      listen: false);
+                              communityViewModel.togglePostLike(post.id);
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    post.isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: post.isLiked
+                                        ? Theme.of(context).colorScheme.error
+                                        : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    post.likeCount.toString(),
+                                    style: TextStyle(
+                                      color: post.isLiked
+                                          ? Theme.of(context).colorScheme.error
+                                          : Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          InkWell(
+                            onTap: () => _navigateToPostDetail(post.id),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.comment_outlined,
+                                    color: Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    post.commentCount.toString(),
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                if (post.author.id == Provider.of<AuthViewModel>(context, listen: false).user?.id)
-                  PopupMenuButton<String>(
-                    icon: Icon(
-                      Icons.more_vert,
-                      color: kPrimaryBlue.withOpacity(0.6),
-                    ),
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _navigateToUpdatePost(post);
-                      } else if (value == 'delete') {
-                        _showDeleteConfirmation(post.id);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20, color: kPrimaryBlue),
-                            const SizedBox(width: 8),
-                            const Text('Edit Post'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 20, color: Colors.red),
-                            const SizedBox(width: 8),
-                            const Text('Delete Post'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text(
-              post.title ?? '',
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                fontWeight: FontWeight.bold,
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(
-              post.content,
-              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-              ),
-            ),
-          ),
-          if (post.images != null && post.images.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: post.images!.length,
-                  itemBuilder: (context, imageIndex) {
-                    final transformedUrl = CloudinaryConstants.getPostImageUrl(post.images![imageIndex]);
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: CachedNetworkImage(
-                          imageUrl: transformedUrl,
-                          width: 200,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.error_outline,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-          Container(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            child: Row(
-              children: [
-                _buildActionButton(
-                  icon: post.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                  label: post.likeCount.toString(),
-                  color: post.isLiked ? kPrimaryBlue : null,
-                  onTap: () {
-                    final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
-                    communityViewModel.togglePostLike(post.id);
-                  },
-                ),
-                _buildActionButton(
-                  icon: Icons.comment_outlined,
-                  label: post.commentCount.toString(),
-                  onTap: () => _navigateToPostDetail(post.id),
-                ),
-                const Spacer(),
-                _buildActionButton(
-                  icon: Icons.bookmark_border,
-                  label: 'Save',
-                  onTap: () {
-                    // TODO: Implement save post functionality
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ).animate()
-     .fadeIn(duration: 600.ms)
-     .moveY(begin: 20, end: 0, duration: 600.ms, curve: Curves.easeOutQuad);
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    Color? color,
-    required VoidCallback onTap,
-  }) {
-    return TextButton.icon(
-      onPressed: onTap,
-      icon: Icon(
-        icon,
-        size: 20,
-        color: color ?? kPrimaryBlue.withOpacity(0.7),
-      ),
-      label: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-          color: color ?? kPrimaryBlue.withOpacity(0.7),
-        ),
-      ),
-      style: TextButton.styleFrom(
-        foregroundColor: kPrimaryBlue,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: kPrimaryBlue.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: kPrimaryBlue,
-            size: 32,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -666,20 +589,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: kPrimaryBlue)),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
               try {
-                final communityViewModel = Provider.of<CommunityViewModel>(context, listen: false);
+                final communityViewModel =
+                    Provider.of<CommunityViewModel>(context, listen: false);
                 await communityViewModel.deletePost(postId);
-                
+
                 if (mounted) {
+                  // Remove the post from the UI immediately
                   setState(() {
-                    communityViewModel.userPosts.removeWhere((post) => post.id == postId);
+                    // Remove from user posts list
+                    communityViewModel.userPosts
+                        .removeWhere((post) => post.id == postId);
                   });
-                  
+
                   _showSuccessSnackBar('Post deleted successfully');
                 }
               } catch (e) {
@@ -688,9 +615,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
               }
             },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
             child: const Text('Delete'),
           ),
         ],
@@ -711,39 +635,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Profile',
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: false,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
+        title: const Text('My Profile'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.group,color: kPrimaryBlue),
+            icon: const Icon(Icons.group),
             onPressed: () {
               GoRouter.of(context).go('/friends');
             },
           ),
           IconButton(
-            icon: Icon(
-              Icons.settings,
-              color: kPrimaryBlue,
-            ),
+            icon: const Icon(Icons.settings),
             onPressed: _navigateToSettings,
           ),
         ],
       ),
       body: Consumer2<AuthViewModel, ProfileViewModel>(
         builder: (context, authViewModel, profileViewModel, _) {
-          if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
-            return Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
-              ),
-            );
+          // Show loading while checking auth or loading profile
+          if (!authViewModel.isAuthenticated ||
+              profileViewModel.isLoading ||
+              _isLoading) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           final user = profileViewModel.currentProfile;
@@ -756,10 +668,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadInitialData,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryBlue,
-                      foregroundColor: Colors.white,
-                    ),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -769,126 +677,270 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           return RefreshIndicator(
             onRefresh: () async {
+              // Load both profile and posts on refresh
               await _loadInitialData();
             },
-            color: kPrimaryBlue,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  _buildProfileHeader(user),
                   const SizedBox(height: 24),
-                  // Profile picture
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Hero(
-                        tag: 'profile_image',
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Container(
-                            height: 120,
-                            width: 120,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(60),
-                              child: _buildProfileImage(user),
-                            ),
-                          ),
-                        ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'My Posts',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: kPrimaryBlue,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  // User name
-                  Text(
-                    user.username,
-                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // User email
-                  Text(
-                    user.email ?? 'email@example.com',
-                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Stats
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
-                      _buildStatCard(context, 'Coins', '${user.coins ?? 0}', Icons.monetization_on),
-                      _buildStatCard(context, 'Badges', '${user.earnedBadges?.length ?? 0}', Icons.emoji_events),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AnalyticsScreen(userId: user.id),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.insights, color: kPrimaryBlue),
-                    label: Text('View Analytics'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // User's Posts
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Your Posts',
-                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildUserPosts(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  const SizedBox(height: 24),
+                  _buildUserPosts(),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(User? profile) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            Theme.of(context).primaryColor.withOpacity(0.1),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Hero(
+                tag: 'profile_image',
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    height: 120,
+                    width: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(60),
+                      child: _buildProfileImage(profile),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            profile?.username ?? 'User Name',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          // Add Rate App button
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Consumer<RatingViewModel>(
+              builder: (context, ratingVM, _) {
+                return TextButton.icon(
+                  onPressed: () => _showRatingDialog(context, ratingVM),
+                  icon: const Icon(Icons.star_border),
+                  label: Text(ratingVM.userRating != null
+                      ? 'Update Your Rating'
+                      : 'Rate App'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                  ),
+                );
+              },
+            ),
+          ),
+          InkWell(
+            onTap: () => setState(() => _isEditingBio = true),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: _isEditingBio
+                  ? Column(
+                      children: [
+                        TextFormField(
+                          controller: _bioController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            hintText: 'Write something about yourself...',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => _isEditingBio = false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: _saveBio,
+                              child: const Text('Save'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              profile?.bio?.isNotEmpty == true
+                                  ? profile!.bio!
+                                  : 'Tap to add bio...',
+                              style: TextStyle(
+                                color: profile?.bio?.isNotEmpty == true
+                                    ? Colors.grey[100]
+                                    : Colors.grey[100],
+                              ),
+                            ),
+                          ),
+                        ),
+                        //const Icon(Icons.edit, size: 16),
+                      ],
+                    ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showRatingDialog(BuildContext context, RatingViewModel ratingVM) {
+    int selectedStars = ratingVM.userRating?.stars ?? 0;
+    final commentController =
+        TextEditingController(text: ratingVM.userRating?.comment ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(ratingVM.userRating != null
+              ? 'Update Your Rating'
+              : 'Rate Our App'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < selectedStars ? Icons.star : Icons.star_border,
+                      color: Theme.of(context).primaryColor,
+                      size: 32,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        selectedStars = index + 1;
+                      });
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: commentController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Share your thoughts (optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            if (ratingVM.userRating != null)
+              TextButton(
+                onPressed: () async {
+                  try {
+                    //await ratingVM.deleteRating(ratingVM.userRating!.id!);
+                    if (mounted) {
+                      Navigator.pop(context);
+                      _showSuccessSnackBar('Rating deleted successfully');
+                    }
+                  } catch (e) {
+                    _showErrorSnackBar(e.toString());
+                  }
+                },
+                child: const Text('Delete Rating'),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: selectedStars == 0
+                  ? null
+                  : () async {
+                      try {
+                        await ratingVM.submitRating(
+                          selectedStars,
+                          commentController.text.trim().isEmpty
+                              ? null
+                              : commentController.text.trim(),
+                        );
+                        if (mounted) {
+                          Navigator.pop(context);
+                          _showSuccessSnackBar(
+                            ratingVM.userRating != null
+                                ? 'Rating updated successfully'
+                                : 'Thank you for your rating!',
+                          );
+                        }
+                      } catch (e) {
+                        _showErrorSnackBar(e.toString());
+                      }
+                    },
+              child: Text(ratingVM.userRating != null ? 'Update' : 'Submit'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -902,8 +954,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (profile?.avatar != null && profile!.avatar!.isNotEmpty) {
+      // Check if the avatar is a Cloudinary URL
       if (profile.avatar!.startsWith('http')) {
-        final transformedUrl = CloudinaryConstants.getProfileImageUrl(profile.avatar!);
+        // Apply Cloudinary transformations for optimized delivery
+        final transformedUrl =
+            CloudinaryConstants.getProfileImageUrl(profile.avatar!);
 
         return CachedNetworkImage(
           imageUrl: transformedUrl,
@@ -917,6 +972,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           errorWidget: (context, url, error) => _buildDefaultAvatar(),
         );
       } else {
+        // Fallback to local asset if not a URL
         return Image.asset(
           'assets/images/${profile.avatar}.png',
           fit: BoxFit.cover,

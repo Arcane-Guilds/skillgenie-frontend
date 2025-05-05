@@ -2,18 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:math' as math;
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:skillGenie/data/models/course/chapter.dart';
-import 'package:skillGenie/data/models/course/exercise.dart';
-import 'package:skillGenie/data/models/course/level.dart';
-
 import '../../../data/models/course_model.dart';
 import '../../viewmodels/course_viewmodel.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../community/post_detail_screen.dart';
-import '../../widgets/common_widgets.dart';
-import '../../widgets/avatar_widget.dart';
-import '../../../core/theme/app_theme.dart';
+import 'course_detail_screen.dart';
 
 class CourseRoadmapScreen extends StatefulWidget {
   final String courseId;
@@ -30,8 +22,6 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
   bool _isLoading = true;
   String? _errorMessage;
   List<Map<String, dynamic>> _lessons = [];
-  bool _showingGenieMessage = true;
-  late List<bool> _expandedLevels;
 
   @override
   void initState() {
@@ -42,18 +32,6 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-
-    // Initialize all levels as expanded
-    _expandedLevels = List.generate(10, (_) => true); // Placeholder, will be updated after loading
-
-    // Auto-hide Genie message after 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _showingGenieMessage = false;
-        });
-      }
-    });
 
     _loadCourse();
   }
@@ -71,7 +49,6 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
 
       if (courseViewModel.currentCourse != null) {
         _generateLessons(courseViewModel.currentCourse!);
-        _expandedLevels = List.generate(courseViewModel.currentCourse!.content.levels.length, (_) => true);
 
         // Calculate progress
         final progress = _calculateCourseProgress(courseViewModel.currentCourse!);
@@ -236,57 +213,19 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
 
         return Scaffold(
           backgroundColor: Colors.grey[50],
-          appBar: AppBar(
-            title: Text(
-              course.title,
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            centerTitle: true,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              onPressed: () => context.go('/home'),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.help_outline,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showingGenieMessage = !_showingGenieMessage;
-                  });
-                },
-              ),
-            ],
-          ),
-          body: Stack(
-            children: [
-              SingleChildScrollView(
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              _buildAppBar(course),
+              SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCourseHeader(course),
-                    _buildLevelsList(course),
-                    if (_showingGenieMessage) 
-                      const SizedBox(height: 160),
+                    _buildProgressHeader(course),
+                    _buildRoadmap(),
                   ],
                 ),
               ),
-              if (_showingGenieMessage)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: _buildGenieMessage(course),
-                ),
             ],
           ),
           floatingActionButton: Consumer<CourseViewModel>(
@@ -320,9 +259,7 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Continue Learning'),
                 elevation: 4,
-              ).animate()
-                .fadeIn(duration: 500.ms)
-                .slideY(begin: 0.3, end: 0);
+              );
             },
           ),
         );
@@ -330,25 +267,155 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
     );
   }
 
-  Widget _buildCourseHeader(Course course) {
+  Widget _buildAppBar(Course course) {
+    final Color courseColor = _getCourseColor(course.title);
+    
+    return SliverAppBar(
+      expandedHeight: 200,
+      pinned: true,
+      backgroundColor: courseColor,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => context.go('/home'),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        title: Text(
+          course.title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            shadows: [
+              Shadow(
+                blurRadius: 4.0,
+                color: Colors.black26,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Gradient background
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    courseColor,
+                    courseColor.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+            // Pattern overlay (dots)
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.1,
+                child: CustomPaint(
+                  painter: DotPatternPainter(),
+                ),
+              ),
+            ),
+            // Glossy effect
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.4),
+                      Colors.white.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Course icon with animated glow
+            Positioned(
+              top: 50,
+              right: 20,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(seconds: 1),
+                builder: (context, value, child) {
+                  return Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: courseColor.withOpacity(0.3 + (0.2 * math.sin(value * math.pi * 2))),
+                          blurRadius: 15 + (5 * math.sin(value * math.pi * 2)),
+                          spreadRadius: 2 + (1 * math.sin(value * math.pi * 2)),
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: child,
+                  );
+                },
+                child: ClipOval(
+                  child: Stack(
+                    children: [
+                      // Icon
+                      Center(
+                        child: Icon(
+                          _getIconForCourse(course.title),
+                          color: courseColor,
+                          size: 45,
+                        ),
+                      ),
+                      // Glossy effect
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 40,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withOpacity(0.7),
+                                Colors.white.withOpacity(0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressHeader(Course course) {
     final Color courseColor = _getCourseColor(course.title);
     
     return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            courseColor,
-            courseColor.withOpacity(0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: courseColor.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -357,269 +424,737 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Learning Roadmap',
-            style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
+          // Course Overview
           Text(
             course.content.overview,
-            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-              color: Colors.white.withOpacity(0.9),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[800],
+              fontStyle: FontStyle.italic,
             ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Course Story
+          if (course.content.story.narrative.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: courseColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: courseColor.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.auto_stories, color: courseColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Your Journey',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: courseColor,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    course.content.story.narrative,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+          
+          // Progress Section
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: courseColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.trending_up,
+                  color: courseColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Your Progress',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Level ${course.currentLevel + 1} · ${course.content.levels.length} levels',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: _calculateCourseProgress(course),
-              backgroundColor: Colors.white.withOpacity(0.3),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              minHeight: 10,
+          AnimatedBuilder(
+            animation: _progressAnimation,
+            builder: (context, child) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '${(_progressAnimation.value * 100).toInt()}% Complete',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: courseColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${_lessons.where((l) => l['isCompleted']).length}/${_lessons.length} chapters',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: courseColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Stack(
+                    children: [
+                      // Background track
+                      Container(
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      // Progress indicator
+                      Container(
+                        height: 12,
+                        width: MediaQuery.of(context).size.width * _progressAnimation.value * 0.85, // Adjust for padding
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              courseColor,
+                              Theme.of(context).primaryColor,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: courseColor.withOpacity(0.4),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoadmap() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, bottom: 16.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.route,
+                    color: Theme.of(context).primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Your Learning Path',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            '${_lessons.where((l) => l['isCompleted']).length} / ${_lessons.length} lessons completed',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
+          
+          // Course Learning Path Skills
+          Consumer<CourseViewModel>(
+            builder: (context, courseViewModel, child) {
+              final course = courseViewModel.currentCourse;
+              if (course != null && course.content.learningPath != null && 
+                  course.content.learningPath!.skills.isNotEmpty) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.psychology,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Skills You\'ll Master',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: course.content.learningPath!.skills.map((skill) {
+                          return Chip(
+                            label: Text(skill),
+                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                            labelStyle: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      if (course.content.learningPath!.finalProject.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.engineering,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Final Project',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          course.content.learningPath!.finalProject,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          
+          // Roadmap path
+          Stack(
+            children: [
+              // Path line
+              Positioned(
+                left: 24,
+                top: 0,
+                bottom: 0,
+                width: 4,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Progress line (animated)
+              Positioned(
+                left: 24,
+                top: 0,
+                width: 4,
+                child: AnimatedBuilder(
+                  animation: _progressAnimation,
+                  builder: (context, child) {
+                    return Container(
+                      height: (_lessons.length * 140 * _progressAnimation.value),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context).primaryColor,
+                            Theme.of(context).primaryColor.withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).primaryColor.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(2, 0),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Lesson nodes
+              Column(
+                children: _lessons.map((lesson) => _buildLessonNode(lesson)).toList(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 80), // Space for FAB
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLessonNode(Map<String, dynamic> lesson) {
+    final bool isCompleted = lesson['isCompleted'];
+    final bool isCurrent = lesson['isCurrent'];
+    final bool isLocked = lesson['isLocked'];
+    final bool isLevelHeader = lesson['isLevelHeader'] ?? false;
+    final Color courseColor = Theme.of(context).primaryColor;
+
+    if (isLevelHeader) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16, top: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Node circle for level
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: isCompleted
+                    ? courseColor
+                    : isCurrent
+                    ? Colors.white
+                    : Colors.grey[200],
+                shape: BoxShape.circle,
+                border: isCurrent
+                    ? Border.all(color: courseColor, width: 3)
+                    : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: (isCompleted || isCurrent)
+                        ? courseColor.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: isLocked
+                    ? const Icon(Icons.lock, color: Colors.grey, size: 24)
+                    : isCompleted
+                    ? const Icon(Icons.check, color: Colors.white, size: 24)
+                    : Icon(
+                  Icons.school,
+                  color: isCurrent ? courseColor : Colors.grey,
+                  size: 24,
+                ),
+              ),
+            ),
+            // Level header content
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isLocked
+                          ? Colors.grey.withOpacity(0.1)
+                          : courseColor.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: isCurrent
+                      ? Border.all(color: courseColor, width: 2)
+                      : null,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            lesson['title'],
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isLocked ? Colors.grey : Colors.black,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isLocked
+                                ? Colors.grey[200]
+                                : courseColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '+${lesson['xpReward']} XP',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isLocked ? Colors.grey : courseColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (lesson['description'] != null && lesson['description'].isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        lesson['description'],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isLocked ? Colors.grey : Colors.grey[700],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (isCurrent) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: courseColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: courseColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.play_arrow,
+                              size: 16,
+                              color: courseColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'CURRENT LEVEL',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: courseColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Regular chapter node
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Node circle with animation for current node
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.0, end: isCurrent ? 1.0 : 0.0),
+            duration: const Duration(milliseconds: 1500),
+            builder: (context, value, child) {
+              return Container(
+                margin: const EdgeInsets.only(right: 16),
+                width: 50 + (value * 4),
+                height: 50 + (value * 4),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? courseColor
+                      : isCurrent
+                      ? Colors.white
+                      : Colors.grey[200],
+                  shape: BoxShape.circle,
+                  border: isCurrent
+                      ? Border.all(color: courseColor, width: 3)
+                      : null,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isCompleted || isCurrent)
+                          ? courseColor.withOpacity(0.3 + (value * 0.2))
+                          : Colors.grey.withOpacity(0.1),
+                      blurRadius: 8 + (value * 4),
+                      spreadRadius: value * 2,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: isLocked
+                      ? const Icon(Icons.lock, color: Colors.grey, size: 20)
+                      : isCompleted
+                      ? const Icon(Icons.check, color: Colors.white, size: 24)
+                      : Text(
+                    lesson['id'].toString(),
+                    style: TextStyle(
+                      color: isCurrent ? courseColor : Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          // Lesson content
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (!isLocked) {
+                  _navigateToChapter(lesson);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isLocked
+                          ? Colors.grey.withOpacity(0.1)
+                          : courseColor.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: isCurrent
+                      ? Border.all(color: courseColor, width: 2)
+                      : null,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            lesson['title'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: isLocked ? Colors.grey : Colors.black,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isLocked
+                                ? Colors.grey[200]
+                                : courseColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '+${lesson['xpReward']} XP',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isLocked ? Colors.grey : courseColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      lesson['description'],
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isLocked ? Colors.grey : Colors.grey[700],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    // Lesson stats row
+                    Wrap(
+                      spacing: 16,
+                      children: [
+                        _buildLessonStat(
+                            Icons.access_time,
+                            lesson['duration'],
+                            isLocked
+                        ),
+                        _buildLessonStat(
+                            Icons.extension,
+                            '${lesson['challenges']} exercises',
+                            isLocked
+                        ),
+                        _buildLessonStat(
+                            Icons.lightbulb_outline,
+                            '${lesson['concepts']} concepts',
+                            isLocked
+                        ),
+                      ],
+                    ),
+                    if (isCurrent) const SizedBox(height: 12),
+                    if (isCurrent)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: courseColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: courseColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.play_arrow,
+                              size: 16,
+                              color: courseColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'CURRENT CHAPTER',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: courseColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
       ),
-    ).animate()
-     .fadeIn(duration: 600.ms)
-     .slideY(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOutQuad);
-  }
-
-  Widget _buildLevelsList(Course course) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: course.content.levels.length,
-      itemBuilder: (context, levelIndex) {
-        final level = course.content.levels[levelIndex];
-        return _buildLevelItem(level, levelIndex, course);
-      },
     );
   }
 
-  Widget _buildLevelItem(CourseLevel level, int levelIndex, Course course) {
-    bool isLocked = levelIndex > course.currentLevel;
-    
-    return Animate(
-      effects: [
-        FadeEffect(duration: 400.ms, delay: Duration(milliseconds: 100 * levelIndex)),
-        SlideEffect(begin: const Offset(0.1, 0), end: Offset.zero, duration: 400.ms, delay: Duration(milliseconds: 100 * levelIndex), curve: Curves.easeOutQuad),
+  Widget _buildLessonStat(IconData icon, String text, bool isLocked) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: isLocked ? Colors.grey : Colors.grey[600],
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: isLocked ? Colors.grey : Colors.grey[600],
+          ),
+        ),
       ],
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: Border.all(
-            color: isLocked
-                ? Theme.of(context).colorScheme.outline.withOpacity(0.5)
-                : Theme.of(context).colorScheme.primary.withOpacity(0.5),
-            width: 1,
-          ),
-        ),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            dividerColor: Colors.transparent,
-          ),
-          child: ExpansionTile(
-            initiallyExpanded: _expandedLevels[levelIndex],
-            onExpansionChanged: (expanded) {
-              setState(() {
-                _expandedLevels[levelIndex] = expanded;
-              });
-            },
-            title: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: isLocked
-                        ? Theme.of(context).colorScheme.outline.withOpacity(0.3)
-                        : Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${level.levelNumber}',
-                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isLocked
-                            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
-                            : Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        level.title,
-                        style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isLocked
-                              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        level.narrative,
-                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: isLocked
-                              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.3)
-                              : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (isLocked)
-                  Icon(
-                    Icons.lock,
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-                    size: 20,
-                  ),
-              ],
-            ),
-            children: level.chapters.map((chapter) => _buildChapterItem(chapter, level, course)).toList(),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildChapterItem(CourseChapter chapter, CourseLevel parentLevel, Course course) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-        ),
-        child: ExpansionTile(
-          initiallyExpanded: true,
-          title: Text(
-            chapter.title,
-            style: Theme.of(context).textTheme.titleSmall!.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          subtitle: Text(
-            chapter.story,
-            style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ),
-          children: chapter.exercises.map((exercise) => _buildExerciseItem(exercise, parentLevel, chapter, course)).toList(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExerciseItem(CourseExercise exercise, CourseLevel parentLevel, CourseChapter parentChapter, Course course) {
-    final progressKey = 'L${parentLevel.levelNumber}C${parentChapter.title}E${exercise.type}';
-    final isCompleted = course.progress[progressKey] == 1;
-    final isLocked = parentLevel.levelNumber > course.currentLevel;
+  void _navigateToChapter(Map<String, dynamic> lesson) {
+    final courseViewModel = Provider.of<CourseViewModel>(context, listen: false);
+    final course = courseViewModel.currentCourse;
     
-    return GenieCard(
-      title: exercise.type,
-      subtitle: '5 min • ${exercise.type}',
-      description: exercise.content,
-      isCompleted: isCompleted,
-      isLocked: isLocked,
-      onTap: () {
-        if (!isLocked) {
+    if (course != null) {
+      // Check if this is a level header
+      if (lesson['isLevelHeader'] == true) {
+        // For level headers, navigate to the first chapter of that level
+        final levelIndex = lesson['levelIndex'];
+        if (levelIndex < course.content.levels.length && !lesson['isLocked']) {
           context.push(
-            '/course-detail/${course.id}?level=${parentLevel.levelNumber}&chapter=${parentChapter.title}&exercise=${exercise.type}'
+            '/course-detail/${course.id}?level=$levelIndex&chapter=0'
           );
         }
-      },
-      leadingWidget: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: isCompleted
-              ? Theme.of(context).colorScheme.secondary
-              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          _getIconForExerciseType(exercise.type),
-          color: isCompleted
-              ? Theme.of(context).colorScheme.onSecondary
-              : Theme.of(context).colorScheme.primary,
-          size: 20,
-        ),
-      ),
-    );
-  }
-
-  IconData _getIconForExerciseType(String type) {
-    switch (type.toLowerCase()) {
-      case 'video':
-        return Icons.play_circle_outline;
-      case 'interactive':
-        return Icons.code;
-      case 'project':
-        return Icons.build;
-      case 'quiz':
-        return Icons.quiz;
-      case 'coding':
-        return Icons.code;
-      case 'reading':
-        return Icons.article;
-      default:
-        return Icons.article;
+      } else {
+        // For regular chapters, navigate to the specific chapter
+        context.push(
+          '/course-detail/${course.id}?level=${lesson['levelIndex']}&chapter=${lesson['chapterIndex']}'
+        );
+      }
     }
-  }
-
-  Widget _buildGenieMessage(Course course) {
-    String message;
-    final completedLessons = _lessons.where((l) => l['isCompleted']).length;
-    final totalLessons = _lessons.length;
-    final progress = totalLessons > 0 ? completedLessons / totalLessons : 0;
-
-    if (completedLessons == 0) {
-      message = 'Welcome to your learning roadmap! This is where you can see all the lessons in your course. Start with the first lesson in Level 1 and work your way through.';
-    } else if (progress > 0.5) {
-      message = 'You\'re making great progress! Keep going to unlock all the lessons and complete the course.';
-    } else {
-      message = 'Here\'s your personalized learning path. Each level builds on the previous one, so make sure to complete them in order.';
-    }
-
-    return AvatarWithMessage(
-      message: message,
-      state: AvatarState.explaining,
-    ).animate()
-     .fadeIn(duration: 500.ms)
-     .slideY(begin: 1, end: 0, duration: 500.ms, curve: Curves.easeOutQuad);
   }
 
   // Helper methods
@@ -636,4 +1171,47 @@ class _CourseRoadmapScreenState extends State<CourseRoadmapScreen> with SingleTi
     final int hash = title.hashCode.abs();
     return colors[hash % colors.length];
   }
+
+  IconData _getIconForCourse(String courseName) {
+    switch (courseName.toLowerCase()) {
+      case 'flutter development':
+        return Icons.flutter_dash;
+      case 'react native':
+        return Icons.code;
+      case 'node.js':
+        return Icons.javascript;
+      case 'python':
+        return Icons.code;
+      case 'machine learning':
+        return Icons.psychology;
+      case 'web development':
+        return Icons.web;
+      case 'data analysis mastery':
+        return Icons.analytics;
+      default:
+        return Icons.school;
+    }
+  }
+}
+
+// Custom painter for dot pattern
+class DotPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+
+    const spacing = 20.0;
+
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 1, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

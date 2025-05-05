@@ -213,7 +213,7 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                   Expanded(child: Divider(color: Colors.grey[300])),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                             /* const SizedBox(height: 16),
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
@@ -234,9 +234,10 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                     ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ),*/
                               const SizedBox(height: 24),
                               const Text(
                                 'By signing in to SkillGenie, you agree to our Terms and Privacy Policy.',

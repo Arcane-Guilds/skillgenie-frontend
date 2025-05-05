@@ -79,6 +79,16 @@ void main() async {
 
     // Request notification permissions
     await serviceLocator<NotificationService>().requestPermissions();
+    
+    // Verify the API base URL in development
+    if (kDebugMode) {
+      try {
+        final apiConstantsType = serviceLocator<ChatViewModel>();
+        print('API Base URL: $apiConstantsType');
+      } catch (e) {
+        print('Failed to print API URL: $e');
+      }
+    }
 
     runApp(MultiProvider(
       providers: [
@@ -108,6 +118,7 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (context) => serviceLocator<ChatViewModel>(),
+          lazy: false, // Initialize immediately
         ),
         ChangeNotifierProvider(
           create: (context) =>
@@ -125,9 +136,33 @@ void main() async {
         builder: (context, child) {
           // Initialize socket connection when app is built
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
             final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
-            // Try to initialize socket connection
-            //chatViewModel.refreshCurrentChat();
+            
+            // If user is already authenticated, force a reconnect
+            if (authViewModel.isAuthenticated) {
+              print('User already authenticated at app launch, forcing chat connection');
+              // Add a small delay to ensure auth state is fully loaded
+              Future.delayed(const Duration(seconds: 1), () {
+                chatViewModel.reconnect();
+                
+                // Set up a periodic connection check
+                Timer.periodic(const Duration(seconds: 30), (timer) {
+                  if (!chatViewModel.isSocketConnected && authViewModel.isAuthenticated) {
+                    print('Periodic check: socket disconnected, attempting reconnect');
+                    chatViewModel.reconnect();
+                  }
+                });
+              });
+            }
+            
+            // Listen for auth state changes 
+            authViewModel.addListener(() {
+              if (authViewModel.isAuthenticated && !chatViewModel.isSocketConnected) {
+                print('Auth state changed: User authenticated, connecting socket');
+                chatViewModel.reconnect();
+              }
+            });
           });
           
           // Add error handling for widget errors
@@ -236,9 +271,33 @@ class MyApp extends StatelessWidget {
         builder: (context, child) {
           // Initialize socket connection when app is built
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
             final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
-            // Try to initialize socket connection
-            //chatViewModel.refreshCurrentChat();
+            
+            // If user is already authenticated, force a reconnect
+            if (authViewModel.isAuthenticated) {
+              print('User already authenticated at app launch, forcing chat connection');
+              // Add a small delay to ensure auth state is fully loaded
+              Future.delayed(const Duration(seconds: 1), () {
+                chatViewModel.reconnect();
+                
+                // Set up a periodic connection check
+                Timer.periodic(const Duration(seconds: 30), (timer) {
+                  if (!chatViewModel.isSocketConnected && authViewModel.isAuthenticated) {
+                    print('Periodic check: socket disconnected, attempting reconnect');
+                    chatViewModel.reconnect();
+                  }
+                });
+              });
+            }
+            
+            // Listen for auth state changes 
+            authViewModel.addListener(() {
+              if (authViewModel.isAuthenticated && !chatViewModel.isSocketConnected) {
+                print('Auth state changed: User authenticated, connecting socket');
+                chatViewModel.reconnect();
+              }
+            });
           });
           
           // Add error handling for widget errors

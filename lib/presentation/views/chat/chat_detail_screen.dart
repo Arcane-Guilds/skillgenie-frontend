@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,8 @@ import '../../../data/models/chat_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/chat_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/api_constants.dart';
 
 
 class ChatDetailScreen extends StatefulWidget {
@@ -128,12 +131,79 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> _loadCurrentUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    if (mounted) {
-      setState(() {
-        _currentUserId = userId;
-      });
+    print('ChatDetailScreen: Attempting to load current user ID');
+    
+    // Try from AuthViewModel first (most reliable source)
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final userId = authViewModel.userId;
+    
+    if (userId != null && userId.isNotEmpty) {
+      print('ChatDetailScreen: Got userId from AuthViewModel: $userId');
+      if (mounted) {
+        setState(() {
+          _currentUserId = userId;
+        });
+      }
+      return;
+    }
+    
+    // Try from SharedPreferences as fallback
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Try multiple possible keys
+      String? userIdFromPrefs;
+      for (final key in ['userId', 'user_id', 'id']) {
+        userIdFromPrefs = prefs.getString(key);
+        if (userIdFromPrefs != null && userIdFromPrefs.isNotEmpty) {
+          print('ChatDetailScreen: Got userId from SharedPreferences key "$key": $userIdFromPrefs');
+          break;
+        }
+      }
+      
+      // If still null, try to extract from user object
+      if (userIdFromPrefs == null) {
+        final userJson = prefs.getString('user');
+        if (userJson != null) {
+          try {
+            final userMap = json.decode(userJson);
+            userIdFromPrefs = userMap['id'] ?? userMap['_id'];
+            print('ChatDetailScreen: Extracted userId from user JSON: $userIdFromPrefs');
+          } catch (e) {
+            print('ChatDetailScreen: Error parsing user JSON: $e');
+          }
+        }
+      }
+      
+      if (userIdFromPrefs != null && mounted) {
+        setState(() {
+          _currentUserId = userIdFromPrefs;
+        });
+      } else {
+        print('ChatDetailScreen: WARNING - Could not find userId in SharedPreferences');
+      }
+    } catch (e) {
+      print('ChatDetailScreen: Error loading user ID: $e');
+    }
+    
+    // Last resort - try to get from ChatViewModel
+    if (_currentUserId == null && mounted) {
+      final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+      await chatViewModel.ensureCurrentUserId();
+      
+      final userId = await chatViewModel.getCurrentUserId();
+      if (userId != null && mounted) {
+        setState(() {
+          _currentUserId = userId;
+        });
+        print('ChatDetailScreen: Got userId from ChatViewModel: $_currentUserId');
+      }
+    }
+    
+    if (_currentUserId == null) {
+      print('ChatDetailScreen: CRITICAL - Failed to get userId from any source');
+    } else {
+      print('ChatDetailScreen: Successfully loaded userId: $_currentUserId');
     }
   }
 
@@ -174,15 +244,30 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     if (message.isEmpty) return;
 
     final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
 
     try {
       // Check if user is authenticated
-      final currentUserId = Provider.of<AuthViewModel>(context, listen: false).currentUser?.id;
-      final currentUser = Provider.of<AuthViewModel>(context, listen: false).currentUser;
+      final currentUserId = authViewModel.currentUser?.id;
+      final currentUser = authViewModel.currentUser;
 
       if (currentUserId == null || currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cannot send message: User not authenticated')),
+          const SnackBar(
+            content: Text('Cannot send message: User not authenticated'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Verify current chat is properly loaded
+      if (chatViewModel.currentChat == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot send message: Chat not loaded properly'),
+            backgroundColor: Colors.red,
+          ),
         );
         return;
       }
@@ -192,40 +277,65 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         _isComposing = false;
       });
 
+      // Store message text before clearing
+      final messageText = message;
+      
       // Clear input field immediately for better UX
       _messageController.clear();
 
       // Send the message
-      chatViewModel.sendMessage(message);
+      chatViewModel.sendMessage(messageText).catchError((error) {
+        // Handle any errors from the sendMessage method
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${error.toString()}'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: () {
+                // Put the text back in the input field
+                _messageController.text = messageText;
+                setState(() {
+                  _isComposing = true;
+                });
+              },
+            ),
+          ),
+        );
+      });
 
-      // Scroll to bottom to show the temporary message
-      _scrollToBottom();
+      // Check connection status
+      if (!chatViewModel.isSocketConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('You are offline. Messages will be sent when you reconnect.'),
+            backgroundColor: Colors.orange,
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: () {
+                // Force reconnection attempt
+                chatViewModel.reconnect();
+              },
+            ),
+          ),
+        );
+      }
+
+      // Scroll to bottom after sending a message
+      _scrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     } catch (e) {
-      // Show error if message sending fails
-      print('Failed to send message: $e');
+      print('Error in _handleSendMessage: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to send message: $e'),
-          action: SnackBarAction(
-            label: 'Retry',
-            onPressed: () => chatViewModel.sendMessage(message),
-          ),
+          backgroundColor: Colors.red,
         ),
       );
     }
-  }
-
-  void _scrollToBottom() {
-    // Use a small delay to ensure UI has updated
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
 
   void _markMessagesAsRead(ChatViewModel viewModel) {
@@ -281,7 +391,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 child: CircleAvatar(
                   radius: 18,
                   backgroundImage: chatRecipient?.avatar != null && chatRecipient!.avatar!.isNotEmpty
+                      ? (chatRecipient.avatar!.startsWith('http')
                       ? NetworkImage(chatRecipient.avatar!)
+                      : AssetImage('assets/images/${chatRecipient.avatar}.png'))
                       : null,
                   child: (chatRecipient?.avatar == null || chatRecipient!.avatar!.isEmpty)
                       ? Text(
@@ -311,15 +423,27 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ],
         ),
         actions: [
+          // Add debug button to test socket
+          IconButton(
+            icon: Icon(
+              Icons.bug_report,
+              color: Colors.grey[600],
+            ),
+            tooltip: 'Test Connection',
+            onPressed: () {
+              _testSocketConnection(context);
+            },
+          ),
           if (!chatViewModel.isSocketConnected)
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: Tooltip(
-                message: 'Offline mode',
-                child: Icon(
-                  Icons.cloud_off,
-                  color: Colors.red[300],
+              child: IconButton(
+                icon: Icon(
+                  Icons.sync_problem,
+                  color: Colors.amber[300],
                 ),
+                tooltip: 'Reconnect to chat',
+                onPressed: () => chatViewModel.reconnect(),
               ),
             ),
         ],
@@ -346,6 +470,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           },
           child: Column(
             children: [
+              // Add connection status banner at the top
+              _buildConnectionStatusBanner(),
+              
               Expanded(
                 child: _buildMessageList(chatViewModel),
               ),
@@ -418,11 +545,49 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 );
               }
 
-              final message = messages[index];
-              final isCurrentUser = message.sender.id == _currentUserId;
-              final messageStatus = chatViewModel.getMessageStatus(message.id);
+              try {
+                final message = messages[index];
+                final isCurrentUser = message.sender.id == _currentUserId;
+                final messageStatus = chatViewModel.getMessageStatus(message.id);
 
-              return _buildMessageItem(message, isCurrentUser, messageStatus, chatViewModel);
+                return _buildMessageItem(message, isCurrentUser, messageStatus, chatViewModel);
+              } catch (e) {
+                // Handle any null errors in messages
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Card(
+                    color: Colors.red.shade50,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Message Error',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'There was an error displaying this message: $e',
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => chatViewModel.refreshCurrentChat(),
+                            child: const Text('Refresh Messages'),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
             },
           ),
         ),
@@ -455,7 +620,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               child: CircleAvatar(
                 radius: 16,
                 backgroundImage: message.sender.avatar != null
+                    ? (message.sender.avatar!.startsWith('http')
                     ? NetworkImage(message.sender.avatar!)
+                    : AssetImage('assets/images/${message.sender.avatar}.png'))
                     : null,
                 child: message.sender.avatar == null
                     ? Text(message.sender.username[0])
@@ -602,6 +769,146 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 : null,
           ),
         ],
+      ),
+    );
+  }
+
+  // Add a connection status indicator banner
+  Widget _buildConnectionStatusBanner() {
+    return Consumer<ChatViewModel>(
+      builder: (context, chatViewModel, child) {
+        if (chatViewModel.isConnecting) {
+          return Container(
+            color: Colors.amber.shade100,
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+            child: const Row(
+              children: [
+                SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text('Connecting to chat...', style: TextStyle(color: Colors.amber, fontSize: 12)),
+              ],
+            ),
+          );
+        } else if (!chatViewModel.isSocketConnected) {
+          return Container(
+            color: Colors.red.shade100,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.cloud_off, size: 16, color: Colors.red),
+                    const SizedBox(width: 8),
+                    const Text('You are offline', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13)),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () => chatViewModel.reconnect(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade50,
+                        foregroundColor: Colors.red,
+                        minimumSize: const Size(80, 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: const Text('RECONNECT', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Messages will be sent when you reconnect. Your network connection may be unstable.',
+                  style: TextStyle(color: Colors.red, fontSize: 11),
+                ),
+              ],
+            ),
+          );
+        } else {
+          return const SizedBox.shrink(); // No banner when connected
+        }
+      },
+    );
+  }
+
+  // Add a method to test socket connection and show diagnostic info
+  void _testSocketConnection(BuildContext context) {
+    final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
+    
+    // Show dialog with connection status information
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Socket Connection Test'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Connected: ${chatViewModel.isSocketConnected ? 'Yes ✅' : 'No ❌'}'),
+                Text('Connecting: ${chatViewModel.isConnecting ? 'Yes' : 'No'}'),
+                const SizedBox(height: 16),
+                const Text('Connection Test:'),
+                FutureBuilder(
+                  future: chatViewModel.testConnection(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Row(
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 8),
+                          Text('Testing connection...')
+                        ],
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else {
+                      final success = snapshot.data as bool? ?? false;
+                      return Text(
+                        success 
+                          ? 'Ping test successful! Server responded. ✅' 
+                          : 'Ping test failed. No response from server. ❌',
+                        style: TextStyle(
+                          color: success ? Colors.green : Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Text('Connection Details:'),
+                const SizedBox(height: 8),
+                const Text('Socket URL: Check console logs for complete details'),
+                const SizedBox(height: 8),
+                Text('API Base URL: ${ApiConstants.baseUrl}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {}); // Refresh the dialog
+                  chatViewModel.reconnect();
+                },
+                child: const Text('Retry Connection'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }

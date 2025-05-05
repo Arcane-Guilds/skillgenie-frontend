@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,7 +10,13 @@ import 'package:skillGenie/presentation/widgets/avatar_widget.dart';
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../viewmodels/reminder_viewmodel.dart';
+import 'package:skillGenie/presentation/viewmodels/reminder_viewmodel.dart';
+import '../../../core/constants/cloudinary_constants.dart';
 import '../../../core/errors/error_handler.dart';
+import '../../../data/models/user_model.dart';
+import '../../viewmodels/profile_viewmodel.dart';
+import '../../viewmodels/reclamation_viewmodel.dart';
+import '../../../presentation/viewmodels/rating_viewmodel.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -35,8 +42,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _initControllers();
 
+    // Load user profile and reclamations on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserProfile();
+      context.read<ReclamationViewModel>().loadReclamations();
     });
   }
 
@@ -1002,13 +1011,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _showErrorSnackBar('Username cannot be empty');
                         return;
                       }
-                      
+
                       Navigator.pop(context);
 
                       try {
                         final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
                         String? imageUrl;
-                        
+
                         // First, handle image upload if needed
                         if (tempImageFile != null) {
                           try {
@@ -1027,21 +1036,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                              }
                           }
                         }
-                        
+
                         // Now update the profile with all the data
                         final updateData = {
                           'username': usernameController.text.trim(),
                           'bio': bioController.text.trim(),
                         };
-                        
+
                         // Only add avatar if we have a new image URL
                         if (imageUrl != null && imageUrl.isNotEmpty) {
                           updateData['avatar'] = imageUrl;
                         }
-                        
+
                         // Send direct update with validated data
                         await profileViewModel.updateProfile(updateData);
-                        
+
                         // Update local state after successful profile update
                         if (mounted) {
                            setState(() {
@@ -1307,6 +1316,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: TextStyle(color: Colors.red)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: _showDeleteAccountConfirmation,
+                    ),
+                  ),
+                  // App Rating Section
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, bottom: 8),
+                    child: Text(
+                      'App Rating',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Consumer<RatingViewModel>(
+                      builder: (context, ratingVM, _) => ListTile(
+                        leading: const Icon(Icons.star_outline),
+                        title: const Text('App Ratings'),
+                        subtitle: Text(
+                          ratingVM.userRating != null
+                              ? 'Your rating: ${ratingVM.userRating!.stars}/5'
+                              : 'Rate our app',
+                        ),
+                        trailing: Text(
+                          '${ratingVM.averageRating.toStringAsFixed(1)} ★',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onTap: () => context.push('/ratings'),
+                      ),
                     ),
                   ),
                 ],

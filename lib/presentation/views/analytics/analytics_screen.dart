@@ -4,10 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/ui_utils.dart';
-import '../../viewmodels/analytics_viewmodel.dart';
-import '../../../data/models/analytics_model.dart';
 import 'package:intl/intl.dart';
-import '../../../data/repositories/analytics_repository.dart';
 import '../../../data/datasources/analytics_remote_datasource.dart';
 import '../../../data/datasources/api_client.dart';
 

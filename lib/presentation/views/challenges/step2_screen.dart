@@ -6,8 +6,9 @@ import 'joinscreen.dart';
 
 class Step2Screen extends StatefulWidget {
   final String name;
+  final String challengeId;
 
-  const Step2Screen({super.key, required this.name});
+  const Step2Screen({super.key, required this.challengeId, required this.name});
 
   @override
   _Step2ScreenState createState() => _Step2ScreenState();
@@ -58,7 +59,7 @@ class _Step2ScreenState extends State<Step2Screen>
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const JoinScreen()),
+                        MaterialPageRoute(builder: (context) => JoinPartyScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -81,7 +82,9 @@ class _Step2ScreenState extends State<Step2Screen>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const GenerateCodeScreen()),
+                            builder: (context) =>  GenerateCodeScreen(
+                              challengeId: widget.challengeId,
+                            ),),
                       );
                     },
                     style: ElevatedButton.styleFrom(

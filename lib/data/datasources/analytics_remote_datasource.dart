@@ -47,4 +47,4 @@ class AnalyticsRemoteDataSource {
       throw ApiException('Failed to fetch recommendations', response.statusCode ?? 500, response.data.toString());
     }
   }
-} 
+}

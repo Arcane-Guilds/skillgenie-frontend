@@ -1324,35 +1324,19 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         }
       }
       
-      // Show loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 2),
-          content: Row(
-            children: [
-              const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text('Opening chat with ${user.username}...'),
-            ],
-          ),
-        ),
+      await chatViewModel.createChat(
+        participants: [user.id],
+        isGroupChat: false,
       );
       
-      // Find or create a chat with this user
-      final chatId = await chatViewModel.findOrCreateDirectChat(user.id);
-      
-      if (mounted && chatId != null) {
-        print('Chat found/created successfully with ID: $chatId');
-        GoRouter.of(context).push('/chat/detail', extra: chatId);
-      } else {
-        throw Exception('Failed to open chat: Chat ID is null');
+      if (mounted) {
+        final chatId = chatViewModel.currentChat?.id;
+        if (chatId != null) {
+          print('Chat created successfully with ID: $chatId');
+          GoRouter.of(context).push('/chat/detail', extra: chatId);
+        } else {
+          throw Exception('Failed to create chat: Chat ID is null');
+        }
       }
     } catch (e) {
       if (mounted) {

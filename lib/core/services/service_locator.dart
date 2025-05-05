@@ -58,7 +58,7 @@ Future<void> setupServiceLocator() async {
 
   // Data sources
   serviceLocator.registerSingleton<ApiClient>(ApiClient());
-  
+
   // Auth data sources
   serviceLocator.registerSingleton<AuthRemoteDataSource>(
     AuthRemoteDataSource(apiClient: serviceLocator<ApiClient>()),
@@ -66,7 +66,7 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerSingleton<AuthLocalDataSource>(
     AuthLocalDataSource(prefs: serviceLocator<SharedPreferences>()),
   );
-  
+
   // Profile data sources
   serviceLocator.registerSingleton<ProfileRemoteDataSource>(
     ProfileRemoteDataSource(apiClient: serviceLocator<ApiClient>()),
@@ -74,7 +74,7 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerSingleton<ProfileLocalDataSource>(
     ProfileLocalDataSource(prefs: serviceLocator<SharedPreferences>()),
   );
-  
+
   // Chatbot data sources
   serviceLocator.registerSingleton<ChatbotRemoteDataSource>(
     ChatbotRemoteDataSource(apiKey: ChatbotConstants.apiKey),
@@ -107,30 +107,30 @@ Future<void> setupServiceLocator() async {
       storageService: serviceLocator<StorageService>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<ChatbotRepository>(
     ChatbotRepository(
       remoteDataSource: serviceLocator<ChatbotRemoteDataSource>(),
       localDataSource: serviceLocator<ChatbotLocalDataSource>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<QuizRepository>(
     QuizRepository(
       client: serviceLocator<http.Client>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<CourseRepository>(
     CourseRepository(
       client: serviceLocator<http.Client>(),
     ),
   );
-  
+
   serviceLocator.registerSingleton<GameRepository>(
     GameRepository(),
   );
-  
+
   serviceLocator.registerSingleton<MediaGeneratorRepository>(
     MediaGeneratorRepository(
       flutterTts: serviceLocator<FlutterTts>(),
@@ -178,10 +178,10 @@ Future<void> setupServiceLocator() async {
     return viewModel;
   });
 
-  serviceLocator.registerFactory<SignUpViewModel>(() => 
-    SignUpViewModel(
-      authRepository: serviceLocator<AuthRepository>(),
-    )
+  serviceLocator.registerFactory<SignUpViewModel>(() =>
+      SignUpViewModel(
+        authRepository: serviceLocator<AuthRepository>(),
+      )
   );
 
   serviceLocator.registerFactory<ProfileViewModel>(() =>
@@ -190,30 +190,30 @@ Future<void> setupServiceLocator() async {
         authViewModel: serviceLocator<AuthViewModel>(),
       ),
   );
-  
+
   serviceLocator.registerFactory<ChatbotViewModel>(() =>
       ChatbotViewModel(
         chatbotRepository: serviceLocator<ChatbotRepository>(),
       ),
   );
-  
+
   // Game ViewModels
-  serviceLocator.registerFactory<GameViewModel>(() => 
-    GameViewModel(
-      gameRepository: serviceLocator<GameRepository>(),
-    )
+  serviceLocator.registerFactory<GameViewModel>(() =>
+      GameViewModel(
+        gameRepository: serviceLocator<GameRepository>(),
+      )
   );
-  
+
   // Lesson ViewModel
   serviceLocator.registerFactory<MediaGeneratorViewModel>(() =>
       MediaGeneratorViewModel(
         mediaGeneratorRepository: serviceLocator<MediaGeneratorRepository>(),
-    )
+      )
   );
 
   // Register QuizViewModel factory
   serviceLocator.registerFactoryParam<QuizViewModel, String, void>(
-    (userId, _) => QuizViewModel(
+        (userId, _) => QuizViewModel(
       userId: userId,
       quizRepository: serviceLocator<QuizRepository>(),
     ),
@@ -240,14 +240,14 @@ Future<void> setupServiceLocator() async {
   );
 
   serviceLocator.registerFactory<ReminderViewModel>(
-    () => ReminderViewModel(
+        () => ReminderViewModel(
       notificationService: serviceLocator<NotificationService>(),
       prefs: serviceLocator<SharedPreferences>(),
     ),
   );
 
   serviceLocator.registerFactory<CommunityViewModel>(
-    () => CommunityViewModel(
+        () => CommunityViewModel(
       communityRepository: serviceLocator<CommunityRepository>(),
       authViewModel: serviceLocator<AuthViewModel>(),
     ),

@@ -4,10 +4,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:skillGenie/data/repositories/achievement_repository.dart';
 import 'package:skillGenie/presentation/viewmodels/chat_viewmodel.dart';
-
+import 'dart:io';
 import 'core/navigation/app_router.dart';
 import 'core/services/service_locator.dart';
-
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/viewmodels/auth/auth_viewmodel.dart';
@@ -19,6 +18,8 @@ import 'presentation/viewmodels/friend_viewmodel.dart';
 import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'presentation/viewmodels/reclamation_viewmodel.dart';
+import 'utils/notification_helper.dart';
+import 'presentation/viewmodels/rating_viewmodel.dart';
 
 // Conditionally import web plugins only on web platform
 // This prevents dart:ui_web errors on mobile platforms
@@ -62,6 +63,10 @@ void main() async {
   runZonedGuarded(() async {
     // Ensure Flutter is initialized
     WidgetsFlutterBinding.ensureInitialized();
+    NotificationHelper.initialize();
+
+    // Configure SSL certificate bypass for development
+    HttpOverrides.global = new DevHttpOverrides();
 
     // Configure for web - use path URL strategy for cleaner URLs
     if (kIsWeb) {
@@ -79,6 +84,7 @@ void main() async {
 
     // Request notification permissions
     await serviceLocator<NotificationService>().requestPermissions();
+
 
     // Verify the API base URL in development
     if (kDebugMode) {
@@ -121,8 +127,10 @@ void main() async {
           lazy: false, // Initialize immediately
         ),
         ChangeNotifierProvider(
-          create: (context) =>
-              ReclamationViewModel(context.read<AuthViewModel>()),
+          create: (context) => serviceLocator<ReclamationViewModel>(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => serviceLocator<RatingViewModel>(),
         ),
       ],
       child: MaterialApp.router(
@@ -164,7 +172,7 @@ void main() async {
               }
             });
           });
-          
+
           // Add error handling for widget errors
           ErrorWidget.builder = (FlutterErrorDetails details) {
             return Scaffold(
@@ -221,6 +229,16 @@ void main() async {
   }, AppErrorHandler.handleError);
 }
 
+// Development-only HTTP client that bypasses SSL certificate validation
+class DevHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -256,8 +274,10 @@ class MyApp extends StatelessWidget {
           create: (context) => serviceLocator<ChatViewModel>(),
         ),
         ChangeNotifierProvider(
-          create: (context) =>
-              ReclamationViewModel(context.read<AuthViewModel>()),
+          create: (context) => serviceLocator<ReclamationViewModel>(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => serviceLocator<RatingViewModel>(),
         ),
       ],
       child: MaterialApp.router(
@@ -299,7 +319,7 @@ class MyApp extends StatelessWidget {
               }
             });
           });
-          
+
           // Add error handling for widget errors
           ErrorWidget.builder = (FlutterErrorDetails details) {
             return Scaffold(

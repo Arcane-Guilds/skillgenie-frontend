@@ -34,6 +34,7 @@ import '../../presentation/views/chat/socket_test_screen.dart';
 import '../services/service_locator.dart';
 import '../widgets/responsive_navigation.dart';
 import '../../presentation/views/reclamation/reclamation_screen.dart';
+import '../../presentation/views/rating/ratings_screen.dart';
 import '../../presentation/views/genie_story_screen.dart';
 
 // ShellScaffold remains the same
@@ -222,10 +223,6 @@ final appRouter = GoRouter(
       builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
-      path: '/genie-story',
-      builder: (context, state) => const GenieStoryScreen(),
-    ),
-    GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
@@ -352,6 +349,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/socket-test',
       builder: (context, state) => const SocketTestScreen(),
+    ),
+    GoRoute(
+      path: '/ratings',
+      builder: (context, state) => const RatingsScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) {

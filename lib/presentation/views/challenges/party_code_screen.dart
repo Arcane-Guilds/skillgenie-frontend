@@ -160,7 +160,8 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ChallengesScreen(partyCode: partyCode),
+        builder: (context) => ChallengesScreen(partyCode: partyCode,
+            challengeId: 'challengeId'), // Replace with actual challenge ID
       ),
     );
   }
@@ -196,7 +197,7 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const GenieAvatar(
+                GenieAvatar(
                   state: AvatarState.idle,
                   size: 120,
                   message: "Invite your friends by sharing or joining a party code!",
@@ -223,10 +224,10 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         TextField(
                           controller: _partyCodeController,
                           readOnly: true,
-                          style: const TextStyle(color: AppTheme.textPrimaryColor),
+                          style: TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Generated Party Code",
-                            labelStyle: const TextStyle(color: AppTheme.textSecondaryColor),
+                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(
@@ -276,10 +277,10 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _joinCodeController,
-                          style: const TextStyle(color: AppTheme.textPrimaryColor),
+                          style: TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Enter Party Code",
-                            labelStyle: const TextStyle(color: AppTheme.textSecondaryColor),
+                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(

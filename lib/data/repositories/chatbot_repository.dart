@@ -34,8 +34,8 @@ class ChatbotRepository {
       // Add user message to history
       chatHistory.add(userMessage);
       
-      // Get AI response using chat history context for better continuity
-      final responseText = await _remoteDataSource.generateChatResponse(chatHistory);
+      // Get AI response
+      final responseText = await _remoteDataSource.generateTextResponse(message);
       
       // Create AI response message
       final aiMessage = ChatMessage(
@@ -53,23 +53,6 @@ class ChatbotRepository {
       return aiMessage;
     } catch (e) {
       _logger.severe('Error sending text message: $e');
-      
-      // Create a fallback AI message for error cases
-      final fallbackMessage = ChatMessage(
-        isPrompt: false,
-        message: _getFallbackErrorResponse(),
-        time: DateTime.now(),
-      );
-      
-      // Still save the fallback response to history
-      try {
-        final chatHistory = await _localDataSource.loadChatHistory();
-        chatHistory.add(fallbackMessage);
-        await _localDataSource.saveChatHistory(chatHistory);
-      } catch (saveError) {
-        _logger.severe('Failed to save fallback message: $saveError');
-      }
-      
       rethrow;
     }
   }
@@ -93,8 +76,8 @@ class ChatbotRepository {
       // Add user message to history
       chatHistory.add(userMessage);
       
-      // Get AI response directly from the Gemini model
-      final responseText = await _remoteDataSource.sendImageMessage(imageFile, null);
+      // Get AI response
+      final responseText = await _remoteDataSource.generateImageDescription(imageFile);
       
       // Create AI response message
       final aiMessage = ChatMessage(
@@ -112,23 +95,6 @@ class ChatbotRepository {
       return aiMessage;
     } catch (e) {
       _logger.severe('Error sending image: $e');
-      
-      // Create a fallback AI message for error cases
-      final fallbackMessage = ChatMessage(
-        isPrompt: false,
-        message: "I couldn't analyze this image properly. There might be an issue with the connection or the image format.",
-        time: DateTime.now(),
-      );
-      
-      // Still save the fallback response to history
-      try {
-        final chatHistory = await _localDataSource.loadChatHistory();
-        chatHistory.add(fallbackMessage);
-        await _localDataSource.saveChatHistory(chatHistory);
-      } catch (saveError) {
-        _logger.severe('Failed to save fallback message: $saveError');
-      }
-      
       rethrow;
     }
   }
@@ -153,18 +119,5 @@ class ChatbotRepository {
       _logger.severe('Error clearing chat history: $e');
       rethrow;
     }
-  }
-  
-  /// Get a fallback error response message
-  String _getFallbackErrorResponse() {
-    final List<String> fallbackResponses = [
-      "I'm having trouble processing your request. Please try again in a moment.",
-      "There seems to be an issue with my response system. Could you please try asking again?",
-      "I apologize, but I couldn't generate a proper response. This might be due to a temporary issue.",
-      "I encountered a problem while processing your request. Please try rephrasing your question.",
-    ];
-    
-    // Return a random fallback response
-    return fallbackResponses[DateTime.now().millisecondsSinceEpoch % fallbackResponses.length];
   }
 } 

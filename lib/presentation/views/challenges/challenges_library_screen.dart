@@ -10,11 +10,13 @@ import 'step1_screen.dart';
 const Color kPrimaryBlue = Color(0xFF29B6F6); // Matching the "New Post" button blue
 
 class Challenge {
+  final String id;
   final String title;
   final String difficulty;
   final List<String> languages;
 
   Challenge({
+    required this.id,
     required this.title,
     required this.difficulty,
     required this.languages,
@@ -23,9 +25,12 @@ class Challenge {
   // Factory constructor to create Challenge from JSON response
   factory Challenge.fromJson(Map<String, dynamic> json) {
     return Challenge(
-      title: json['title'] ?? 'No Title', 
-      difficulty: json['difficulty'] ?? 'No Difficulty',
-      languages: List<String>.from(json['languages'] ?? []),
+      id: json['_id'] ?? '',
+      title: json['title'] ?? 'No Title', // Default to 'No Title' if null
+      difficulty: json['difficulty'] ??
+          'No Difficulty', // Default to 'No Difficulty' if null
+      languages: List<String>.from(
+          json['languages'] ?? []), // Default to empty list if null
     );
   }
 }
@@ -45,15 +50,11 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
 
   // Fetch challenges from API
   Future<void> fetchChallenges() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+    final response =
+        await http.get(Uri.parse('${ApiConstants.baseUrl}/challenges'));
 
     try {
-      final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/challenges'));
-
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
       setState(() {
         _challengesList = data.map((json) => Challenge.fromJson(json)).toList();
@@ -183,12 +184,12 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      /*floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const Step1Screen(name: 'New Challenge'),
+              builder: (context) => const Step1Screen(,name: 'New Challenge'),
             ),
           );
         },
@@ -196,9 +197,9 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
         foregroundColor: Colors.white,
         elevation: 2,
         child: const Icon(Icons.add),
-      ).animate()
-        .fadeIn(duration: 500.ms)
-        .slideY(begin: 0.3, end: 0),
+      ).animate()*/
+        //.fadeIn(duration: 500.ms)
+        //.slideY(begin: 0.3, end: 0),
     );
   }
 
@@ -374,8 +375,9 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => Step1Screen(
-                          name: challenge.title,
-                        ),
+                            challengeId: challenge.id,
+                            name:challenge.title, // Passing the challenge title
+                          ),
                         ),
                       );
                     },
@@ -538,6 +540,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => Step1Screen(
+                          challengeId: challenge.id,
                           name: challenge.title,
                         ),
                       ),

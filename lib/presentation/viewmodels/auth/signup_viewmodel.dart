@@ -25,7 +25,7 @@ class SignUpViewModel extends ChangeNotifier {
     );
   }
 
-  Future<void> signUp(BuildContext context, {required String username, required String email, required String password, required int age}) async {
+  Future<void> signUp(BuildContext context, {required String username, required String email, required String password}) async {
   _setLoading(true);
   _errorMessage = null;
   notifyListeners();

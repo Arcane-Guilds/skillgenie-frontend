@@ -962,8 +962,10 @@ class CommunityViewModel extends ChangeNotifier {
 
   // Reset error message
   void resetError() {
-    _errorMessage = null;
-    notifyListeners();
+    if (_errorMessage != null) {
+      _errorMessage = null;
+      notifyListeners();
+    }
   }
 
   // Helper method to merge replies from different sources

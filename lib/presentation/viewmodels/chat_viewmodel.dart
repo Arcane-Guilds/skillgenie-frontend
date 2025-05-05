@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +8,7 @@ import '../../core/storage/secure_storage.dart';
 import '../../data/models/chat_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/chat_repository.dart';
+import 'auth/auth_viewmodel.dart';
 
 enum MessageStatus {
   sending,
@@ -17,6 +20,7 @@ enum MessageStatus {
 class ChatViewModel with ChangeNotifier {
   final ChatRepository _chatRepository;
   final SecureStorage _secureStorage;
+  final AuthViewModel _authViewModel;
 
   // Add this getter to check the socket connection status
   bool get isSocketConnected => _chatRepository.isSocketConnected;
@@ -28,10 +32,12 @@ class ChatViewModel with ChangeNotifier {
   String? _selectedChatId;
   bool _isLoading = false;
   bool _socketInitialized = false;
+  bool _isConnecting = false;
   String? _errorMessage;
   final int _page = 1;
   final bool _hasMoreMessages = true;
   Timer? _messageRefreshTimer;
+  Timer? _connectionCheckTimer;
   String? _currentUserId;
   int _totalUnreadCount = 0;
   Map<String, int> _unreadCountByChat = {};
@@ -51,6 +57,7 @@ class ChatViewModel with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   int get totalUnreadCount => _totalUnreadCount;
   bool get socketInitialized => _socketInitialized;
+  bool get isConnecting => _isConnecting;
   Stream<Message> get newMessageStream => _newMessageController.stream;
   Stream<Chat> get newChatStream => _newChatController.stream;
 
@@ -60,38 +67,107 @@ class ChatViewModel with ChangeNotifier {
   ChatViewModel({
     required ChatRepository chatRepository,
     required SecureStorage secureStorage,
+    required AuthViewModel authViewModel,
   }) : _chatRepository = chatRepository,
-        _secureStorage = secureStorage {
-    _initialize();
+        _secureStorage = secureStorage,
+        _authViewModel = authViewModel {
+    _authViewModel.addListener(_handleAuthChange);
+    _handleAuthChange();
+  }
+
+  void _handleAuthChange() {
+    final isAuthenticated = _authViewModel.isAuthenticated;
+    final userId = _authViewModel.userId;
+    
+    print('ChatViewModel: Auth state changed - isAuthenticated: $isAuthenticated, userId: $userId');
+    
+    if (isAuthenticated && userId != null) {
+      _currentUserId = userId;
+      print('ChatViewModel: Setting currentUserId to $userId');
+      
+      if (!_socketInitialized) {
+        _initialize();
+      }
+    } else if (!isAuthenticated && _socketInitialized) {
+      _chatRepository.dispose();
+      _socketInitialized = false;
+      _isConnecting = false;
+      _chats = [];
+      _messages = [];
+      _currentChat = null;
+      _messageRefreshTimer?.cancel();
+      _connectionCheckTimer?.cancel();
+      notifyListeners();
+    }
   }
 
   Future<void> _initialize() async {
+    print('ChatViewModel: Initializing...');
     
-    _chatRepository.onNewMessage = _handleNewMessage as void Function(Message message)?;
-    _chatRepository.onMessagesRead = _handleMessagesRead as void Function(String chatId, String userId)?;
+    // First, try to get the userId directly from AuthViewModel
+    if (_currentUserId == null) {
+      _currentUserId = _authViewModel.userId;
+      print('ChatViewModel: Got userId from AuthViewModel: $_currentUserId');
+    }
+    
+    _chatRepository.onNewMessage = (message) {
+      if (message is Map<String, dynamic>) {
+        _handleNewMessage(message);
+      } else if (message is Message) {
+        _handleNewMessage(message.toJson());
+      }
+    };
+    
+    _chatRepository.onMessagesRead = (chatId, userId) {
+      _handleMessagesRead({
+        'chatId': chatId,
+        'userId': userId,
+      });
+    };
+    
+    _chatRepository.onNewChat = (chat) {
+      if (chat is Map<String, dynamic>) {
+        _handleNewChat(chat);
+      } else if (chat is Chat) {
+        _handleNewChat(chat.toJson());
+      }
+    };
 
     await _initializeSocket();
 
-    _currentUserId = await _secureStorage.getUserId();
-    print('ChatViewModel initialized with user ID: $_currentUserId');
+    // If we still don't have a user ID, try to get it from secure storage
+    if (_currentUserId == null) {
+      _currentUserId = await _secureStorage.getUserId();
+      print('ChatViewModel initialized with user ID from storage: $_currentUserId');
+    }
+
+    // If we still don't have a user ID, log an error
+    if (_currentUserId == null) {
+      print('ERROR: ChatViewModel could not get user ID from any source');
+    } else {
+      print('ChatViewModel successfully initialized with user ID: $_currentUserId');
+    }
 
     await loadChats();
     await refreshUnreadCounts();
 
-    _setupMessageRefreshTimer();
+    _setupConnectionCheckTimer();
   }
 
   Future<void> _initializeSocket() async {
-    if (_socketInitialized) return;
+    if (_socketInitialized || _isConnecting) return;
 
+    _isConnecting = true;
+    notifyListeners();
+    
     try {
-      // Initialize socket connection
+      print('ChatViewModel: Attempting to initialize socket connection...');
       await _chatRepository.initializeSocket();
       _socketInitialized = true;
       notifyListeners();
 
-      // Check connection status periodically and reconnect if needed
-      Timer.periodic(const Duration(seconds: 15), (timer) {
+      _connectionCheckTimer?.cancel();
+      _connectionCheckTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
         if (!_chatRepository.isSocketConnected) {
           print('Socket disconnected, attempting to reconnect...');
           _chatRepository.initializeSocket();
@@ -99,15 +175,77 @@ class ChatViewModel with ChangeNotifier {
       });
     } catch (e) {
       print('ChatViewModel: Error initializing socket: $e');
-      _errorMessage = 'Failed to initialize real-time connection';
+      _errorMessage = 'Failed to initialize chat connection. Please try again.';
       notifyListeners();
+    } finally {
+      _isConnecting = false;
+      notifyListeners();
+    }
+  }
 
-      // Retry after delay if initialization fails
-      Future.delayed(const Duration(seconds: 5), () {
-        if (!_socketInitialized) {
-          _initializeSocket();
-        }
-      });
+  void _setupConnectionCheckTimer() {
+    _connectionCheckTimer?.cancel();
+    _connectionCheckTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (!_chatRepository.isSocketConnected && !_isConnecting) {
+        print('Connection check: Socket disconnected, attempting to reconnect...');
+        _initializeSocket();
+      }
+    });
+  }
+
+  Future<void> reconnect() async {
+    if (_isConnecting) return;
+    
+    _chatRepository.dispose();
+    _socketInitialized = false;
+    await _initializeSocket();
+  }
+
+  Future<bool> testConnection() async {
+    try {
+      if (!_socketInitialized || !_chatRepository.isSocketConnected) {
+        print('Socket not initialized or not connected, attempting to reconnect first');
+        await reconnect();
+        // Wait briefly for reconnection to complete
+        await Future.delayed(const Duration(seconds: 2));
+      }
+      
+      if (!_chatRepository.isSocketConnected) {
+        print('Socket still not connected after reconnect attempt');
+        return false;
+      }
+      
+      try {
+        print('Sending ping to test connection');
+        final completer = Completer<bool>();
+        
+        // Create a one-time listener for the pong response
+        _chatRepository.onPong = (data) {
+          print('Received pong response: $data');
+          if (!completer.isCompleted) {
+            completer.complete(true);
+          }
+        };
+        
+        // Send ping
+        _chatRepository.sendPing();
+        
+        // Wait for pong with timeout
+        Timer(const Duration(seconds: 3), () {
+          if (!completer.isCompleted) {
+            print('Ping timeout - no pong received');
+            completer.complete(false);
+          }
+        });
+        
+        return await completer.future;
+      } catch (e) {
+        print('Error during ping test: $e');
+        return false;
+      }
+    } catch (e) {
+      print('Error in testConnection: $e');
+      return false;
     }
   }
 
@@ -297,16 +435,32 @@ class ChatViewModel with ChangeNotifier {
   }
 
   Future<void> sendMessage(String content) async {
-    if (_currentChat == null || content.trim().isEmpty) return;
+    if (_currentChat == null || content.trim().isEmpty) {
+      throw Exception('Cannot send message: Chat not selected or empty message');
+    }
+    
+    // Ensure we have a current user ID
+    if (_currentUserId == null) {
+      await ensureCurrentUserId();
+      
+      if (_currentUserId == null) {
+        print('Cannot send message: _currentUserId is still null after retry');
+        _setError('Cannot send message: Not authenticated');
+        throw Exception('Cannot send message: Not authenticated');
+      }
+    }
 
     try {
+      // Generate a unique temp ID for the message
+      final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+
       // Create temporary message with local ID
       final tempMessage = Message(
-        id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        id: tempId,
         chatId: _currentChat!.id,
         sender: User(
           id: _currentUserId!,
-          username: '', // Will be filled in by server
+          username: 'Me', // Use a placeholder name until server response
           email: '',
         ),
         content: content,
@@ -322,16 +476,19 @@ class ChatViewModel with ChangeNotifier {
 
       // Send message through socket
       try {
+        print('Attempting to send message via socket: $content, tempId: $tempId');
+        
         final success = await _chatRepository.sendMessageViaSocketWithTimeout(
           _currentChat!.id,
           content,
+          tempId: tempId, // Pass the tempId to help with matching
           timeout: const Duration(seconds: 3),
         );
 
         if (success) {
           _messageStatus[tempMessage.id] = MessageStatus.sent;
           notifyListeners();
-          print('Message sent successfully via socket');
+          print('Message sent successfully via socket, temp message status updated');
         } else {
           throw Exception('Socket send timeout');
         }
@@ -339,23 +496,45 @@ class ChatViewModel with ChangeNotifier {
         print('Socket send failed, using REST API: $socketError');
 
         // Fall back to REST API if socket fails
-        await _chatRepository.sendMessage(_currentChat!.id, content);
-        _messageStatus[tempMessage.id] = MessageStatus.sent;
-        notifyListeners();
+        final newMessage = await _chatRepository.sendMessage(_currentChat!.id, content);
+        
+        // If REST API call succeeded, remove the temporary message since we'll get the real one
+        if (newMessage != null) {
+          // Find and remove temporary message
+          final tempIndex = _messages.indexWhere((m) => m.id == tempId);
+          if (tempIndex >= 0) {
+            _messages.removeAt(tempIndex);
+          }
+          
+          // Add the official message from the server
+          _messages.insert(0, newMessage);
+          notifyListeners();
+          print('Message sent successfully via REST API, temp message replaced');
+        } else {
+          // Just mark temp message as sent if we don't have a real one
+          _messageStatus[tempMessage.id] = MessageStatus.sent;
+          notifyListeners();
+        }
       }
 
       // The message will appear in the next refresh or socket event
     } catch (e) {
       print('Error sending message: $e');
 
-      // Mark the temporary message as failed
-      final tempMessageIndex = _messages.indexWhere((m) => m.id.startsWith('temp_') && m.content == content);
+      // Find matching temporary message by content
+      final tempMessageIndex = _messages.indexWhere((m) => 
+        m.id.startsWith('temp_') && 
+        m.content == content && 
+        m.sender.id == _currentUserId
+      );
+      
       if (tempMessageIndex >= 0) {
         _messageStatus[_messages[tempMessageIndex].id] = MessageStatus.failed;
         notifyListeners();
       }
 
       _setError('Failed to send message: $e');
+      throw e; // Re-throw the error to be caught by the UI
     }
   }
 
@@ -423,18 +602,51 @@ class ChatViewModel with ChangeNotifier {
       print('New message received: $data');
       final message = Message.fromJson(data);
 
+      // Extract tempId from the data if present
+      final tempId = data['tempId'] as String?;
+      print('Message tempId from server: $tempId');
+
       // Add to stream for UI components that are listening specifically for new messages
       _newMessageController.add(message);
 
       // If this message belongs to the currently selected chat, add it to the messages list
       if (_currentChat?.id == message.chatId) {
-        // Check if the message already exists in our list
+        // First check if there's a tempId to match
+        bool tempMessageRemoved = false;
+        if (tempId != null && tempId.isNotEmpty) {
+          // Try to find and remove the temporary message with matching tempId
+          final tempIndex = _messages.indexWhere((m) => m.id == tempId);
+          if (tempIndex >= 0) {
+            print('Found and removing temporary message with matching tempId: $tempId');
+            _messages.removeAt(tempIndex);
+            tempMessageRemoved = true;
+          }
+        }
+
+        // If no match by tempId, check for matching content from current user
+        if (!tempMessageRemoved && message.sender.id == _currentUserId) {
+          // Look for temporary messages with matching content
+          final tempIndices = <int>[];
+          for (int i = 0; i < _messages.length; i++) {
+            if (_messages[i].id.startsWith('temp_') &&
+                _messages[i].content == message.content &&
+                _messages[i].sender.id == message.sender.id) {
+              tempIndices.add(i);
+              print('Found temporary message at index $i with matching content: ${message.content}');
+            }
+          }
+
+          // Remove temp messages from last to first to avoid index shifting issues
+          for (int i = tempIndices.length - 1; i >= 0; i--) {
+            print('Removing temporary message at index ${tempIndices[i]}');
+            _messages.removeAt(tempIndices[i]);
+            tempMessageRemoved = true;
+          }
+        }
+
+        // Check if the message already exists to avoid duplicates
         final existingIndex = _messages.indexWhere((m) => m.id == message.id);
-
         if (existingIndex == -1) {
-          // First, try to remove any temporary messages with the same content
-          _removeTempMessage(message.content);
-
           // Add new message to the list
           _messages.insert(0, message);
 
@@ -587,28 +799,77 @@ class ChatViewModel with ChangeNotifier {
   @override
   void dispose() {
     _messageRefreshTimer?.cancel();
+    _connectionCheckTimer?.cancel();
     _chatRepository.dispose();
     _newMessageController.close();
     _newChatController.close();
+    _authViewModel.removeListener(_handleAuthChange);
     super.dispose();
   }
 
-  // Remove temporary message once the real one arrives
-  void _removeTempMessage(String content) {
-    // Find ALL temp messages with the same content (not just the first one)
-    final tempIndices = <int>[];
-
-    for (int i = 0; i < _messages.length; i++) {
-      if (_messages[i].id.startsWith('temp_') && _messages[i].content == content) {
-        tempIndices.add(i);
-        print('  Found temporary message at index $i with content: $content');
+  // Helper method to ensure we have the current user ID from all possible sources
+  Future<void> ensureCurrentUserId() async {
+    if (_currentUserId != null) return;
+    
+    print('ChatViewModel: Attempting to ensure currentUserId is set');
+    
+    // Try from AuthViewModel first
+    _currentUserId = _authViewModel.userId;
+    if (_currentUserId != null) {
+      print('ChatViewModel: Got userId from AuthViewModel: $_currentUserId');
+      return;
+    }
+    
+    // Try from SharedPreferences/secure storage
+    _currentUserId = await _secureStorage.getUserId();
+    if (_currentUserId != null) {
+      print('ChatViewModel: Got userId from SecureStorage: $_currentUserId');
+      return;
+    }
+    
+    // Try from AuthViewModel currentUser object
+    if (_authViewModel.currentUser != null) {
+      _currentUserId = _authViewModel.currentUser!.id;
+      print('ChatViewModel: Got userId from AuthViewModel.currentUser: $_currentUserId');
+      return;
+    }
+    
+    // Try directly from SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userIdFromPrefs = prefs.getString('user_id') ?? prefs.getString('userId');
+      if (userIdFromPrefs != null && userIdFromPrefs.isNotEmpty) {
+        _currentUserId = userIdFromPrefs;
+        print('ChatViewModel: Got userId directly from SharedPreferences: $_currentUserId');
+        return;
       }
+      
+      // Try to get it from the user object in SharedPreferences
+      final userJson = prefs.getString("user");
+      if (userJson != null) {
+        try {
+          final userObj = json.decode(userJson);
+          _currentUserId = userObj['id'] ?? userObj['_id'];
+          if (_currentUserId != null) {
+            print('ChatViewModel: Extracted userId from user JSON: $_currentUserId');
+            return;
+          }
+        } catch (e) {
+          print('ChatViewModel: Error parsing user JSON: $e');
+        }
+      }
+    } catch (e) {
+      print('ChatViewModel: Error getting userId from SharedPreferences: $e');
     }
+    
+    print('ChatViewModel: CRITICAL - Could not get userId from any source');
+  }
 
-    // Remove from last to first to avoid index shifting problems
-    for (int i = tempIndices.length - 1; i >= 0; i--) {
-      print('  Removing temporary message at index ${tempIndices[i]}');
-      _messages.removeAt(tempIndices[i]);
+  // Getter for current user ID that ensures it's loaded
+  Future<String?> getCurrentUserId() async {
+    if (_currentUserId == null) {
+      await ensureCurrentUserId();
     }
+    return _currentUserId;
   }
 }

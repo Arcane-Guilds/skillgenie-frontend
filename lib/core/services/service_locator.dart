@@ -258,6 +258,7 @@ Future<void> setupServiceLocator() async {
       ChatViewModel(
         chatRepository: serviceLocator<ChatRepository>(),
         secureStorage: serviceLocator<SecureStorage>(),
+        authViewModel: serviceLocator<AuthViewModel>(),
       ),
   );
 }

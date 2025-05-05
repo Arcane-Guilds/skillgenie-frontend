@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +11,9 @@ import 'package:flutter/foundation.dart';
 import 'package:skillGenie/presentation/views/achievements_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:confetti/confetti.dart';
+import 'package:shimmer/shimmer.dart';
+import 'dart:math';
 
 import '../../../data/models/user_model.dart';
 import '../../../data/models/community/post.dart';
@@ -42,6 +47,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   File? _imageFile;
   bool _isUploadingImage = false;
   double _uploadProgress = 0;
+  String? selectedFrame;
+  String? selectedDecoration;
+  String? selectedBackground;
+  bool _pulseValue = false;
+  late ConfettiController _confettiController;
+  Timer? _pulseTimer;
 
   // Controllers
   late TextEditingController _bioController;
@@ -52,11 +63,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     super.initState();
     _initControllers();
     _tabController = TabController(length: 2, vsync: this);
+    _confettiController = ConfettiController(duration: const Duration(seconds: 10));
+    _pulseTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+      setState(() {
+        _pulseValue = !_pulseValue;
+      });
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+<<<<<<< HEAD
       final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
       if (profileViewModel.currentProfile == null) {
         _loadInitialData();
       }
+=======
+      _loadInitialData();
+      _loadEquippedCosmetics();
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
     });
   }
 
@@ -64,6 +86,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   void dispose() {
     _tabController.dispose();
     _bioController.dispose();
+    _confettiController.dispose();
+    _pulseTimer?.cancel();
     super.dispose();
   }
 
@@ -108,6 +132,50 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     } catch (e) {
       print("Error in _loadInitialData: $e");
       if (mounted) _showErrorSnackBar(profileViewModel.errorMessage ?? e.toString());
+    }
+  }
+
+  Future<void> _loadEquippedCosmetics() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedFrame = prefs.getString('selectedFrame');
+      selectedDecoration = prefs.getString('selectedDecoration');
+      selectedBackground = prefs.getString('selectedBackground');
+      
+      // Convert empty strings to null
+      if (selectedFrame == '') selectedFrame = null;
+      if (selectedDecoration == '') selectedDecoration = null;
+      if (selectedBackground == '') selectedBackground = null;
+    });
+
+    // Start confetti if decoration is equipped
+    if (selectedDecoration == 'decoration_confetti') {
+      _confettiController.play();
+    }
+  }
+
+  Future<void> _saveEquippedCosmetics() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedFrame', selectedFrame ?? '');
+    await prefs.setString('selectedDecoration', selectedDecoration ?? '');
+    await prefs.setString('selectedBackground', selectedBackground ?? '');
+  }
+
+  Future<void> _unequipCosmetic(String type) async {
+    final prefs = await SharedPreferences.getInstance();
+    switch (type) {
+      case 'frame':
+        setState(() => selectedFrame = null);
+        await prefs.setString('selectedFrame', '');
+        break;
+      case 'decoration':
+        setState(() => selectedDecoration = null);
+        await prefs.setString('selectedDecoration', '');
+        break;
+      case 'background':
+        setState(() => selectedBackground = null);
+        await prefs.setString('selectedBackground', '');
+        break;
     }
   }
 
@@ -640,6 +708,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildWebStatCard(
+<<<<<<< HEAD
             context,
             'Streak',
             '${user.streakDays} days',
@@ -655,6 +724,23 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             Icons.emoji_events,
             Colors.amber.shade400,
             screenWidth
+=======
+          context,
+          'Streak',
+          '${user.streakDays} days',
+          Icons.local_fire_department,
+          Colors.orange.shade700,
+          screenWidth
+        ),
+        const SizedBox(width: 24),
+        _buildWebStatCard(
+          context,
+          'Badges',
+          '${user.earnedBadges.length ?? 0}',
+          Icons.emoji_events,
+          Colors.amber.shade400,
+          screenWidth
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
         ),
       ],
     );
@@ -664,6 +750,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildWebStatCard(BuildContext context, String title, String value, IconData icon, Color iconColor, double screenWidth) {
     // Dynamic sizing based on screen width
     final cardWidth = screenWidth > 1600 ? 220.0 :
+<<<<<<< HEAD
     screenWidth > 1200 ? 180.0 :
     screenWidth > 992 ? 160.0 : 140.0;
 
@@ -678,6 +765,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final titleFontSize = screenWidth > 1600 ? 18.0 :
     screenWidth > 1200 ? 16.0 :
     screenWidth > 992 ? 15.0 : 14.0;
+=======
+                     screenWidth > 1200 ? 180.0 :
+                     screenWidth > 992 ? 160.0 : 140.0;
+
+    final iconSize = screenWidth > 1600 ? 60.0 :
+                    screenWidth > 1200 ? 50.0 :
+                    screenWidth > 992 ? 45.0 : 40.0;
+
+    final valueFontSize = screenWidth > 1600 ? 36.0 :
+                         screenWidth > 1200 ? 32.0 :
+                         screenWidth > 992 ? 28.0 : 24.0;
+
+    final titleFontSize = screenWidth > 1600 ? 18.0 :
+                         screenWidth > 1200 ? 16.0 :
+                         screenWidth > 992 ? 15.0 : 14.0;
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
 
     return Container(
       width: cardWidth,
@@ -737,6 +840,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildWebStatCard(
+<<<<<<< HEAD
             context,
             'Streak',
             '${user.streakDays} days',
@@ -751,6 +855,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             Icons.emoji_events,
             Colors.amber.shade400,
             screenWidth
+=======
+          context,
+          'Streak',
+          '${user.streakDays} days',
+          Icons.local_fire_department,
+          Colors.orange.shade700,
+          screenWidth
+        ),
+        _buildWebStatCard(
+          context,
+          'Badges',
+          '${user.earnedBadges.length ?? 0}',
+          Icons.emoji_events,
+          Colors.amber.shade400,
+          screenWidth
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
         ),
       ],
     );
@@ -841,28 +961,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final communityViewModel = context.watch<CommunityViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Profile',
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: false,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.group,color: kPrimaryBlue),
-            onPressed: () {
-              GoRouter.of(context).go('/friends');
-            },
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.settings,
-              color: kPrimaryBlue,
+      body: Stack(
+        children: [
+          // Background effect for the entire screen
+          if (selectedBackground != null)
+            Positioned.fill(
+              child: _buildBackgroundEffect(),
             ),
+<<<<<<< HEAD
             onPressed: _navigateToSettings,
           ),
         ],
@@ -1002,10 +1108,335 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                               color: Colors.white,
                               size: 20,
                             ),
+=======
+          
+          // Main content
+          SafeArea(
+            child: Consumer2<AuthViewModel, ProfileViewModel>(
+              builder: (context, authViewModel, profileViewModel, _) {
+                if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
+                    ),
+                  );
+                }
+
+                final user = profileViewModel.currentProfile;
+                if (user == null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('No profile data available'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadInitialData,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryBlue,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await _loadInitialData();
+                  },
+                  color: kPrimaryBlue,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 24),
+                        // Profile picture
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Hero(
+                              tag: 'profile_image',
+                              child: GestureDetector(
+                                onTap: _pickImage,
+                                child: Container(
+                                  height: 120,
+                                  width: 120,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(60),
+                                    child: _buildProfileImage(user),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: kPrimaryBlue,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // User name
+                        Text(
+                          user.username,
+                          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // User bio (replace email)
+                        Text(
+                          (user.bio != null && user.bio!.trim().isNotEmpty)
+                              ? user.bio!
+                              : 'No bio set.',
+                          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
+                            _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: kPrimaryBlue,
+                            unselectedLabelColor: Colors.grey,
+                            indicatorColor: kPrimaryBlue,
+                            tabs: const [
+                              Tab(icon: Icon(Icons.list), text: 'Posts'),
+                              Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: 500, // or MediaQuery.of(context).size.height * 0.6, etc.
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              // Tab 1: User Posts
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: _buildUserPosts(),
+                              ),
+                              // Tab 2: Achievements & Analytics
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    // Achievements button
+                                    Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(18),
+                                      color: Colors.white,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(18),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => AchievementsScreen(userId: user.id),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(18),
+                                            gradient: LinearGradient(
+                                              colors: [Colors.amber.shade200, Colors.amber.shade400],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
+                                              const SizedBox(width: 16),
+                                              const Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Achievements',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 2),
+                                                  Text(
+                                                    'View your badges and milestones',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black54,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    // Analytics button
+                                    Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(18),
+                                      color: kPrimaryBlue,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(18),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => AnalyticsScreen(userId: user.id),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                          decoration: const BoxDecoration(
+                                            borderRadius: BorderRadius.all(Radius.circular(18)),
+                                            gradient: LinearGradient(
+                                              colors: [kPrimaryBlue, Colors.lightBlueAccent],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                          ),
+                                          child: const Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.insights, color: Colors.white, size: 32),
+                                              SizedBox(width: 16),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'View Analytics',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 2),
+                                                  Text(
+                                                    'Track your learning progress',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.white70,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    // Take Quiz button
+                                    Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(18),
+                                      color: Colors.deepPurpleAccent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(18),
+                                        onTap: () async {
+                                          final prefs = await SharedPreferences.getInstance();
+                                          final String? userJson = prefs.getString("user");
+                                          if (userJson != null) {
+                                            final user = User.fromJson(jsonDecode(userJson));
+                                            if (!mounted) return;
+                                            context.push('/quiz/${user.id}');
+                                          } else {
+                                            if (!mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('User ID not found')),
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(18),
+                                            gradient: LinearGradient(
+                                              colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                          ),
+                                          child: const Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.quiz, color: Colors.white, size: 32),
+                                              SizedBox(width: 16),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Take Quiz',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 2),
+                                                  Text(
+                                                    'Get personalized course ',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.white70,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
                           ),
                         ),
                       ],
                     ),
+<<<<<<< HEAD
                     const SizedBox(height: 16),
                     Text(
                       user.username,
@@ -1245,43 +1676,200 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
             );
           }
+=======
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Decoration effects overlay
+          if (selectedDecoration != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: _buildDecorationEffect(),
+              ),
+            ),
+        ],
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
       ),
     );
   }
 
-  Widget _buildProfileImage(User? profile) {
-    if (_imageFile != null) {
-      return Image.file(
-        _imageFile!,
-        fit: BoxFit.cover,
-      );
-    }
-
-    if (profile?.avatar != null && profile!.avatar!.isNotEmpty) {
-      if (profile.avatar!.startsWith('http')) {
-        final transformedUrl = CloudinaryConstants.getProfileImageUrl(profile.avatar!);
-
-        return CachedNetworkImage(
-          imageUrl: transformedUrl,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[300],
-            child: const Center(
-              child: CircularProgressIndicator(),
+  Widget _buildBackgroundEffect() {
+    switch (selectedBackground) {
+      case 'background_aurora':
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.teal.withOpacity(0.7),
+                Colors.purple.withOpacity(0.7),
+                Colors.blue.withOpacity(0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          errorWidget: (context, url, error) => _buildDefaultAvatar(),
         );
-      } else {
-        return Image.asset(
-          'assets/images/${profile.avatar}.png',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
+      
+      case 'background_cityscape':
+        return Stack(
+          children: [
+            Container(color: Colors.black87),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 200,
+              child: CustomPaint(
+                painter: CityscapePainter(),
+              ),
+            ),
+            _buildCityLights(),
+          ],
         );
-      }
+      
+      case 'background_space':
+        return Stack(
+          children: [
+            Container(color: Colors.black),
+            _buildStars(),
+            Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  colors: [
+                    Colors.deepPurple.withOpacity(0.5),
+                    Colors.indigo.withOpacity(0.3),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                  radius: 1.0,
+                ),
+              ),
+            ),
+          ],
+        );
+      
+      default:
+        return const SizedBox.shrink();
     }
+  }
 
-    return _buildDefaultAvatar();
+  Widget _buildDecorationEffect() {
+    switch (selectedDecoration) {
+      case 'decoration_confetti':
+        return ConfettiWidget(
+          confettiController: _confettiController,
+          blastDirection: -pi / 2,
+          emissionFrequency: 0.05,
+          numberOfParticles: 20,
+          maxBlastForce: 5,
+          minBlastForce: 2,
+          gravity: 0.1,
+          shouldLoop: true,
+          colors: const [
+            Colors.green,
+            Colors.blue,
+            Colors.pink,
+            Colors.orange,
+            Colors.purple,
+          ],
+        );
+      
+      case 'decoration_flames':
+        return AnimatedFlames();
+      
+      case 'decoration_bubbles':
+        return BubbleAnimation(
+          numberOfBubbles: 15,
+          maxBubbleSize: 20,
+          minBubbleSize: 8,
+          bubbleColor: Colors.lightBlueAccent.withOpacity(0.3),
+        );
+      
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildProfileImage(User? profile) {
+    return Container(
+      width: 120,
+      height: 120,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Profile image
+          if (_imageFile != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(60),
+              child: Image.file(
+                _imageFile!,
+                fit: BoxFit.cover,
+              ),
+            )
+          else if (profile?.avatar != null && profile!.avatar!.isNotEmpty)
+            if (profile.avatar!.startsWith('http'))
+              ClipRRect(
+                borderRadius: BorderRadius.circular(60),
+                child: CachedNetworkImage(
+                  imageUrl: CloudinaryConstants.getProfileImageUrl(profile.avatar!),
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => _buildDefaultAvatar(),
+                ),
+              )
+            else
+              ClipRRect(
+                borderRadius: BorderRadius.circular(60),
+                child: Image.asset(
+                  'assets/images/${profile.avatar}.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
+                ),
+              )
+          else
+            _buildDefaultAvatar(),
+          // Frame effect
+          if (selectedFrame != null)
+            _buildFrameEffect(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFrameEffect() {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          width: 3,
+          color: selectedFrame == 'frame_rainbow' 
+              ? HSVColor.fromAHSV(1.0, (DateTime.now().millisecondsSinceEpoch / 10) % 360, 1.0, 1.0).toColor()
+              : selectedFrame == 'frame_galaxy'
+                  ? Colors.indigo
+                  : Colors.greenAccent,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: selectedFrame == 'frame_rainbow'
+                ? HSVColor.fromAHSV(1.0, (DateTime.now().millisecondsSinceEpoch / 10) % 360, 1.0, 0.8).toColor().withOpacity(0.5)
+                : selectedFrame == 'frame_galaxy'
+                    ? Colors.indigo.withOpacity(0.5)
+                    : Colors.greenAccent.withOpacity(_pulseValue ? 0.6 : 0.3),
+            blurRadius: _pulseValue ? 15 : 5,
+            spreadRadius: _pulseValue ? 3 : 1,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDefaultAvatar() {
@@ -1295,6 +1883,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
+<<<<<<< HEAD
   Widget _buildFacebookStyleWebLayout(BuildContext context, User user) {
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -1668,10 +2257,26 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
           ],
         ),
+=======
+  Widget _buildCityLights() {
+    return Stack(
+      children: List.generate(
+        30,
+        (index) => Positioned(
+          left: Random().nextDouble() * MediaQuery.of(context).size.width,
+          bottom: Random().nextDouble() * 100,
+          child: Container(
+            width: 2,
+            height: Random().nextDouble() * 10 + 5,
+            color: Colors.yellow.withOpacity(Random().nextDouble() * 0.8 + 0.2),
+          ),
+        ),
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
       ),
     );
   }
 
+<<<<<<< HEAD
   Widget _buildStatsCard(BuildContext context, User user) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
@@ -1895,25 +2500,26 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         CircleAvatar(
           radius: isWideScreen ? 38 : 28,
           backgroundColor: Colors.grey[200],
+=======
+  Widget _buildStars() {
+    return Stack(
+      children: List.generate(
+        50,
+        (index) => Positioned(
+          left: Random().nextDouble() * MediaQuery.of(context).size.width,
+          top: Random().nextDouble() * MediaQuery.of(context).size.height,
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
           child: Icon(
-            Icons.person,
-            size: isWideScreen ? 36 : 28,
-            color: Colors.grey[400],
+            Icons.star,
+            size: Random().nextDouble() * 3 + 1,
+            color: Colors.white.withOpacity(Random().nextDouble() * 0.8 + 0.2),
           ),
         ),
-        SizedBox(height: isWideScreen ? 12 : 8),
-        Container(
-          width: isWideScreen ? 80 : 60,
-          height: isWideScreen ? 16 : 14,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
+<<<<<<< HEAD
   Widget _buildCreatePostCard(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 992;
@@ -2073,6 +2679,214 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           borderRadius: BorderRadius.circular(isWideScreen ? 12 : 8),
         ),
       ),
+=======
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadEquippedCosmetics();
+  }
+}
+
+class CityscapePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, size.height);
+    
+    // Draw random buildings
+    double x = 0;
+    while (x < size.width) {
+      final buildingHeight = Random().nextDouble() * 60 + 20;
+      final buildingWidth = Random().nextDouble() * 30 + 10;
+      
+      path.lineTo(x, size.height - buildingHeight);
+      path.lineTo(x + buildingWidth, size.height - buildingHeight);
+      path.lineTo(x + buildingWidth, size.height);
+      
+      x += buildingWidth;
+    }
+    
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class AnimatedFlames extends StatefulWidget {
+  @override
+  State<AnimatedFlames> createState() => _AnimatedFlamesState();
+}
+
+class _AnimatedFlamesState extends State<AnimatedFlames> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late List<int> _seeds;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat();
+    _seeds = List.generate(10, (_) => Random().nextInt(100000));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    final flames = List.generate(
+      10,
+      (i) {
+        final rand = Random(_seeds[i]);
+        return Flame(
+          x: rand.nextDouble() * width,
+          y: rand.nextDouble() * height,
+          size: rand.nextDouble() * 20 + 10,
+        );
+      },
+    );
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Stack(
+          children: flames.map((flame) {
+            final progress = _controller.value;
+            final y = flame.y - (progress * 50);
+            final opacity = 1 - progress;
+            return Positioned(
+              left: flame.x,
+              top: y,
+              child: Opacity(
+                opacity: opacity,
+                child: Icon(
+                  Icons.local_fire_department,
+                  size: flame.size,
+                  color: Colors.orange,
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
+}
+
+class Flame {
+  final double x;
+  final double y;
+  final double size;
+
+  Flame({required this.x, required this.y, required this.size});
+}
+
+class BubbleAnimation extends StatefulWidget {
+  final int numberOfBubbles;
+  final double maxBubbleSize;
+  final double minBubbleSize;
+  final Color bubbleColor;
+
+  const BubbleAnimation({
+    Key? key,
+    required this.numberOfBubbles,
+    required this.maxBubbleSize,
+    required this.minBubbleSize,
+    required this.bubbleColor,
+  }) : super(key: key);
+
+  @override
+  State<BubbleAnimation> createState() => _BubbleAnimationState();
+}
+
+class _BubbleAnimationState extends State<BubbleAnimation> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late List<int> _seeds;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+    _seeds = List.generate(widget.numberOfBubbles, (_) => Random().nextInt(100000));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    final bubbles = List.generate(
+      widget.numberOfBubbles,
+      (i) {
+        final rand = Random(_seeds[i]);
+        return Bubble(
+          x: rand.nextDouble() * width,
+          y: height,
+          size: rand.nextDouble() * (widget.maxBubbleSize - widget.minBubbleSize) + widget.minBubbleSize,
+          speed: rand.nextDouble() * 2 + 1,
+        );
+      },
+    );
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Stack(
+          children: bubbles.map((bubble) {
+            final progress = _controller.value;
+            final y = bubble.y - (progress * bubble.speed * height);
+            return Positioned(
+              left: bubble.x,
+              top: y,
+              child: Container(
+                width: bubble.size,
+                height: bubble.size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.bubbleColor,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
+    );
+  }
+}
+
+class Bubble {
+  final double x;
+  final double y;
+  final double size;
+  final double speed;
+
+  Bubble({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.speed,
+  });
 }

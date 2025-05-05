@@ -23,9 +23,13 @@ import 'presentation/viewmodels/reclamation_viewmodel.dart';
 
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 
+<<<<<<< HEAD
 // Conditionally import web plugins only on web platform
 // This prevents dart:ui_web errors on mobile platforms
 import 'web_imports.dart' if (dart.library.io) 'mobile_imports.dart';
+=======
+// import 'web_imports.dart' if (dart.library.io) 'mobile_imports.dart';  // Comment out web imports
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
 
 class AppErrorHandler {
   static void handleError(Object error, StackTrace stackTrace) {
@@ -66,10 +70,16 @@ void main() async {
     // Ensure Flutter is initialized
     WidgetsFlutterBinding.ensureInitialized();
 
+<<<<<<< HEAD
     // Configure for web - use path URL strategy for cleaner URLs
     if (kIsWeb) {
       configureApp(); // This function is defined in web_imports.dart or mobile_imports.dart
     }
+=======
+    // if (kIsWeb) {  // Comment out web configuration
+    //   configureApp();
+    // }
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
 
     // Load environment variables first
     await dotenv.load(fileName: ".env");
@@ -117,6 +127,13 @@ void main() async {
       }
     }
 
+<<<<<<< HEAD
+=======
+    await setupServiceLocator();
+    await serviceLocator<NotificationService>().initialize();
+    await serviceLocator<NotificationService>().requestPermissions();
+
+>>>>>>> 9f495d13950abbe707662aa41e52148b69189245
     runApp(MultiProvider(
       providers: [
         Provider<AchievementRepository>(

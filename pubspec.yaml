@@ -78,6 +78,7 @@ dependencies:
   media_scanner: ^2.2.0
   gal: ^2.3.1
   permission_handler: ^11.4.0
+  # Commenting out FFmpeg dependencies since they are not being used
   ffmpeg_kit_flutter_new: ^1.1.0
   flutter_pdfview: ^1.4.0
   ffmpeg_cli: ^0.3.0
@@ -86,6 +87,8 @@ dependencies:
   timezone: ^0.9.2
   timeago: ^3.7.0
   video_player: ^2.9.5
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
   # UI Elements & Animations
   rflutter_alert: ^2.0.7
@@ -99,8 +102,8 @@ dependencies:
   json_annotation: ^4.8.1
   flutter_stripe: ^11.5.0
   js: ^0.6.7
-
-  
+  confetti: ^0.7.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
@@ -111,7 +114,7 @@ dev_dependencies:
   json_serializable: ^6.7.1
 
 flutter:
-  generate: true  # Ensures localization files are generated properly
+  generate: true  # Required for localizations
   uses-material-design: true
   assets:
     - assets/images/genie.png
@@ -137,6 +140,8 @@ flutter:
     - assets/images/avatar6.png
     - assets/images/coin.jpeg
     - assets/coin_animation.json
+    - assets/images/certificate_template.png
+    - assets/images/cat.gif
     - res/hangman_words.txt
   fonts:
     - family: PatrickHand

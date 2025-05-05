@@ -133,6 +133,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           });
         }
       }
+      // After updating progress, refresh course data and UI
+    await courseViewModel.fetchCourseById(widget.courseId);
+    setState(() {});
     }
   }
 

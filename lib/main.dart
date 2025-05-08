@@ -21,9 +21,6 @@ import 'presentation/viewmodels/reminder_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'presentation/viewmodels/reclamation_viewmodel.dart';
 
-// Stripe import
-import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
-
 import 'web_imports.dart' if (dart.library.io) 'mobile_imports.dart';
 
 class AppErrorHandler {
@@ -70,29 +67,6 @@ void main() async {
     if (kDebugMode) {
       print('Environment variables loaded:');
       print('API_BASE_URL: ${dotenv.env['API_BASE_URL']}');
-      print('STRIPE_PUBLISHABLE_KEY: ${dotenv.env['STRIPE_PUBLISHABLE_KEY']?.substring(0, 10)}...');
-    }
-
-    // Stripe init (non-blocking)
-    try {
-      final pk = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
-      if (pk != null && pk.isNotEmpty) {
-        if (kDebugMode) print('Initializing Stripe with key: ${pk.substring(0, 10)}...');
-
-        stripe.Stripe.publishableKey = pk;
-        stripe.Stripe.merchantIdentifier = 'merchant.com.skillgenie';
-        await stripe.Stripe.instance.applySettings();
-
-        if (kDebugMode) print('✅ Stripe initialized successfully');
-      } else {
-        if (kDebugMode) print('⚠️ Stripe publishable key is missing or empty');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        print('❌ Stripe initialization failed:');
-        print('Error: $e');
-        print('Stack trace:\n$st');
-      }
     }
 
     await setupServiceLocator();

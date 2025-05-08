@@ -19,7 +19,7 @@ class SelectableLetter extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: curvedBox.copyWith(
-          color: backgroundBoxColor,
+          color: Colors.blue[100],
         ),
         alignment: Alignment.center,
         width: 50,
@@ -76,9 +76,9 @@ class Letter extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 20,
-          color: Color.fromRGBO(116, 88, 207, 1),
+          color: Colors.blue[900],
           fontFamily: "Roboto",
         ),
       ),

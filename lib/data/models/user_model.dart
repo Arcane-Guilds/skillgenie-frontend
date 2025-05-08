@@ -160,7 +160,7 @@ class User {
     );
   }
 
-  static Future<bool> updateCoins(String userId, int amount) async {
+  static Future<bool> updateCoins(String userId) async {
     try {
       final backendUrl = dotenv.env['API_BASE_URL'] ?? '';
       if (backendUrl.isEmpty) {
@@ -168,14 +168,11 @@ class User {
         return false;
       }
 
-      final response = await http.post(
-        Uri.parse('$backendUrl/user/$userId/add-coins'),
+      final response = await http.get(
+        Uri.parse('$backendUrl/user/$userId/coins'),
         headers: {
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'amount': amount,
-        }),
       );
 
       print('Coin update response: ${response.body}');

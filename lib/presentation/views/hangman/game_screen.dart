@@ -64,38 +64,35 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void returnHomePage() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => HomeGameScreen()),
-      ModalRoute.withName('homePage'),
-    );
+    Navigator.pop(context);
   }
 
   void initWords() {
-    finishedGame = false;
-    hintStatus = true;
-    hangState = 0;
-    buttonStatus = List.generate(26, (index) {
-      return true;
-    });
-    wordList = [];
-    hintLetters = [];
-    word = widget.hangmanObject.getWord();
-    if (word.isNotEmpty) {
-      hiddenWord = widget.hangmanObject.getHiddenWord(word.length);
-    } else {
-      returnHomePage();
-    }
+    setState(() {
+      finishedGame = false;
+      hintStatus = true;
+      hangState = 0;
+      buttonStatus = List.generate(26, (index) => true);
+      wordList = [];
+      hintLetters = [];
+      word = widget.hangmanObject.getWord();
+      if (word.isNotEmpty) {
+        hiddenWord = widget.hangmanObject.getHiddenWord(word.length);
+      } else {
+        returnHomePage();
+      }
 
-    for (int i = 0; i < word.length; i++) {
-      wordList.add(word[i]);
-      hintLetters.add(i);
-    }
+      for (int i = 0; i < word.length; i++) {
+        wordList.add(word[i]);
+        hintLetters.add(i);
+      }
+    });
   }
 
   void wordPress(int index) {
     if (lives == 0) {
       returnHomePage();
+      return;
     }
 
     if (finishedGame) {
@@ -106,6 +103,13 @@ class _GameScreenState extends State<GameScreen> {
     bool showGameOver = false;
     bool showFailed = false;
     bool showSuccess = false;
+
+    // First update the button state
+    setState(() {
+      buttonStatus[index] = false;
+    });
+
+    // Then check the word
     setState(() {
       for (int i = 0; i < wordList.length; i++) {
         if (wordList[i] == englishAlphabet.alphabet[index]) {
@@ -131,7 +135,6 @@ class _GameScreenState extends State<GameScreen> {
           showFailed = true;
         }
       }
-      buttonStatus[index] = false;
       if (hiddenWord == word) {
         finishedGame = true;
         showSuccess = true;
@@ -149,10 +152,8 @@ class _GameScreenState extends State<GameScreen> {
             DialogButton(
               color: kDialogButtonColor,
               onPressed: () {
-                Navigator.pop(context);
-                Future.delayed(const Duration(milliseconds: 100), () {
-                  returnHomePage();
-                });
+                Navigator.of(context, rootNavigator: true).pop();
+                returnHomePage();
               },
               child: Icon(
                 MdiIcons.home,
@@ -161,10 +162,8 @@ class _GameScreenState extends State<GameScreen> {
             ),
             DialogButton(
               onPressed: () {
-                Navigator.pop(context);
-                Future.delayed(const Duration(milliseconds: 100), () {
-                  newGame();
-                });
+                Navigator.of(context, rootNavigator: true).pop();
+                newGame();
               },
               color: kDialogButtonColor,
               child: Icon(MdiIcons.refresh, size: 30.0),
@@ -186,14 +185,16 @@ class _GameScreenState extends State<GameScreen> {
               color: kDialogButtonColor,
               height: 52,
               child: Icon(
-                MdiIcons.arrowRightThick,
+                MdiIcons.check,
                 size: 30.0,
               ),
               onPressed: () {
-                Navigator.pop(context);
-                Future.delayed(const Duration(milliseconds: 100), () {
-                  initWords();
-                });
+                Navigator.of(context, rootNavigator: true).pop();
+                if (mounted) {
+                  setState(() {
+                    initWords();
+                  });
+                }
               },
             ),
           ],
@@ -213,17 +214,17 @@ class _GameScreenState extends State<GameScreen> {
               color: kDialogButtonColor,
               height: 52,
               child: Icon(
-                MdiIcons.arrowRightThick,
+                MdiIcons.check,
                 size: 30.0,
               ),
               onPressed: () {
-                Navigator.pop(context);
-                Future.delayed(const Duration(milliseconds: 100), () {
+                Navigator.of(context, rootNavigator: true).pop();
+                if (mounted) {
                   setState(() {
                     wordCount += 1;
                     initWords();
                   });
-                });
+                }
               },
             )
           ],
@@ -243,18 +244,18 @@ class _GameScreenState extends State<GameScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFFE3F2FD),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF1A1A1A),
+          backgroundColor: const Color(0xFFE3F2FD),
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
             onPressed: () => returnHomePage(),
           ),
-          title: const Text(
+          title: Text(
             'Hangman',
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.blue[900],
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -282,7 +283,7 @@ class _GameScreenState extends State<GameScreen> {
                                         highlightColor: Colors.transparent,
                                         splashColor: Colors.transparent,
                                         iconSize: 39,
-                                        icon: Icon(MdiIcons.heart, color: Colors.white),
+                                        icon: Icon(MdiIcons.heart, color: Colors.blue[900]),
                                         onPressed: () {},
                                       ),
                                     ),
@@ -297,8 +298,8 @@ class _GameScreenState extends State<GameScreen> {
                                             padding: const EdgeInsets.all(2.0),
                                             child: Text(
                                               lives.toString() == "1" ? "I" : lives.toString(),
-                                              style: const TextStyle(
-                                                color: Colors.white,
+                                              style: TextStyle(
+                                                color: Colors.blue[900],
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold,
                                                 fontFamily: 'PatrickHand',
@@ -315,8 +316,8 @@ class _GameScreenState extends State<GameScreen> {
                             SizedBox(
                               child: Text(
                                 wordCount == 1 ? "I" : '$wordCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: Colors.blue[900],
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -326,7 +327,7 @@ class _GameScreenState extends State<GameScreen> {
                               child: IconButton(
                                 tooltip: 'Hint',
                                 iconSize: 39,
-                                icon: Icon(MdiIcons.lightbulb, color: Colors.white),
+                                icon: Icon(MdiIcons.lightbulb, color: Colors.blue[900]),
                                 highlightColor: Colors.transparent,
                                 splashColor: Colors.transparent,
                                 onPressed: hintStatus
@@ -345,9 +346,9 @@ class _GameScreenState extends State<GameScreen> {
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           widget.hangmanObject.getWordDescription(word),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
-                            color: Colors.white,
+                            color: Colors.blue[900],
                             fontWeight: FontWeight.w500,
                           ),
                           textAlign: TextAlign.center,

@@ -15,30 +15,30 @@ class Game extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => serviceLocator<GameViewModel>(),
       child: Scaffold(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFFE3F2FD), // Light blue background
         appBar: AppBar(
-          backgroundColor: const Color(0xFF1A1A1A),
+          backgroundColor: const Color(0xFFE3F2FD), // Light blue app bar
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: Colors.blue[900]), // Dark blue for contrast
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'Word Jumble',
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.blue[900], // Dark blue for contrast
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
         body: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF1A1A1A),
-                Color(0xFF2A2A2A),
+                const Color(0xFFE3F2FD), // Light blue
+                const Color(0xFFBBDEFB), // Slightly darker light blue
               ],
             ),
           ),
@@ -52,19 +52,19 @@ class Game extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.blue[200]!,
                         width: 1,
                       ),
                     ),
                     child: Text(
                       "Word Hint\n${viewModel.hint}",
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
-                        color: Colors.white,
+                        color: Colors.blue[900],
                         fontWeight: FontWeight.w500,
                       ),
                     ),

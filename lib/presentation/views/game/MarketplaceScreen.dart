@@ -137,12 +137,31 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     if (userId == null) return;
     final backendUrl = dotenv.env['API_BASE_URL'] ?? '';
     try {
-      final response = await http.get(Uri.parse('$backendUrl/user/$userId/coins'));
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken');
+      
+      if (token == null) {
+        print('No access token found for fetching coins');
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$backendUrl/user/$userId/coins'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      
+      print('Fetching coins response: ${response.statusCode} - ${response.body}');
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           coins = data['coins'] ?? 0;
         });
+      } else {
+        print('Failed to fetch coins: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching coins: $e');
@@ -156,6 +175,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
     if (bought != null) {
       await _fetchCoins();
+      setState(() {}); // Force UI update
     }
   }
 

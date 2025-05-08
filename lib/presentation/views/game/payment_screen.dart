@@ -2,16 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
-import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import 'payment_handler.dart';
-import 'web_payment_handler.dart';
-import 'mobile_payment_handler.dart';
 
 class PaymentScreen extends StatefulWidget {
   final int coins;
@@ -24,61 +20,7 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   bool _loading = false;
-  bool _stripeInitialized = false;
-  late final String _backendUrl = dotenv.env['API_BASE_URL'] ?? '';
-  late final String? _publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
-  late final PaymentHandler _paymentHandler;
-
-  @override
-  void initState() {
-    super.initState();
-    // Create the appropriate handler implementation based on platform
-    _paymentHandler = kIsWeb
-        ? WebPaymentHandlerImpl()
-        : MobilePaymentHandlerImpl();
-    _checkConfiguration();
-    _initializeStripe();
-  }
-
-  void _checkConfiguration() {
-    print('=================== PAYMENT CONFIGURATION ===================');
-    print('API URL: $_backendUrl');
-    print('Stripe Key Available: ${_publishableKey != null}');
-    if (_publishableKey != null && _publishableKey!.isNotEmpty) {
-      print('Stripe Key Preview: ${_publishableKey!.substring(0, min(_publishableKey!.length, 10))}...');
-    }
-    print('Platform: ${kIsWeb ? 'Web' : 'Mobile'}');
-    print('=========================================================');
-  }
-
-  int min(int a, int b) => a < b ? a : b;
-
-  Future<void> _initializeStripe() async {
-    try {
-      if (_publishableKey == null || _publishableKey!.isEmpty) {
-        throw Exception('Stripe publishable key is not configured');
-      }
-
-      await _paymentHandler.initialize(_publishableKey!);
-      if (mounted) {
-        setState(() {
-          _stripeInitialized = true;
-        });
-      }
-      print('✅ Stripe initialized successfully');
-    } catch (e) {
-      print('❌ Error initializing Stripe: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to initialize payment system: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    }
-  }
+  final _backendUrl = dotenv.env['API_BASE_URL'] ?? '';
 
   Future<void> _handlePayment() async {
     print('=================== PAYMENT STARTED ===================');
@@ -109,77 +51,181 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('User ID not found');
       }
 
-      print('1. Creating payment intent...');
+      // Convert price to cents for Stripe
+      final amountInCents = (widget.price * 100).toInt();
+
+      print('1. Creating checkout session...');
       final response = await http.post(
-        Uri.parse('$_backendUrl/payment/intent'),
+        Uri.parse('$_backendUrl/payment/create-checkout'),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authViewModel.token}',
         },
         body: json.encode({
-          'amount': (widget.price * 100).toInt(),
-          'currency': 'usd',
+          'amount': amountInCents,
+          'coins': widget.coins,
         }),
       );
 
-      print('2. Payment intent response:');
+      print('2. Checkout session response:');
       print('Status code: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-      final responseData = json.decode(response.body);
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw 'Payment failed: ${responseData['message'] ?? 'Unknown error'}';
+      if (response.statusCode != 201) {
+        throw Exception('Failed to create checkout session');
       }
 
-      final clientSecret = responseData['clientSecret'] as String?;
-      if (clientSecret == null) {
-        throw 'Invalid response from server: Missing client secret';
-      }
+      final sessionData = json.decode(response.body);
+      final checkoutUrl = sessionData['checkoutUrl'] as String;
+      final sessionId = sessionData['sessionId'] as String;
 
-      print('3. Processing payment...');
-      final result = await _paymentHandler.handlePayment(clientSecret);
+      // Launch the checkout URL
+      if (await canLaunch(checkoutUrl)) {
+        await launch(
+          checkoutUrl,
+          forceSafariVC: false,
+          forceWebView: false,
+        );
 
-      if (result.success) {
-        print('Payment successful!');
+        // Wait longer for the webhook to process
+        print('Waiting 10 seconds for initial webhook processing...');
+        await Future.delayed(const Duration(seconds: 10));
 
-        // Add coins to user's balance in backend
-        final success = await User.updateCoins(userId, widget.coins);
+        // Verify payment status with retries
+        bool verificationSuccess = false;
+        int maxRetries = 8;  // Increased from 5 to 8
+        int retryCount = 0;
+        
+        while (!verificationSuccess && retryCount < maxRetries) {
+          try {
+            print('Verification attempt ${retryCount + 1} of $maxRetries...');
+            final verifyResponse = await http.get(
+              Uri.parse('$_backendUrl/payment/session?sessionId=$sessionId'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ${authViewModel.token}',
+              },
+            );
 
-        if (!success) {
-          // Show error but don't throw exception - payment was successful
-          if (!mounted) return;
+            if (verifyResponse.statusCode != 200) {
+              print('Verification request failed with status code: ${verifyResponse.statusCode}');
+              throw Exception('Failed to verify payment');
+            }
+
+            final verifyData = json.decode(verifyResponse.body);
+            print('Verification response (attempt ${retryCount + 1}): $verifyData');
+            
+            // Check if the payment was successful by looking at the payment status
+            if (verifyData['paymentStatus'] == 'paid') {
+              verificationSuccess = true;
+              print('Payment verified successfully through session status!');
+              break;
+            }
+            
+            print('Payment not verified yet. Status: ${verifyData['status']}, Payment Status: ${verifyData['paymentStatus']}');
+            retryCount++;
+            if (retryCount < maxRetries) {
+              print('Waiting 5 seconds before next verification attempt...');
+              await Future.delayed(const Duration(seconds: 5));
+            }
+          } catch (error) {
+            print('Verification attempt ${retryCount + 1} failed with error: $error');
+            retryCount++;
+            if (retryCount < maxRetries) {
+              print('Waiting 5 seconds before next verification attempt...');
+              await Future.delayed(const Duration(seconds: 5));
+            }
+          }
+        }
+
+        // If verification failed, check user's balance
+        if (!verificationSuccess) {
+          print('Session verification failed, checking user balance...');
+          try {
+            final userResponse = await http.get(
+              Uri.parse('$_backendUrl/user/$userId/coins'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ${authViewModel.token}',
+              },
+            );
+
+            if (userResponse.statusCode == 200) {
+              final userData = json.decode(userResponse.body);
+              final currentCoins = userData['coins'] as int;
+              print('Current user coins: $currentCoins, Expected coins: ${widget.coins}');
+              
+              if (currentCoins >= widget.coins) {
+                verificationSuccess = true;
+                print('Payment verified through coin balance!');
+              } else {
+                print('Coin balance verification failed. Current balance is less than expected.');
+              }
+            } else {
+              print('Failed to get user data. Status code: ${userResponse.statusCode}');
+            }
+          } catch (error) {
+            print('Error checking user balance: $error');
+          }
+        }
+
+        // Handle the final result
+        if (!mounted) return;
+        
+        if (verificationSuccess) {
+          // Refresh user data to get updated coin balance
+          try {
+            print('Refreshing user data to get final coin balance...');
+            final userResponse = await http.get(
+              Uri.parse('$_backendUrl/user/$userId/coins'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ${authViewModel.token}',
+              },
+            );
+
+            if (userResponse.statusCode == 200) {
+              final userData = json.decode(userResponse.body);
+              final currentCoins = userData['coins'] as int;
+              print('Final coin balance: $currentCoins');
+            } else {
+              print('Failed to refresh user data. Status code: ${userResponse.statusCode}');
+            }
+          } catch (error) {
+            print('Error refreshing user data: $error');
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Payment successful but there was an issue updating your coins. Please contact support.'),
+              content: Text('Payment successful! Your coins have been added.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 5),
+            ),
+          );
+          Navigator.pop(context, widget.coins);
+        } else {
+          print('All verification attempts failed. Showing warning message...');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment verification failed. Please check your account balance.'),
               backgroundColor: Colors.orange,
               duration: Duration(seconds: 5),
             ),
           );
-          // Still return success since payment was processed
           Navigator.pop(context, widget.coins);
-          return;
         }
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment successful! 🎉'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context, widget.coins);
       } else {
-        throw result.error ?? 'Payment failed';
+        throw Exception('Could not launch checkout URL');
       }
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
       print('ERROR OCCURRED:');
-      print(e);
+      print(error);
       String errorMessage = 'Payment failed';
-      if (e is Exception) {
-        errorMessage = e.toString();
+      if (error is Exception) {
+        errorMessage = error.toString();
       } else {
-        errorMessage = e.toString();
+        errorMessage = error.toString();
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -208,43 +254,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Stripe status
-            Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: _stripeInitialized ? Colors.green.shade50 : Colors.amber.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: _stripeInitialized ? Colors.green : Colors.amber,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _stripeInitialized ? Icons.check_circle : Icons.info_outline,
-                    color: _stripeInitialized ? Colors.green : Colors.amber,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _stripeInitialized
-                          ? 'Payment system ready'
-                          : 'Payment system is initializing...',
-                      style: TextStyle(
-                        color: _stripeInitialized ? Colors.green : Colors.amber.shade800,
-                      ),
-                    ),
-                  ),
-                  if (!_stripeInitialized)
-                    TextButton(
-                      onPressed: _initializeStripe,
-                      child: const Text('Retry'),
-                    ),
-                ],
-              ),
-            ),
             // Payment amount display
             Material(
               elevation: 2,
@@ -273,7 +282,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             const SizedBox(height: 24),
             // Pay button
             ElevatedButton(
-              onPressed: _stripeInitialized && !_loading ? _handlePayment : null,
+              onPressed: !_loading ? _handlePayment : null,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: Theme.of(context).primaryColor,
@@ -285,24 +294,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
               child: _loading
                   ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
                   : Text(
-                'Pay \$${widget.price.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-            // Platform indicator (for debugging)
-            const SizedBox(height: 24),
-            Text(
-              'Platform: ${kIsWeb ? 'Web' : 'Mobile'}',
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
+                      'Pay \$${widget.price.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
             ),
           ],
         ),

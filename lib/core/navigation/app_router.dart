@@ -35,7 +35,6 @@ import '../services/service_locator.dart';
 import '../widgets/responsive_navigation.dart';
 import '../../presentation/views/reclamation/reclamation_screen.dart';
 import '../../presentation/views/genie_story_screen.dart';
-import '../../presentation/views/genie_tutorial_screen.dart';
 import '../../presentation/views/game/payment_return_screen.dart';
 import '../../presentation/views/game/payment_screen.dart';
 
@@ -286,10 +285,6 @@ final appRouter = GoRouter(
           ),
         );
       },
-    ),
-    GoRoute(
-      path: '/tutorial',
-      builder: (context, state) => const GenieTutorialScreen(),
     ),
     GoRoute(
       path: '/game',

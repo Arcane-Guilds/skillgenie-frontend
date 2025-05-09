@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
@@ -31,8 +18,289 @@
 
   <title>Skill Genie</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Load Stripe.js -->
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <!-- Add stripe elements container (hidden) -->
+  <style>
+    #stripe-card-element {
+      padding: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background-color: white;
+      height: 40px;
+      box-sizing: border-box;
+    }
+
+    #stripe-card-errors {
+      color: #fa755a;
+      text-align: left;
+      font-size: 13px;
+      line-height: 17px;
+      margin-top: 12px;
+    }
+
+    #stripe-elements-container {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+      align-items: center;
+      justify-content: center;
+    }
+
+    #stripe-modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 8px;
+    }
+
+    #stripe-modal-title {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #32325d;
+    }
+
+    #stripe-modal-amount {
+      font-weight: bold;
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #5469d4;
+    }
+
+    .stripe-btn {
+      background: #5469d4;
+      color: white;
+      border-radius: 4px;
+      border: 0;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: block;
+      box-shadow: 0 4px 5px 0 rgba(0,0,0,0.15);
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+
+    .stripe-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .stripe-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .stripe-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .stripe-cancel-btn {
+      background: transparent;
+      color: #5469d4;
+      border: 0;
+      padding: 12px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .stripe-test-info {
+      background-color: #f8fafc;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+  </style>
+
+  <!-- Stripe Elements Modal Container -->
+  <div id="stripe-elements-container">
+    <div id="stripe-modal-content">
+      <h2 id="stripe-modal-title">Complete Payment</h2>
+      <div id="stripe-modal-amount"></div>
+      <div class="stripe-test-info">
+        <strong>Test Mode:</strong> Use card number 4242 4242 4242 4242, any future date, any 3 digits for CVC, and any 5 digits for postal code.
+      </div>
+      <div id="stripe-card-element"></div>
+      <div id="stripe-card-errors" role="alert"></div>
+      <div class="stripe-footer">
+        <button class="stripe-cancel-btn" id="stripe-cancel-button">Cancel</button>
+        <button class="stripe-btn" id="stripe-submit-button">Pay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stripe Web Helper Script -->
+  <script>
+    // Global variables
+    let stripeInstance;
+    let cardElement;
+    let elements;
+    let paymentClientSecret;
+    let paymentResolver;
+    let paymentAmount;
+
+    // Initialize Stripe with publishable key - MUST BE NAMED EXACTLY AS IN DART JS INTEROP
+    function stripeWebInit(publishableKey) {
+      try {
+        // Initialize Stripe
+        stripeInstance = Stripe(publishableKey);
+        console.log("✅ Stripe initialized successfully!");
+        return true;
+      } catch (error) {
+        console.error("Stripe initialization error:", error);
+        return false;
+      }
+    }
+
+    // Show the payment modal - MUST BE NAMED EXACTLY AS IN DART JS INTEROP
+    function showStripePaymentModal(clientSecret, amount) {
+      try {
+        // Store the client secret
+        paymentClientSecret = clientSecret;
+        paymentAmount = amount;
+
+        // Display the amount
+        document.getElementById('stripe-modal-amount').textContent = `$${(amount/100).toFixed(2)}`;
+
+        // Create Elements instance
+        elements = stripeInstance.elements();
+
+        // Create and mount the card element
+        cardElement = elements.create('card', {
+          style: {
+            base: {
+              color: '#32325d',
+              fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+              fontSmoothing: 'antialiased',
+              fontSize: '16px',
+              '::placeholder': {
+                color: '#aab7c4'
+              }
+            },
+            invalid: {
+              color: '#fa755a',
+              iconColor: '#fa755a'
+            }
+          }
+        });
+
+        // Mount the card element
+        cardElement.mount('#stripe-card-element');
+
+        // Handle real-time validation errors from the card Element
+        cardElement.on('change', function(event) {
+          const displayError = document.getElementById('stripe-card-errors');
+          if (event.error) {
+            displayError.textContent = event.error.message;
+          } else {
+            displayError.textContent = '';
+          }
+        });
+
+        // Show the modal
+        const modal = document.getElementById('stripe-elements-container');
+        modal.style.display = 'flex';
+
+        // Setup button handlers
+        document.getElementById('stripe-submit-button').addEventListener('click', handleSubmit);
+        document.getElementById('stripe-cancel-button').addEventListener('click', closeStripeModal);
+
+        // Create a promise that will be resolved when payment completes
+        return new Promise((resolve) => {
+          paymentResolver = resolve;
+        });
+      } catch (error) {
+        console.error("Error showing Stripe payment modal:", error);
+        return Promise.resolve({
+          success: false,
+          error: error.message || 'An unexpected error occurred'
+        });
+      }
+    }
+
+    // Handle form submission
+    async function handleSubmit() {
+      const submitButton = document.getElementById('stripe-submit-button');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Processing...';
+
+      try {
+        const result = await stripeInstance.confirmCardPayment(paymentClientSecret, {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: 'Test User',
+            }
+          }
+        });
+
+        if (result.error) {
+          // Show error to customer
+          const errorElement = document.getElementById('stripe-card-errors');
+          errorElement.textContent = result.error.message;
+          submitButton.disabled = false;
+          submitButton.textContent = 'Pay';
+        } else {
+   // Payment succeeded
+    console.log('Payment succeeded:', result.paymentIntent);
+    closeStripeModal(true);  // Pass true to indicate successful payment
+    paymentResolver({
+      success: true,
+      paymentIntentId: result.paymentIntent.id
+    });
+    paymentResolver = null;  // Ensure we don't resolve twice
+  }
+      } catch (error) {
+        console.error('Payment error:', error);
+        const errorElement = document.getElementById('stripe-card-errors');
+        errorElement.textContent = error.message || 'An unexpected error occurred';
+        submitButton.disabled = false;
+        submitButton.textContent = 'Pay';
+      }
+    }
+
+    // Close the modal
+function closeStripeModal(wasSuccessful = false) {
+  const modal = document.getElementById('stripe-elements-container');
+  modal.style.display = 'none';
+
+  // Clean up
+  if (cardElement) {
+    cardElement.unmount();
+    cardElement = null;
+  }
+
+  // Only trigger the "canceled" resolution if not already handled as success
+  if (paymentResolver && !wasSuccessful) {
+    paymentResolver({
+      success: false,
+      error: 'Payment canceled by user'
+    });
+    paymentResolver = null;
+  }
+}
+
+    // Log that Stripe is ready
+    console.log("🚀 Stripe web functions initialized and ready to use");
+  </script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+<script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

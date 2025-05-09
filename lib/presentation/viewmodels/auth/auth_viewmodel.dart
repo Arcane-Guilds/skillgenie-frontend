@@ -42,6 +42,9 @@ class AuthViewModel extends ChangeNotifier {
   /// Check if the view model is loading
   bool get isLoading => _isLoading;
 
+  /// Get the current access token
+  String? get token => _tokens?.accessToken;
+
   /// Returns true if the user is authenticated (has valid tokens and user data)
   bool get isAuthenticated => _tokens != null && _user != null;
 

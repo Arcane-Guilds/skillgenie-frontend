@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/game_constants.dart';
 
-
 class SummaryPage extends StatelessWidget {
   final bool won;
   late final Gradient backgroundGradient;
@@ -35,7 +34,7 @@ class SummaryPage extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  context.pushReplacement("/game");
+                  Navigator.pop(context);
                 },
                 style: ButtonStyle(
                   backgroundColor: WidgetStateProperty.all(Colors.white),

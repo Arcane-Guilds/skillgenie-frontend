@@ -96,7 +96,7 @@ class _SelectedLetterViewState extends State<SelectedLetterView>
         width: 50,
         height: 50,
         decoration: curvedBox.copyWith(
-          color: backgroundBoxColor,
+          color: Colors.blue[100],
         ),
         child: AnimatedScale(
           duration: gameAnimationDuration,
@@ -151,7 +151,7 @@ class LetterTile extends StatelessWidget {
     return AnimatedContainer(
       duration: gameAnimationDuration,
       decoration: curvedBox.copyWith(
-        color: done ? Colors.white : const Color.fromRGBO(255, 255, 254, 1),
+        color: done ? Colors.white : const Color(0xFFE3F2FD),
         boxShadow: const [gameBoxShadow],
       ),
       onEnd: () {
@@ -166,9 +166,9 @@ class LetterTile extends StatelessWidget {
         child: Center(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
-              color: Color.fromRGBO(116, 88, 207, 1),
+              color: Colors.blue[900],
               fontFamily: "Roboto",
             ),
           ),

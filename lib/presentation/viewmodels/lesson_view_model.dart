@@ -1,23 +1,20 @@
-import 'dart:io';
-import 'dart:ui' as ui;
+/* */ import 'dart:io';
+
 import 'package:ffmpeg_kit_flutter/return_code.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+
+
 import 'package:path_provider/path_provider.dart';
 import 'package:gal/gal.dart';
+import 'dart:ui' as ui;
 import 'package:permission_handler/permission_handler.dart';
-
-import '../../services/eleven_labs_service.dart';
-
-
 
 class LessonViewModel extends ChangeNotifier {
   final FlutterTts flutterTts = FlutterTts();
-  final ElevenLabsService elevenLabsService = ElevenLabsService();
-
   String lessonContent = "";
   bool isProcessing = false;
   String? generatedVideoPath;
@@ -72,20 +69,6 @@ class LessonViewModel extends ChangeNotifier {
     }
   }
 
-  List<String> _splitTextIntoPages(String text) {
-    List<String> pages = [];
-    const int maxLength = 800;
-    int start = 0;
-
-    while (start < text.length) {
-      int end = (start + maxLength) < text.length ? start + maxLength : text.length;
-      pages.add(text.substring(start, end));
-      start = end;
-    }
-
-    return pages;
-  }
-
   Future<String> generateImageFromText(String text, int index) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, Rect.fromPoints(const Offset(0, 0), const Offset(900, 600)));
@@ -114,6 +97,7 @@ class LessonViewModel extends ChangeNotifier {
     }
 
     final buffer = byteData.buffer.asUint8List();
+
     final directory = await getApplicationDocumentsDirectory();
     final imagePath = "${directory.path}/page_${index.toString().padLeft(2, '0')}.png";
     final file = File(imagePath);
@@ -129,24 +113,31 @@ class LessonViewModel extends ChangeNotifier {
   }
 
   Future<void> generateMultipleImagesFromText() async {
+    List<String> imagePaths = [];
     List<String> textPages = _splitTextIntoPages(lessonContent);
 
     for (int i = 0; i < textPages.length; i++) {
-      await generateImageFromText(textPages[i], i);
+      String path = await generateImageFromText(textPages[i], i);
+      imagePaths.add(path);
     }
 
     notifyListeners();
   }
 
-  Future<String> generateAudioFromText() async {
-    try {
-      final audioPath = await elevenLabsService.generateAudioFromText(lessonContent, 'lesson_audio');
-      print("✅ Audio généré à : $audioPath");
-      return audioPath;
-    } catch (e) {
-      print("❌ Erreur lors de la génération de l’audio : $e");
-      rethrow;
+  List<String> _splitTextIntoPages(String text) {
+    // You can split your content more intelligently here based on the PDF structure.
+    // For example, splitting by paragraphs or chunks of text, etc.
+    List<String> pages = [];
+    const int maxLength = 800; // Max characters per page
+    int start = 0;
+
+    while (start < text.length) {
+      int end = (start + maxLength) < text.length ? start + maxLength : text.length;
+      pages.add(text.substring(start, end));
+      start = end;
     }
+
+    return pages;
   }
 
   Future<void> generateVideoFromImages() async {
@@ -155,29 +146,39 @@ class LessonViewModel extends ChangeNotifier {
 
     try {
       await generateMultipleImagesFromText();
+
       final directory = await getApplicationDocumentsDirectory();
-      final videoPath = "${directory.path}/output_video.mp4";
-      final audioPath = await generateAudioFromText();
+      List<String> generatedImages = [];
 
-      String ffmpegCommand =
-          "-framerate 1/3 -start_number 0 -i '${directory.path}/page_%02d.png' "
-          "-i '$audioPath' -c:v mpeg4 -r 30 -pix_fmt yuv420p "
-          "-c:a aac -shortest -y '$videoPath'";
-
-      await FFmpegKit.execute(ffmpegCommand).then((session) async {
-        final returnCode = await session.getReturnCode();
-
-        if (ReturnCode.isSuccess(returnCode)) {
-          print("✅ Vidéo avec audio générée !");
-          await Gal.putVideo(videoPath);
-          generatedVideoPath = videoPath;
-        } else {
-          print("❌ Échec de la génération de la vidéo avec audio.");
+      for (int i = 0; i < 4; i++) {
+        String imagePath = "${directory.path}/page_${i.toString().padLeft(2, '0')}.png";
+        if (File(imagePath).existsSync()) {
+          generatedImages.add(imagePath);
         }
-      });
+      }
+
+      if (generatedImages.length == 4) {
+        final videoPath = "${directory.path}/output_video.mp4";
+        String ffmpegCommand =
+            "-framerate 1/3 -start_number 1 -i '${directory.path}/page_%02d.png' -c:v mpeg4 -r 30 -pix_fmt yuv420p -y '$videoPath'";
+
+        await FFmpegKit.execute(ffmpegCommand).then((session) async {
+          final returnCode = await session.getReturnCode();
+
+          if (ReturnCode.isSuccess(returnCode)) {
+            print("✅ Vidéo générée avec succès !");
+            await Gal.putVideo(videoPath);
+            generatedVideoPath = videoPath;
+          } else {
+            print("❌ Échec de la génération de la vidéo.");
+          }
+        });
+      } else {
+        print("❌ Moins de 4 images générées, vidéo non créée.");
+      }
 
     } catch (e) {
-      lessonContent = "Erreur lors de la génération vidéo/audio : $e";
+      lessonContent = "Erreur lors de la génération de la vidéo : $e";
       print("❌ Erreur : $e");
     } finally {
       isProcessing = false;
@@ -185,4 +186,5 @@ class LessonViewModel extends ChangeNotifier {
     }
   }
 }
-	
+
+ /* */

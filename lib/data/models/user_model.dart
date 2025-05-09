@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class User {
   final String id;
@@ -156,5 +158,42 @@ class User {
       bestStreak: bestStreak ?? this.bestStreak,
       lastActivityDate: lastActivityDate ?? this.lastActivityDate,
     );
+  }
+
+  static Future<bool> updateCoins(String userId) async {
+    try {
+      final backendUrl = dotenv.env['API_BASE_URL'] ?? '';
+      if (backendUrl.isEmpty) {
+        print('Error: API URL not configured');
+        return false;
+      }
+
+      final response = await http.get(
+        Uri.parse('$backendUrl/user/$userId/coins'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('Coin update response: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Parse the response to verify the update
+        final responseData = json.decode(response.body);
+        if (responseData['coins'] != null) {
+          print('Coins updated successfully. New balance: ${responseData['coins']}');
+          return true;
+        } else {
+          print('Response did not contain updated coin balance');
+          return false;
+        }
+      } else {
+        print('Failed to update coins. Status: ${response.statusCode}, Body: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Exception while updating coins: $e');
+      return false;
+    }
   }
 }

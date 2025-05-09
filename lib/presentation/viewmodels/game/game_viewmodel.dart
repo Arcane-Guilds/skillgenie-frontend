@@ -25,6 +25,7 @@ class GameViewModel extends ChangeNotifier {
   String get text => state.text;
   bool? get won => state.won;
   int get lowestIndex => state.lowestIndex;
+  String get correctWord => state.correctWord;
 
   void selectWord(int index) {
     if (state.lowestIndex < maxFinalLetters &&

@@ -21,16 +21,17 @@ class HomeGameScreenState extends State<HomeGameScreen> {
     double height = MediaQuery.of(context).size.height;
     widget.hangmanWords.readWords();
     return Scaffold(
+      backgroundColor: const Color(0xFFE3F2FD), // Light blue background
       body: SafeArea(
           child: Column(
             children: <Widget>[
               Center(
                 child: Container(
                   margin: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 8.0),
-                  child: const Text(
+                  child: Text(
                     'HANGMAN',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.blue[900], // Dark blue for contrast
                         fontSize: 58.0,
                         fontWeight: FontWeight.w300,
                         letterSpacing: 3.0),

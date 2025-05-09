@@ -18,6 +18,9 @@ class GameViewModel extends ChangeNotifier {
         correctWord: wordData['word']!, 
         hint: wordData['hint']!);
     state.text = _gameRepository.generateRandomLetters(state.correctWord);
+    state.selectedText = List.filled(maxFinalLetters, -1);
+    state.lowestIndex = 0;
+    notifyListeners();
   }
 
   String get hint => state.hint;

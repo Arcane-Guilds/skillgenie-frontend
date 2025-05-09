@@ -65,6 +65,8 @@ class _SelectedLetterViewState extends State<SelectedLetterView>
       _controller.stop();
     }
     _controller.reset();
+    _tweens.clear();
+    _tweens.addAll(_getTweens(5));
     setState(() {});
   }
 
@@ -121,7 +123,7 @@ class _SelectedLetterViewState extends State<SelectedLetterView>
             child: LetterTile(
               index: index,
               started: _controller.isAnimating,
-              text: active ? _getLetterText(index, viewModel) : "",
+              text: active ? viewModel.text[viewModel.selectedText[index]] : "",
               done: _controller.isCompleted,
               won: viewModel.won ?? false,
               correctWord: viewModel.correctWord,

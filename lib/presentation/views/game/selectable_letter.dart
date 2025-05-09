@@ -39,7 +39,7 @@ class _SelectableLetterContent extends StatelessWidget {
   });
 
   bool _isActive(int index, List<int> selectedText) {
-    return selectedText.contains(index);
+    return !selectedText.contains(index);
   }
 
   @override
@@ -47,7 +47,7 @@ class _SelectableLetterContent extends StatelessWidget {
     return Consumer<GameViewModel>(
       builder: (context, viewModel, child) {
         return AnimatedScale(
-          scale: _isActive(index, viewModel.selectedText) ? 0 : 1,
+          scale: _isActive(index, viewModel.selectedText) ? 1 : 0,
           duration: gameAnimationDuration,
           curve: gameAnimationCurve,
           child: Letter(text: viewModel.text[index]),

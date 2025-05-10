@@ -5,8 +5,6 @@ import 'package:skillGenie/core/theme/app_theme.dart';
 import 'package:skillGenie/presentation/widgets/avatar_widget.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-
-
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -211,18 +209,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         duration: const Duration(milliseconds: 300),
                         child: _isLastPage
                             ? const Text(
-                                'Get Started',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              )
+                          'Get Started',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        )
                             : const Icon(
-                                Icons.arrow_forward,
-                                color: Colors.white,
-                                size: 28,
-                              ),
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
                     ),
                   ),

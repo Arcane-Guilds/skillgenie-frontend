@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../viewmodels/auth/auth_viewmodel.dart';
@@ -43,14 +44,14 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/images/genie.png',
+            SvgPicture.asset(
+              'assets/images/logo.svg',
               width: 120,
               height: 120,
             ),
             const SizedBox(height: 24),
             Text(
-              'skillGenie',
+              'SkillGenie',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

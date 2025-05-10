@@ -1,0 +1,33 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Light blue glow background -->
+  <circle cx="100" cy="100" r="90" fill="#B3E5FC" opacity="0.6" />
+
+  <!-- Main blue circular body -->
+  <circle cx="100" cy="100" r="70" fill="#1CB0F6" />
+
+  <!-- White face area (rounded square with transparency) - made wider -->
+  <rect x="60" y="75" width="80" height="35" rx="12" ry="12" fill="#ffffff" fill-opacity="0.8" />
+
+  <!-- Left eye - larger -->
+  <circle cx="82" cy="92" r="11" fill="#333" />
+
+  <!-- Right eye - larger -->
+  <circle cx="118" cy="92" r="11" fill="#333" />
+
+  <!-- Mouth (darker rounded rectangle) positioned at very bottom of circle -->
+  <rect x="70" y="155" width="60" height="12" rx="6" ry="6" fill="#222" />
+
+  <!-- Inner mouth area (very dark gray) -->
+  <rect x="75" y="157" width="50" height="8" rx="4" ry="4" fill="#444" />
+
+  <!-- Simple bobbing animation -->
+  <animateTransform
+    attributeName="transform"
+    type="translate"
+    additive="sum"
+    values="0,0; 0,-3; 0,0"
+    dur="2s"
+    repeatCount="indefinite"
+    begin="0s"
+  />
+</svg>

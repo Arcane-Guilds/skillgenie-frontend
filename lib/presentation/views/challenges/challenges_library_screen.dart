@@ -7,14 +7,17 @@ import '../../../core/constants/api_constants.dart';
 import 'step1_screen.dart';
 
 // App-wide primary color - changing from purple to blue
-const Color kPrimaryBlue = Color(0xFF29B6F6); // Matching the "New Post" button blue
+const Color kPrimaryBlue =
+    Color(0xFF29B6F6); // Matching the "New Post" button blue
 
 class Challenge {
+  final String id;
   final String title;
   final String difficulty;
   final List<String> languages;
 
   Challenge({
+    required this.id,
     required this.title,
     required this.difficulty,
     required this.languages,
@@ -23,9 +26,12 @@ class Challenge {
   // Factory constructor to create Challenge from JSON response
   factory Challenge.fromJson(Map<String, dynamic> json) {
     return Challenge(
-      title: json['title'] ?? 'No Title', 
-      difficulty: json['difficulty'] ?? 'No Difficulty',
-      languages: List<String>.from(json['languages'] ?? []),
+      id: json['_id'] ?? '',
+      title: json['title'] ?? 'No Title', // Default to 'No Title' if null
+      difficulty: json['difficulty'] ??
+          'No Difficulty', // Default to 'No Difficulty' if null
+      languages: List<String>.from(
+          json['languages'] ?? []), // Default to empty list if null
     );
   }
 }
@@ -34,7 +40,8 @@ class ChallengesLibraryScreen extends StatefulWidget {
   const ChallengesLibraryScreen({super.key});
 
   @override
-  _ChallengesLibraryScreenState createState() => _ChallengesLibraryScreenState();
+  _ChallengesLibraryScreenState createState() =>
+      _ChallengesLibraryScreenState();
 }
 
 class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
@@ -51,12 +58,14 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
     });
 
     try {
-      final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/challenges'));
+      final response =
+          await http.get(Uri.parse('${ApiConstants.baseUrl}/challenges'));
 
-    if (response.statusCode == 200) {
-      List<dynamic> data = jsonDecode(response.body);
-      setState(() {
-        _challengesList = data.map((json) => Challenge.fromJson(json)).toList();
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          _challengesList =
+              data.map((json) => Challenge.fromJson(json)).toList();
           _isLoading = false;
         });
       } else {
@@ -124,7 +133,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // App Bar - only show in mobile mode
-              if (!isWeb) 
+              if (!isWeb)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
                   child: Row(
@@ -135,7 +144,8 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
+                            color: kPrimaryBlue
+                                .withOpacity(0.3), // Changed to blue
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -154,7 +164,8 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: kPrimaryBlue.withOpacity(0.3), // Changed to blue
+                          color:
+                              kPrimaryBlue.withOpacity(0.3), // Changed to blue
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -166,18 +177,19 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                     ],
                   ),
                 ),
-              
+
               // Content
               Expanded(
-                child: _isLoading 
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: kPrimaryBlue, // Changed to blue
-                    ),
-                  )
-                : _errorMessage.isNotEmpty
-                  ? _buildErrorMessage()
-                  : _buildChallengesContent(challengesTypes, size, theme, colorScheme),
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: kPrimaryBlue, // Changed to blue
+                        ),
+                      )
+                    : _errorMessage.isNotEmpty
+                        ? _buildErrorMessage()
+                        : _buildChallengesContent(
+                            challengesTypes, size, theme, colorScheme),
               ),
             ],
           ),
@@ -188,7 +200,10 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const Step1Screen(name: 'New Challenge'),
+              builder: (context) => const Step1Screen(
+                name: 'New Challenge',
+                challengeId: '',
+              ),
             ),
           );
         },
@@ -196,9 +211,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
         foregroundColor: Colors.white,
         elevation: 2,
         child: const Icon(Icons.add),
-      ).animate()
-        .fadeIn(duration: 500.ms)
-        .slideY(begin: 0.3, end: 0),
+      ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.3, end: 0),
     );
   }
 
@@ -223,16 +236,19 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
             Text(
               'Something went wrong',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               _errorMessage,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.7),
+                  ),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -242,7 +258,8 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryBlue, // Changed to blue
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -251,13 +268,14 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
     ).animate().fadeIn(duration: 500.ms);
   }
 
-  Widget _buildChallengesContent(List<String> challengesTypes, Size size, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildChallengesContent(List<String> challengesTypes, Size size,
+      ThemeData theme, ColorScheme colorScheme) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search bar section
+        children: [
+          // Search bar section
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
             child: Container(
@@ -270,21 +288,22 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                 ),
               ),
               child: Row(
-                      children: [
-                        Icon(
-                          Icons.search,
+                children: [
+                  Icon(
+                    Icons.search,
                     color: kPrimaryBlue.withOpacity(0.6), // Changed to blue
-                        ),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Search challenges',
-                              border: InputBorder.none,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search challenges',
+                        border: InputBorder.none,
                         hintStyle: TextStyle(
-                          color: kPrimaryBlue.withOpacity(0.6), // Changed to blue
+                          color:
+                              kPrimaryBlue.withOpacity(0.6), // Changed to blue
                         ),
-                        ),
+                      ),
                       style: theme.textTheme.bodyLarge,
                     ),
                   ),
@@ -297,7 +316,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
             ),
           ).animate().fadeIn(duration: 400.ms),
 
-            // Categories list section
+          // Categories list section
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
@@ -308,31 +327,35 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                 itemBuilder: (BuildContext context, int index) {
                   final bool isSelected = _selectedCategoryIndex == index;
                   return GestureDetector(
-                      onTap: () {
-                        setState(() {
+                    onTap: () {
+                      setState(() {
                         _selectedCategoryIndex = index;
-                        });
-                      },
+                      });
+                    },
                     child: Container(
                       margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected 
-                          ? kPrimaryBlue // Changed to blue
-                          : kPrimaryBlue.withOpacity(0.1), // Changed to blue
+                        color: isSelected
+                            ? kPrimaryBlue // Changed to blue
+                            : kPrimaryBlue.withOpacity(0.1), // Changed to blue
                         borderRadius: BorderRadius.circular(12),
-                        border: isSelected 
-                          ? null 
-                          : Border.all(color: kPrimaryBlue.withOpacity(0.3)), // Changed to blue
+                        border: isSelected
+                            ? null
+                            : Border.all(
+                                color: kPrimaryBlue
+                                    .withOpacity(0.3)), // Changed to blue
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         challengesTypes[index],
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected 
-                            ? Colors.white 
-                            : kPrimaryBlue, // Changed to blue
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected
+                              ? Colors.white
+                              : kPrimaryBlue, // Changed to blue
                         ),
                       ),
                     ),
@@ -357,33 +380,34 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
 
           const SizedBox(height: 16),
 
-            // Challenges list section (Horizontal scroll)
-            SizedBox(
-            height: 220, 
-              child: ListView.builder(
-                itemCount: _challengesList.length,
-                scrollDirection: Axis.horizontal,
+          // Challenges list section (Horizontal scroll)
+          SizedBox(
+            height: 220,
+            child: ListView.builder(
+              itemCount: _challengesList.length,
+              scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(left: 20, right: 10),
-                itemBuilder: (BuildContext context, int index) {
-                  final challenge = _challengesList[index];
+              itemBuilder: (BuildContext context, int index) {
+                final challenge = _challengesList[index];
                 final color = _getDifficultyColor(challenge.difficulty);
 
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Step1Screen(
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Step1Screen(
+                          challengeId: challenge.id,
                           name: challenge.title,
                         ),
-                        ),
-                      );
-                    },
-                    child: Container(
+                      ),
+                    );
+                  },
+                  child: Container(
                     width: 280,
                     margin: const EdgeInsets.only(right: 16, bottom: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
                           color: color.withOpacity(0.2),
@@ -409,7 +433,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                               ),
                             ),
                           ),
-                          
+
                           // Pattern overlay for visual interest
                           Positioned.fill(
                             child: Opacity(
@@ -419,20 +443,21 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                               ),
                             ),
                           ),
-                          
+
                           // Content
                           Padding(
                             padding: const EdgeInsets.all(16),
-                                child: Column(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
+                              children: [
                                 // Difficulty badge
                                 Align(
                                   alignment: Alignment.topRight,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
                                     decoration: BoxDecoration(
-                                        color: Colors.white,
+                                      color: Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -445,13 +470,13 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                                     ),
                                   ),
                                 ),
-                                
+
                                 const Spacer(),
-                                
+
                                 // Title
-                                    Text(
+                                Text(
                                   challenge.title,
-                                      style: const TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -459,29 +484,32 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                
+
                                 const SizedBox(height: 8),
-                                
+
                                 // Languages
                                 Wrap(
                                   spacing: 6,
                                   runSpacing: 6,
-                                  children: challenge.languages.map((lang) => 
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        lang,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    )
-                                  ).toList(),
+                                  children: challenge.languages
+                                      .map((lang) => Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Colors.white.withOpacity(0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              lang,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ))
+                                      .toList(),
                                 ),
                               ],
                             ),
@@ -490,36 +518,41 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                       ),
                     ),
                   ),
-                ).animate()
-                  .fadeIn(duration: 600.ms, delay: 300.ms + (100.ms * index))
-                  .slideX(begin: 0.2, end: 0, duration: 500.ms, curve: Curves.easeOutQuad);
-                },
-              ),
+                )
+                    .animate()
+                    .fadeIn(duration: 600.ms, delay: 300.ms + (100.ms * index))
+                    .slideX(
+                        begin: 0.2,
+                        end: 0,
+                        duration: 500.ms,
+                        curve: Curves.easeOutQuad);
+              },
             ),
+          ),
 
           const SizedBox(height: 24),
 
-            // Popular challenges section
+          // Popular challenges section
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Popular Challenges',
+            child: Text(
+              'Popular Challenges',
               style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ).animate().fadeIn(duration: 700.ms, delay: 400.ms),
 
           const SizedBox(height: 16),
 
-            // Popular challenges list (Vertical list)
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _challengesList.length,
+          // Popular challenges list (Vertical list)
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _challengesList.length,
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-              itemBuilder: (BuildContext context, int index) {
-                final challenge = _challengesList[index];
+            itemBuilder: (BuildContext context, int index) {
+              final challenge = _challengesList[index];
               final color = _getDifficultyColor(challenge.difficulty);
 
               return Card(
@@ -538,6 +571,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => Step1Screen(
+                          challengeId: challenge.id,
                           name: challenge.title,
                         ),
                       ),
@@ -565,15 +599,17 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                           ),
                           child: Center(
                             child: Icon(
-                              _getIconForLanguage(challenge.languages.isNotEmpty ? challenge.languages.first : ''),
+                              _getIconForLanguage(challenge.languages.isNotEmpty
+                                  ? challenge.languages.first
+                                  : ''),
                               color: Colors.white,
                               size: 28,
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(width: 16),
-                        
+
                         // Challenge details
                         Expanded(
                           child: Column(
@@ -587,31 +623,33 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              
+
                               const SizedBox(height: 4),
-                              
+
                               // Languages
                               Text(
                                 'Languages: ${challenge.languages.join(', ')}',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: kPrimaryBlue.withOpacity(0.8), // Changed to blue
+                                  color: kPrimaryBlue
+                                      .withOpacity(0.8), // Changed to blue
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              
+
                               const SizedBox(height: 8),
-                              
+
                               // Difficulty badge
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: color.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   challenge.difficulty,
-                                style: TextStyle(
+                                  style: TextStyle(
                                     color: color,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -621,24 +659,26 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                             ],
                           ),
                         ),
-                        
+
                         // Arrow icon
                         Icon(
                           Icons.arrow_forward_ios,
-                          color: kPrimaryBlue.withOpacity(0.6), // Changed to blue
+                          color:
+                              kPrimaryBlue.withOpacity(0.6), // Changed to blue
                           size: 16,
                         ),
                       ],
                     ),
                   ),
                 ),
-              ).animate()
-                .fadeIn(duration: 800.ms, delay: 500.ms + (50.ms * index))
-                .slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad);
-              },
-            ),
-          ],
-        ),
+              )
+                  .animate()
+                  .fadeIn(duration: 800.ms, delay: 500.ms + (50.ms * index))
+                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad);
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -666,28 +706,29 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
 
 class PatternPainter extends CustomPainter {
   final Color color;
-  
+
   PatternPainter({required this.color});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-      
+
     const double spacing = 20.0;
-    
+
     // Draw diagonal lines
     for (double i = 0; i < size.width + size.height; i += spacing) {
       canvas.drawLine(
         Offset(i < size.width ? i : 0, i < size.width ? 0 : i - size.width),
-        Offset(i < size.height ? 0 : i - size.height, i < size.height ? i : size.height),
+        Offset(i < size.height ? 0 : i - size.height,
+            i < size.height ? i : size.height),
         paint,
       );
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-} 
+}

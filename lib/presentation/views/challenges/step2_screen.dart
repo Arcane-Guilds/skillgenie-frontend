@@ -6,8 +6,9 @@ import 'joinscreen.dart';
 
 class Step2Screen extends StatefulWidget {
   final String name;
+  final String challengeId;
 
-  const Step2Screen({super.key, required this.name});
+  const Step2Screen({super.key, required this.challengeId, required this.name});
 
   @override
   _Step2ScreenState createState() => _Step2ScreenState();
@@ -45,10 +46,11 @@ class _Step2ScreenState extends State<Step2Screen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-               GenieAvatar(
+              GenieAvatar(
                 state: AvatarState.celebrating,
                 size: 200,
-                message: 'Now we will go to the party ${widget.name}! Let the fun begin!',
+                message:
+                    'Now we will go to the party ${widget.name}! Let the fun begin!',
               ),
               const SizedBox(height: 24),
               Row(
@@ -58,7 +60,8 @@ class _Step2ScreenState extends State<Step2Screen>
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const JoinScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const JoinPartyScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -66,7 +69,8 @@ class _Step2ScreenState extends State<Step2Screen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 32),
                       minimumSize: const Size(140, 50),
                     ),
                     child: const Text(
@@ -81,7 +85,9 @@ class _Step2ScreenState extends State<Step2Screen>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const GenerateCodeScreen()),
+                            builder: (context) => GenerateCodeScreen(
+                                  challengeId: widget.challengeId,
+                                )),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -89,7 +95,8 @@ class _Step2ScreenState extends State<Step2Screen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 32),
                       minimumSize: const Size(140, 50),
                     ),
                     child: const Text(

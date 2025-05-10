@@ -33,7 +33,6 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _ageController = TextEditingController();
   bool _hasNavigated = false;
 
   @override
@@ -41,7 +40,6 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _ageController.dispose();
     super.dispose();
   }
 
@@ -102,29 +100,6 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                   }
                                   return null;
                                 },
-                              ),
-                              const SizedBox(height: 16),
-                              _buildTextFormField(
-                                controller: _ageController,
-                                hintText: 'Age',
-                                keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your age';
-                                  }
-                                  if (int.tryParse(value) == null) {
-                                    return 'Please enter a valid age';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Providing your age ensures you get the right SkillGenie experience. For more details, please visit our Privacy Policy.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
                               ),
                               const SizedBox(height: 16),
                               _buildTextFormField(
@@ -192,7 +167,6 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                         username: _usernameController.text,
                                         email: _emailController.text,
                                         password: _passwordController.text,
-                                        age: int.parse(_ageController.text),
                                       );
                                     }
                                   },
@@ -239,7 +213,7 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                   Expanded(child: Divider(color: Colors.grey[300])),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                             /* const SizedBox(height: 16),
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
@@ -260,9 +234,10 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                     ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ),*/
                               const SizedBox(height: 24),
                               const Text(
                                 'By signing in to SkillGenie, you agree to our Terms and Privacy Policy.',

@@ -18,6 +18,9 @@ class GameViewModel extends ChangeNotifier {
         correctWord: wordData['word']!, 
         hint: wordData['hint']!);
     state.text = _gameRepository.generateRandomLetters(state.correctWord);
+    state.selectedText = List.filled(maxFinalLetters, -1);
+    state.lowestIndex = 0;
+    notifyListeners();
   }
 
   String get hint => state.hint;
@@ -25,6 +28,7 @@ class GameViewModel extends ChangeNotifier {
   String get text => state.text;
   bool? get won => state.won;
   int get lowestIndex => state.lowestIndex;
+  String get correctWord => state.correctWord;
 
   void selectWord(int index) {
     if (state.lowestIndex < maxFinalLetters &&

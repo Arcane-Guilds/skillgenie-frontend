@@ -15,9 +15,17 @@ class AuthViewModel extends ChangeNotifier {
   String? _userId;
   String? _error;
   bool _isLoading = false;
+  bool _authChecked = false; // Track if initial auth check is done
+  bool _hasCompletedOnboarding = false; // Added for onboarding status
+
+  // Key for SharedPreferences
+  static const String _onboardingCompleteKey = 'hasCompletedOnboarding';
 
   AuthViewModel({required AuthRepository authRepository}) 
-      : _authRepository = authRepository;
+      : _authRepository = authRepository {
+        // Optionally load status immediately, but checkAuthStatus might be better
+        // _loadOnboardingStatus(); 
+      }
 
   /// Get the current user
   User? get user => _user;
@@ -34,11 +42,50 @@ class AuthViewModel extends ChangeNotifier {
   /// Check if the view model is loading
   bool get isLoading => _isLoading;
 
+  /// Get the current access token
+  String? get token => _tokens?.accessToken;
+
   /// Returns true if the user is authenticated (has valid tokens and user data)
   bool get isAuthenticated => _tokens != null && _user != null;
 
+  /// Returns true if the initial authentication check has been performed
+  bool get authChecked => _authChecked;
+
+  /// Returns true if the user has completed the onboarding process
+  bool get hasCompletedOnboarding => _hasCompletedOnboarding; // Added getter
+
   /// Get the current user (alias for user)
   User? get currentUser => _user;
+
+  /// Load onboarding status from SharedPreferences
+  Future<void> _loadOnboardingStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _hasCompletedOnboarding = prefs.getBool(_onboardingCompleteKey) ?? false;
+      print("Loaded onboarding status: $_hasCompletedOnboarding");
+    } catch (e) {
+      print("Error loading onboarding status: $e");
+      _hasCompletedOnboarding = false; // Default to false on error
+    }
+    // No need to notifyListeners here unless UI depends directly on this load
+  }
+
+  /// Set onboarding status and save to SharedPreferences
+  Future<void> setOnboardingComplete(bool complete) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final success = await prefs.setBool(_onboardingCompleteKey, complete);
+      if (success) {
+        _hasCompletedOnboarding = complete;
+        print("Saved onboarding status: $_hasCompletedOnboarding");
+        notifyListeners(); // Notify listeners as this state change might affect redirection
+      } else {
+         print("Error saving onboarding status to SharedPreferences.");
+      }
+    } catch (e) {
+      print("Error saving onboarding status: $e");
+    }
+  }
 
   /// Sign in with email and password
   Future<void> signIn(String email, String password) async {
@@ -102,20 +149,21 @@ class AuthViewModel extends ChangeNotifier {
         print('WARNING: User object is null after successful login');
       }
       
+      // Load onboarding status after successful login & user fetch
+      await _loadOnboardingStatus(); 
+      
       _isLoading = false;
+      _authChecked = true; // Mark auth as checked after successful login
       notifyListeners();
     } catch (e) {
       print('Error during sign in: $e');
       _isLoading = false;
-      if (e.toString().contains('User not found')) {
-        _error = 'User not found';
-      } else if (e.toString().contains('Incorrect password')) {
-        _error = 'Incorrect password';
-      } else {
-        _error = e.toString();
-      }
+      // Set a generic user-friendly error message
+      _error = 'Invalid email or password. Please try again.'; 
+      _authChecked = true; // Mark as checked even on login failure
       notifyListeners();
-      throw Exception(_error);
+      // Do NOT re-throw the exception here. The UI will listen for _error.
+      // throw Exception(_error); 
     }
   }
 
@@ -131,9 +179,16 @@ class AuthViewModel extends ChangeNotifier {
       _user = await _authRepository.getUser();
       _isLoading = false;
       notifyListeners();
+      
+      // Load onboarding status after signup
+      await _loadOnboardingStatus(); 
+      
+      _authChecked = true; // Mark auth as checked
+      notifyListeners();
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      _authChecked = true; // Mark as checked even on signup failure
       notifyListeners();
       throw Exception(_error);
     }
@@ -159,6 +214,11 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Check if the user is authenticated
   Future<void> checkAuthStatus() async {
+    if (_authChecked) return; // Avoid redundant checks if already done
+
+    _isLoading = true; // Indicate loading during the check
+    notifyListeners(); // Notify start of check
+
     try {
       print('Checking authentication status...');
       _tokens = await _authRepository.getTokens();
@@ -186,13 +246,20 @@ class AuthViewModel extends ChangeNotifier {
         print('WARNING: Tokens found but user object is null');
       }
       
-      _isLoading = false;
-      notifyListeners();
+      // Load onboarding status regardless of auth state
+      await _loadOnboardingStatus(); 
+      
+      print('Authentication check complete.');
+      
     } catch (e) {
       print('Error checking auth status: $e');
-      _isLoading = false;
       _error = e.toString();
-      notifyListeners();
+      // Ensure onboarding status is loaded even if auth check fails
+      await _loadOnboardingStatus(); 
+    } finally {
+       _isLoading = false; // Stop loading indicator
+       _authChecked = true; // Mark that the initial check has been performed
+       notifyListeners(); // Notify completion of check
     }
   }
 
@@ -208,9 +275,16 @@ class AuthViewModel extends ChangeNotifier {
       _userId = null;
       _isLoading = false;
       notifyListeners();
+      
+      _hasCompletedOnboarding = false; // Reset onboarding status on sign out
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_onboardingCompleteKey); // Remove from storage
+      _authChecked = false; // Reset auth check status
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      _hasCompletedOnboarding = false; 
+      _authChecked = false; 
       notifyListeners();
       throw Exception(_error);
     }
@@ -267,6 +341,14 @@ class AuthViewModel extends ChangeNotifier {
       _error = 'Failed to verify OTP: ${e.toString()}';
       notifyListeners();
       throw Exception(_error);
+    }
+  }
+
+  /// Clears the current error message.
+  void clearError() {
+    if (_error != null) {
+      _error = null;
+      notifyListeners();
     }
   }
 }

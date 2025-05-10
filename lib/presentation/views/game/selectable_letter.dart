@@ -19,7 +19,7 @@ class SelectableLetter extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: curvedBox.copyWith(
-          color: backgroundBoxColor,
+          color: Colors.blue[100],
         ),
         alignment: Alignment.center,
         width: 50,
@@ -39,7 +39,7 @@ class _SelectableLetterContent extends StatelessWidget {
   });
 
   bool _isActive(int index, List<int> selectedText) {
-    return selectedText.contains(index);
+    return !selectedText.contains(index);
   }
 
   @override
@@ -47,7 +47,7 @@ class _SelectableLetterContent extends StatelessWidget {
     return Consumer<GameViewModel>(
       builder: (context, viewModel, child) {
         return AnimatedScale(
-          scale: _isActive(index, viewModel.selectedText) ? 0 : 1,
+          scale: _isActive(index, viewModel.selectedText) ? 1 : 0,
           duration: gameAnimationDuration,
           curve: gameAnimationCurve,
           child: Letter(text: viewModel.text[index]),
@@ -76,9 +76,9 @@ class Letter extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 20,
-          color: Color.fromRGBO(116, 88, 207, 1),
+          color: Colors.blue[900],
           fontFamily: "Roboto",
         ),
       ),

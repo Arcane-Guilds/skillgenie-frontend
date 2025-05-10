@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/services/service_locator.dart';
 import '../../viewmodels/game/game_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
 
 class Game extends StatelessWidget {
   const Game({super.key});
@@ -14,14 +15,30 @@ class Game extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => serviceLocator<GameViewModel>(),
       child: Scaffold(
-        body: DecoratedBox(
-          decoration: const BoxDecoration(
+        backgroundColor: const Color(0xFFE3F2FD), // Light blue background
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFE3F2FD), // Light blue app bar
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.blue[900]), // Dark blue for contrast
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'Word Jumble',
+            style: TextStyle(
+              color: Colors.blue[900], // Dark blue for contrast
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: Container(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment(0, 0),
-              end: Alignment(0, 1),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [
-                Color.fromRGBO(211, 151, 250, 1),
-                Color.fromRGBO(131, 100, 232, 1),
+                const Color(0xFFE3F2FD), // Light blue
+                const Color(0xFFBBDEFB), // Slightly darker light blue
               ],
             ),
           ),
@@ -31,20 +48,55 @@ class Game extends StatelessWidget {
               const Spacer(),
               Consumer<GameViewModel>(
                 builder: (context, viewModel, child) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 20),
-                    child: Text(
-                      "Word Hint\n${viewModel.hint}",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 20, color: Colors.white),
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.blue[200]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          "Word Hint\n${viewModel.hint}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.blue[900],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            viewModel.resetGame();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('New Word'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[100],
+                            foregroundColor: Colors.blue[900],
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
               ),
+              const SizedBox(height: 32),
               const SelectedLetterView(),
               const Spacer(),
-              SizedBox(
+              Container(
                 width: 400,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Consumer<GameViewModel>(
                   builder: (context, viewModel, child) {
                     return Wrap(
@@ -62,7 +114,8 @@ class Game extends StatelessWidget {
                     );
                   },
                 ),
-              )
+              ),
+              const SizedBox(height: 32),
             ],
           ),
         ),

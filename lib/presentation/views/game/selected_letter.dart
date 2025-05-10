@@ -60,6 +60,16 @@ class _SelectedLetterViewState extends State<SelectedLetterView>
     super.dispose();
   }
 
+  void _resetAnimation() {
+    if (_controller.isAnimating) {
+      _controller.stop();
+    }
+    _controller.reset();
+    _tweens.clear();
+    _tweens.addAll(_getTweens(5));
+    setState(() {});
+  }
+
   bool _isActive(int index, List<int> selectedList) {
     return selectedList[index] != -1;
   }
@@ -96,7 +106,7 @@ class _SelectedLetterViewState extends State<SelectedLetterView>
         width: 50,
         height: 50,
         decoration: curvedBox.copyWith(
-          color: backgroundBoxColor,
+          color: Colors.blue[100],
         ),
         child: AnimatedScale(
           duration: gameAnimationDuration,
@@ -113,9 +123,10 @@ class _SelectedLetterViewState extends State<SelectedLetterView>
             child: LetterTile(
               index: index,
               started: _controller.isAnimating,
-              text: active ? _getLetterText(index, viewModel) : "",
+              text: active ? viewModel.text[viewModel.selectedText[index]] : "",
               done: _controller.isCompleted,
               won: viewModel.won ?? false,
+              correctWord: viewModel.correctWord,
             ),
           ),
         ),
@@ -133,6 +144,8 @@ class LetterTile extends StatelessWidget {
   final bool started, done, won;
   final int index;
   final String text;
+  final String correctWord;
+  static bool _dialogShown = false; // Add static flag to track dialog state
   
   const LetterTile({
     this.started = false,
@@ -140,6 +153,7 @@ class LetterTile extends StatelessWidget {
     required this.text,
     this.won = false,
     this.index = 0,
+    required this.correctWord,
     super.key,
   });
 
@@ -151,12 +165,56 @@ class LetterTile extends StatelessWidget {
     return AnimatedContainer(
       duration: gameAnimationDuration,
       decoration: curvedBox.copyWith(
-        color: done ? Colors.white : const Color.fromRGBO(255, 255, 254, 1),
+        color: done ? Colors.white : const Color(0xFFE3F2FD),
         boxShadow: const [gameBoxShadow],
       ),
       onEnd: () {
-        if (done) {
-          context.pushReplacement("/game/summary", extra: won);
+        if (done && !_dialogShown) { // Only show dialog if not already shown
+          _dialogShown = true; // Set flag to true before showing dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                backgroundColor: const Color(0xFF2C1E68),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                title: Text(
+                  won ? 'Correct!' : 'Wrong!',
+                  style: TextStyle(
+                    color: won ? const Color(0xFF00e676) : Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30.0,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                content: Text(
+                  'The word was: $correctWord',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20.0,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close dialog
+                      _dialogShown = false; // Reset flag when dialog is closed
+                      context.go('/games'); // Navigate to games screen using GoRouter
+                    },
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
         }
       },
       child: AnimatedOpacity(
@@ -166,9 +224,9 @@ class LetterTile extends StatelessWidget {
         child: Center(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
-              color: Color.fromRGBO(116, 88, 207, 1),
+              color: Colors.blue[900],
               fontFamily: "Roboto",
             ),
           ),

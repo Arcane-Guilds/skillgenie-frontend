@@ -15,6 +15,7 @@ import '../../../core/utils/constants.dart';
 import '../../../core/utils/user_scores.dart';
 import '../../../core/widgets/word_button.dart';
 import 'homegame_screen.dart';
+import '../../../core/theme/app_theme.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key, required this.hangmanObject});
@@ -38,7 +39,6 @@ class _GameScreenState extends State<GameScreen> {
   int hangState = 0;
   int wordCount = 0;
   bool finishedGame = false;
-  bool resetGame = false;
 
   void newGame() {
     setState(() {
@@ -47,7 +47,6 @@ class _GameScreenState extends State<GameScreen> {
       lives = 5;
       wordCount = 0;
       finishedGame = false;
-      resetGame = false;
       initWords();
     });
   }
@@ -65,49 +64,52 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void returnHomePage() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => HomeGameScreen()),
-      ModalRoute.withName('homePage'),
-    );
+    Navigator.pop(context);
   }
 
   void initWords() {
-    finishedGame = false;
-    resetGame = false;
-    hintStatus = true;
-    hangState = 0;
-    buttonStatus = List.generate(26, (index) {
-      return true;
-    });
-    wordList = [];
-    hintLetters = [];
-    word = widget.hangmanObject.getWord();
-    if (word.isNotEmpty) {
-      hiddenWord = widget.hangmanObject.getHiddenWord(word.length);
-    } else {
-      returnHomePage();
-    }
+    setState(() {
+      finishedGame = false;
+      hintStatus = true;
+      hangState = 0;
+      buttonStatus = List.generate(26, (index) => true);
+      wordList = [];
+      hintLetters = [];
+      word = widget.hangmanObject.getWord();
+      if (word.isNotEmpty) {
+        hiddenWord = widget.hangmanObject.getHiddenWord(word.length);
+      } else {
+        returnHomePage();
+      }
 
-    for (int i = 0; i < word.length; i++) {
-      wordList.add(word[i]);
-      hintLetters.add(i);
-    }
+      for (int i = 0; i < word.length; i++) {
+        wordList.add(word[i]);
+        hintLetters.add(i);
+      }
+    });
   }
 
   void wordPress(int index) {
     if (lives == 0) {
       returnHomePage();
+      return;
     }
 
     if (finishedGame) {
-      setState(() {
-        resetGame = true;
-      });
       return;
     }
 
     bool check = false;
+    bool showGameOver = false;
+    bool showFailed = false;
+    bool showSuccess = false;
+
+    // First update the button state
+    setState(() {
+      buttonStatus[index] = false;
+    });
+
+    // Then check the word
     setState(() {
       for (int i = 0; i < wordList.length; i++) {
         if (wordList[i] == englishAlphabet.alphabet[index]) {
@@ -124,79 +126,58 @@ class _GameScreenState extends State<GameScreen> {
       if (!check) {
         hangState += 1;
       }
-
       if (hangState == 6) {
         finishedGame = true;
         lives -= 1;
         if (lives < 1) {
-          if (wordCount > 0) {
-            Score score = Score(
-                id: 1,
-                scoreDate: DateTime.now().toString(),
-                userScore: wordCount);
-            score_database.manipulateDatabase(score, database);
-          }
-          Alert(
-              style: kGameOverAlertStyle,
-              context: context,
-              title: "Game Over!",
-              desc: "Your score is $wordCount",
-              buttons: [
-                DialogButton(
-                  color: kDialogButtonColor,
-                  onPressed: () => returnHomePage(),
-                  child: Icon(
-                    MdiIcons.home,
-                    size: 30.0,
-                  ),
-                ),
-                DialogButton(
-                  onPressed: () {
-                    newGame();
-                    Navigator.pop(context);
-                  },
-                  color: kDialogButtonColor,
-                  child: Icon(MdiIcons.refresh, size: 30.0),
-                ),
-              ]).show();
+          showGameOver = true;
         } else {
-          Alert(
-            context: context,
-            style: kFailedAlertStyle,
-            type: AlertType.error,
-            title: word,
-//            desc: "You Lost!",
-            buttons: [
-              DialogButton(
-                radius: BorderRadius.circular(10),
-                width: 127,
-                color: kDialogButtonColor,
-                height: 52,
-                child: Icon(
-                  MdiIcons.arrowRightThick,
-                  size: 30.0,
-                ),
-                onPressed: () {
-                  setState(() {
-                    Navigator.pop(context);
-                    initWords();
-                  });
-                },
-              ),
-            ],
-          ).show();
+          showFailed = true;
         }
       }
-
-      buttonStatus[index] = false;
       if (hiddenWord == word) {
         finishedGame = true;
+        showSuccess = true;
+      }
+    });
+
+    if (showGameOver) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Alert(
+          style: kGameOverAlertStyle,
+          context: context,
+          title: "Game Over!",
+          desc: "Your score is $wordCount",
+          buttons: [
+            DialogButton(
+              color: kDialogButtonColor,
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).pop();
+                returnHomePage();
+              },
+              child: Icon(
+                MdiIcons.home,
+                size: 30.0,
+              ),
+            ),
+            DialogButton(
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).pop();
+                newGame();
+              },
+              color: kDialogButtonColor,
+              child: Icon(MdiIcons.refresh, size: 30.0),
+            ),
+          ]
+        ).show();
+      });
+    } else if (showFailed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         Alert(
           context: context,
-          style: kSuccessAlertStyle,
-          type: AlertType.success,
+          style: kFailedAlertStyle,
+          type: AlertType.error,
           title: word,
-//          desc: "You guessed it right!",
           buttons: [
             DialogButton(
               radius: BorderRadius.circular(10),
@@ -204,21 +185,52 @@ class _GameScreenState extends State<GameScreen> {
               color: kDialogButtonColor,
               height: 52,
               child: Icon(
-                MdiIcons.arrowRightThick,
+                MdiIcons.check,
                 size: 30.0,
               ),
               onPressed: () {
-                setState(() {
-                  wordCount += 1;
-                  Navigator.pop(context);
-                  initWords();
-                });
+                Navigator.of(context, rootNavigator: true).pop();
+                if (mounted) {
+                  setState(() {
+                    initWords();
+                  });
+                }
+              },
+            ),
+          ],
+        ).show();
+      });
+    } else if (showSuccess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Alert(
+          context: context,
+          style: kSuccessAlertStyle,
+          type: AlertType.success,
+          title: word,
+          buttons: [
+            DialogButton(
+              radius: BorderRadius.circular(10),
+              width: 127,
+              color: kDialogButtonColor,
+              height: 52,
+              child: Icon(
+                MdiIcons.check,
+                size: 30.0,
+              ),
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).pop();
+                if (mounted) {
+                  setState(() {
+                    wordCount += 1;
+                    initWords();
+                  });
+                }
               },
             )
           ],
         ).show();
-      }
-    });
+      });
+    }
   }
 
   @override
@@ -229,14 +241,25 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (resetGame) {
-      setState(() {
-        initWords();
-      });
-    }
     return PopScope(
       canPop: false,
-      child: Scaffold(backgroundColor: Colors.purple,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFE3F2FD),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFE3F2FD),
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
+            onPressed: () => returnHomePage(),
+          ),
+          title: Text(
+            'Hangman',
+            style: TextStyle(
+              color: Colors.blue[900],
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         body: SafeArea(
           child: Column(
             children: <Widget>[
@@ -260,13 +283,12 @@ class _GameScreenState extends State<GameScreen> {
                                         highlightColor: Colors.transparent,
                                         splashColor: Colors.transparent,
                                         iconSize: 39,
-                                        icon: Icon(MdiIcons.heart),
+                                        icon: Icon(MdiIcons.heart, color: Colors.blue[900]),
                                         onPressed: () {},
                                       ),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          8.7, 7.9, 0, 0.8),
+                                      padding: const EdgeInsets.fromLTRB(8.7, 7.9, 0, 0.8),
                                       alignment: Alignment.center,
                                       child: SizedBox(
                                         height: 38,
@@ -275,11 +297,9 @@ class _GameScreenState extends State<GameScreen> {
                                           child: Padding(
                                             padding: const EdgeInsets.all(2.0),
                                             child: Text(
-                                              lives.toString() == "1"
-                                                  ? "I"
-                                                  : lives.toString(),
-                                              style: const TextStyle(
-                                                color: Color(0xFF2C1E68),
+                                              lives.toString() == "1" ? "I" : lives.toString(),
+                                              style: TextStyle(
+                                                color: Colors.blue[900],
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold,
                                                 fontFamily: 'PatrickHand',
@@ -296,37 +316,41 @@ class _GameScreenState extends State<GameScreen> {
                             SizedBox(
                               child: Text(
                                 wordCount == 1 ? "I" : '$wordCount',
-                                style: kWordCounterTextStyle,
+                                style: TextStyle(
+                                  color: Colors.blue[900],
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             SizedBox(
                               child: IconButton(
                                 tooltip: 'Hint',
                                 iconSize: 39,
-                                icon: Icon(MdiIcons.lightbulb),
+                                icon: Icon(MdiIcons.lightbulb, color: Colors.blue[900]),
                                 highlightColor: Colors.transparent,
                                 splashColor: Colors.transparent,
                                 onPressed: hintStatus
                                     ? () {
-                                        int rand = Random()
-                                            .nextInt(hintLetters.length);
-                                        wordPress(englishAlphabet.alphabet
-                                            .indexOf(
-                                                wordList[hintLetters[rand]]));
-                                        hintStatus = false;
-                                      }
+                                  int rand = Random().nextInt(hintLetters.length);
+                                  wordPress(englishAlphabet.alphabet.indexOf(wordList[hintLetters[rand]]));
+                                  hintStatus = false;
+                                }
                                     : null,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      // Add the word description label here
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          widget.hangmanObject.getWordDescription(word),  // Fetch and display the word description
-                          style: const TextStyle(fontSize: 18, color: Colors.white),
+                          widget.hangmanObject.getWordDescription(word),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.blue[900],
+                            fontWeight: FontWeight.w500,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),

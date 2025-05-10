@@ -62,14 +62,12 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     });
   }
 
-  // 🟢 Generate Party Code
   Future<void> _generateParty() async {
     setState(() => isLoading = true);
 
     try {
       final response = await http
-          .get(Uri.parse('${ApiConstants.baseUrl}'
-          '/party-code/generate'));
+          .get(Uri.parse('${ApiConstants.baseUrl}/party-code/generate'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
@@ -85,7 +83,6 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     }
   }
 
-  // 🟢 Join Party
   Future<void> _joinParty() async {
     final String code = _joinCodeController.text.trim();
     if (code.isEmpty) {
@@ -114,8 +111,6 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
         final data = jsonDecode(response.body);
         if (data['success']) {
           _showSnackbar('✅ Joined party successfully');
-
-          // 🔥 Check if the party now has 2 or more users
           _checkAndNavigate(code);
         } else {
           _showSnackbar('❌ Failed to join party');
@@ -130,7 +125,6 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     }
   }
 
-  // ✅ Fetch users in party & navigate if at least 2 users
   Future<void> _checkAndNavigate(String code) async {
     try {
       final response = await http
@@ -153,14 +147,15 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     }
   }
 
-  // ✅ Navigate to ChallengeScreen
   void _goToChallengeScreen(String partyCode) {
     print("🚀 Navigating to ChallengeScreen with partyCode: $partyCode");
-
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ChallengesScreen(partyCode: partyCode),
+        builder: (context) => ChallengesScreen(
+          partyCode: partyCode,
+          challengeId: 'challengeId', // Replace with actual challenge ID
+        ),
       ),
     );
   }
@@ -199,7 +194,8 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                 const GenieAvatar(
                   state: AvatarState.idle,
                   size: 120,
-                  message: "Invite your friends by sharing or joining a party code!",
+                  message:
+                      "Invite your friends by sharing or joining a party code!",
                 ),
                 const SizedBox(height: 24),
                 Card(
@@ -214,19 +210,22 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                       children: [
                         Text(
                           'Invite by Party Code',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: AppTheme.textPrimaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: AppTheme.textPrimaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _partyCodeController,
                           readOnly: true,
-                          style: const TextStyle(color: AppTheme.textPrimaryColor),
+                          style:
+                              const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Generated Party Code",
-                            labelStyle: const TextStyle(color: AppTheme.textSecondaryColor),
+                            labelStyle: const TextStyle(
+                                color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(
@@ -259,7 +258,8 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                                     ? const SizedBox(
                                         width: 16,
                                         height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
                                       )
                                     : const Icon(Icons.refresh),
                                 label: const Text('Generate'),
@@ -276,10 +276,12 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _joinCodeController,
-                          style: const TextStyle(color: AppTheme.textPrimaryColor),
+                          style:
+                              const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Enter Party Code",
-                            labelStyle: const TextStyle(color: AppTheme.textSecondaryColor),
+                            labelStyle: const TextStyle(
+                                color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(
@@ -322,7 +324,8 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
-                          onPressed: () => _goToChallengeScreen(_partyCodeController.text),
+                          onPressed: () =>
+                              _goToChallengeScreen(_partyCodeController.text),
                           icon: const Icon(Icons.arrow_forward),
                           label: const Text('Go to Challenge'),
                           style: ElevatedButton.styleFrom(

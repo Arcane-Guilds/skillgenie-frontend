@@ -204,13 +204,23 @@ class FriendRepository {
   Future<List<User>> searchUsers(String query) async {
     try {
       _logger.i('Searching users with query: $query');
+
+      // Validate query length before calling API
+      if (query.isEmpty || query.length < 2) {
+        _logger.w('Search query too short, returning empty list.');
+        return [];
+      }
+
       final headers = await _getAuthHeaders();
       final response = await _client.get(
-        Uri.parse('${ApiConstants.baseUrl}/user/search?q=$query'),
+        Uri.parse('${ApiConstants.baseUrl}/user/search?query=$query'),
         headers: headers,
       );
 
       _handleApiError(response);
+
+      // Log the raw response for debugging
+      _logger.d('Search API response: ${response.body}');
 
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => User.fromJson(json)).toList();
@@ -219,6 +229,7 @@ class FriendRepository {
       rethrow;
     }
   }
+
 
   // Create a chat with a friend after accepting friend request
   Future<Map<String, dynamic>> createChatWithFriend(String friendId) async {
@@ -316,6 +327,47 @@ class FriendRepository {
     } catch (e) {
       _logger.e('Error checking existing chats: $e');
       return null; // Return null if there's an error, to allow chat creation
+    }
+  }
+
+  // Fetch suggested friends from the backend
+  Future<List<User>> getSuggestedFriends() async {
+    try {
+      _logger.i('Fetching suggested friends from API');
+      final headers = await _getAuthHeaders();
+      
+      // Call the suggestions endpoint
+      final response = await _client.get(
+        Uri.parse('${ApiConstants.baseUrl}/friends/suggestions'),
+        headers: headers,
+      );
+
+      _handleApiError(response);
+
+      final List<dynamic> data = jsonDecode(response.body);
+      _logger.i('Successfully fetched ${data.length} suggested friends');
+      return data.map((json) => User.fromJson(json)).toList();
+    } catch (e) {
+      _logger.e('Error fetching suggested friends: $e');
+      rethrow; // Rethrow the error to be handled by the ViewModel
+    }
+  }
+
+  // Cancel a sent friend request
+  Future<void> cancelFriendRequest(String requestId) async {
+    try {
+      _logger.i('Cancelling friend request: $requestId');
+      final headers = await _getAuthHeaders();
+      final response = await _client.delete(
+        Uri.parse('${ApiConstants.baseUrl}/friends/requests/$requestId/cancel'),
+        headers: headers,
+      );
+
+      _handleApiError(response); // Will throw on 4xx/5xx errors
+      _logger.i('Friend request $requestId cancelled successfully');
+    } catch (e) {
+      _logger.e('Error cancelling friend request $requestId: $e');
+      rethrow; // Rethrow for ViewModel to handle
     }
   }
 

@@ -16,11 +16,35 @@ class SearchRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: const Color(0xFFE3F2FD), // Light blue background
         appBar: AppBar(
-          title: const Text('Wiki Crossword'),
-          backgroundColor: Colors.transparent,
+          title: Text(
+            'Wiki Crossword',
+            style: TextStyle(
+              color: Colors.blue[900], // Dark blue for contrast
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: const Color(0xFFE3F2FD), // Light blue app bar
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.blue[900]), // Dark blue for contrast
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        body: const SearchScreen(),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color(0xFFE3F2FD), // Light blue
+                const Color(0xFFBBDEFB), // Slightly darker light blue
+              ],
+            ),
+          ),
+          child: const SearchScreen(),
+        ),
       ),
     );
   }
@@ -52,69 +76,177 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            decoration: InputDecoration(
-              labelText: 'Search Wikipedia',
-              hintText: 'Enter a topic to create a crossword',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  if (query.isNotEmpty) {
-                    setState(() {
-                      search = WikiSearch(query, language_rus);
-                    });
-                  }
-                },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.blue[200]!,
+                width: 1,
               ),
             ),
-            onChanged: (value) {
-              query = value;
-            },
-            onSubmitted: (value) {
-              if (value.isNotEmpty) {
-                setState(() {
-                  query = value;
-                  search = WikiSearch(query, language_rus);
-                });
-              }
-            },
+            child: TextField(
+              decoration: InputDecoration(
+                labelText: 'Search Wikipedia',
+                labelStyle: TextStyle(color: Colors.blue[900]),
+                hintText: 'Enter a topic to create a crossword',
+                hintStyle: TextStyle(color: Colors.blue[200]),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: Icon(Icons.search, color: Colors.blue[900]),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              ),
+              onChanged: (value) {
+                query = value;
+              },
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  setState(() {
+                    query = value;
+                    search = WikiSearch(query, language_rus);
+                  });
+                }
+              },
+            ),
           ),
         ),
         Expanded(
           child: search == null
-              ? const Center(child: Text('Search for a topic to create a crossword'))
+              ? Center(
+                  child: Container(
+                    margin: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.blue[200]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      'Search for a topic to create a crossword',
+                      style: TextStyle(
+                        color: Colors.blue[900],
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
               : FutureBuilder<Map<String, int>>(
                   future: search,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[900]!),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Searching...',
+                              style: TextStyle(
+                                color: Colors.blue[900],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
                     } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
+                      return Center(
+                        child: Container(
+                          margin: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.red[200]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            'Error: ${snapshot.error}',
+                            style: TextStyle(
+                              color: Colors.red[900],
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No results found'));
+                      return Center(
+                        child: Container(
+                          margin: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.blue[200]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            'No results found',
+                            style: TextStyle(
+                              color: Colors.blue[900],
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
                     } else {
                       return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
                           String title = snapshot.data!.keys.elementAt(index);
                           int pageId = snapshot.data!.values.elementAt(index);
-                          return ListTile(
-                            title: Text(title),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CrosswordSettingsRoute(
-                                    pageid: pageId,
-                                    title: title,
-                                    language: language_rus,
-                                  ),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.blue[200]!,
+                                width: 1,
+                              ),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                title,
+                                style: TextStyle(
+                                  color: Colors.blue[900],
+                                  fontSize: 16,
                                 ),
-                              );
-                            },
+                              ),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.blue[900],
+                                size: 16,
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CrosswordSettingsRoute(
+                                      pageid: pageId,
+                                      title: title,
+                                      language: language_rus,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           );
                         },
                       );

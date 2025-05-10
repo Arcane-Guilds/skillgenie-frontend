@@ -15,8 +15,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
-  bool _isLoading = false;
-  String? _errorMessage;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -31,35 +29,24 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    await authViewModel.signIn(
+      _emailController.text,
+      _passwordController.text,
+    );
 
-    try {
-      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-      await authViewModel.signIn(
-        _emailController.text,
-        _passwordController.text,
-      );
-      if (mounted) {
-        context.go('/home');
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    if (mounted && authViewModel.error == null) {
+      print("Login successful in UI, explicitly navigating to /home");
+      context.go('/home');
+    } else if (mounted && authViewModel.error != null) {
+      print("Login failed in UI, error: ${authViewModel.error}");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authViewModel = context.watch<AuthViewModel>();
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
@@ -85,13 +72,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          if (_errorMessage != null)
+                          if (authViewModel.error != null)
                             Container(
-                              padding: const EdgeInsets.all(8),
-                              color: Colors.red[100],
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.red[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Text(
-                                _errorMessage!,
-                                style: const TextStyle(color: Colors.red),
+                                authViewModel.error!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontWeight: FontWeight.w500
+                                ),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           const SizedBox(height: 16),
@@ -155,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : () => _handleLogin(context),
+                              onPressed: authViewModel.isLoading ? null : () => _handleLogin(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryColor,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -163,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: _isLoading
+                              child: authViewModel.isLoading
                                   ? const SizedBox(
                                       height: 20,
                                       width: 20,

@@ -24,7 +24,7 @@ class GameRepository {
     
     // Add random letters to the correct word
     for (var i = 0; i < maxSelectableLetters - maxFinalLetters; i++) {
-      int randomIndex = _random.nextInt(25) + 1;
+      int randomIndex = _random.nextInt(26); // Changed to 26 to include all letters
       word += alphabet[randomIndex];
     }
     

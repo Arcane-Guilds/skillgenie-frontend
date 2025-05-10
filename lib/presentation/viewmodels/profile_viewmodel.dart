@@ -366,29 +366,38 @@ class ProfileViewModel extends ChangeNotifier {
       throw Exception('User is not authenticated');
     }
 
-    _setLoading(true);
+    _setLoading(true); // Start loading
     _errorMessage = null;
+    notifyListeners(); // Notify UI about loading start
 
     try {
       _lastApiCallTime = DateTime.now();
       await _profileRepository.updatePassword(currentPassword, newPassword);
-      _setLoading(false);
+  
+      // !!! IMPORTANT: Call signOut AFTER successful password change !!!
+      // This clears potentially invalid tokens, notifies listeners (GoRouter),
+      // and forces re-authentication.
+      await _authViewModel.signOut();
+      
+      // No need to set loading false here, signOut should trigger state change
+
     } catch (e) {
-      _setLoading(false);
+      // Stop loading ONLY on error
+      _setLoading(false); 
       
       if (e is ApiException) {
         _errorMessage = e.message;
-        
-        // Handle authentication errors
-        if (e.statusCode == 401) {
-          await _handleAuthError();
-        }
+        // Don't call _handleAuthError here, let the UI handle the error message.
       } else {
-        _errorMessage = e.toString();
+        _errorMessage = 'An unexpected error occurred while changing the password.';
+        if (kDebugMode) {
+          print('Update Password Error: $e');
+        }
       }
-      
-      rethrow;
+      notifyListeners(); // Notify UI about the error
+      rethrow; // Rethrow for the calling UI
     }
+    // Don't set loading false on success here, state change is driven by signOut
   }
 
   // Delete account
@@ -397,31 +406,40 @@ class ProfileViewModel extends ChangeNotifier {
       throw Exception('User is not authenticated');
     }
 
-    _setLoading(true);
     _errorMessage = null;
+    _setLoading(true); 
+    notifyListeners();
 
     try {
       _lastApiCallTime = DateTime.now();
-      await _profileRepository.deleteAccount();
-      _currentProfile = null;
-      _isCacheValid = false;
-      _setLoading(false);
+      await _profileRepository.deleteAccount(); // Tell backend to delete
+
+      // Set loading false *before* signing out
+      _setLoading(false); 
+
+      // Call signOut AFTER successful deletion and state update
+      // This will clear tokens and trigger navigation via AuthViewModel listeners/GoRouter redirect
+      await _authViewModel.signOut(); 
+
+      // No need to manually clear profile data here, 
+      // the listener in _onAuthStateChanged handles it upon signOut.
+
     } catch (e) {
-      _setLoading(false);
+      // Stop loading ONLY on error
+      _setLoading(false); 
       
       if (e is ApiException) {
         _errorMessage = e.message;
-        
-        // Handle authentication errors
-        if (e.statusCode == 401) {
-          await _handleAuthError();
-        }
       } else {
-        _errorMessage = e.toString();
+        _errorMessage = 'An unexpected error occurred during account deletion.';
+        if (kDebugMode) {
+          print('Delete Account Error: $e'); // Keep debug print for errors
+        }
       }
-      
-      rethrow;
+      notifyListeners(); // Notify UI about the error
+      rethrow; // Rethrow for the calling UI to potentially handle
     }
+    // Don't set loading false on success here anymore, it's done before signOut.
   }
 
   // Logout

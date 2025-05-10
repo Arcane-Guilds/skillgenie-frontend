@@ -1,11 +1,24 @@
 import 'dart:io';
 
+<<<<<<< HEAD
+=======
+import 'package:cached_network_image/cached_network_image.dart';
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:skillGenie/core/theme/app_theme.dart';
 import 'package:skillGenie/presentation/widgets/avatar_widget.dart';
+<<<<<<< HEAD
+=======
+import '../../../data/models/user_model.dart';
+import '../../viewmodels/profile_viewmodel.dart';
+import '../../viewmodels/reminder_viewmodel.dart';
+import 'package:skillGenie/presentation/viewmodels/reminder_viewmodel.dart';
+import '../../../core/constants/cloudinary_constants.dart';
+import '../../../core/errors/error_handler.dart';
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../viewmodels/reminder_viewmodel.dart';
@@ -27,7 +40,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   File? _imageFile;
   bool _isUploadingImage = false;
   double _uploadProgress = 0;
+<<<<<<< HEAD
   bool _isLoading = false;
+=======
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 
   // Controllers
   late TextEditingController _usernameController;
@@ -395,8 +411,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           behavior: SnackBarBehavior.floating,
                         );
 
+<<<<<<< HEAD
                         ScaffoldMessenger.of(stableContext)
                             .showSnackBar(snackBar);
+=======
+                        ScaffoldMessenger.of(stableContext).showSnackBar(snackBar);
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                       }
 
                       try {
@@ -433,9 +453,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Navigator.of(stableContext).pop();
 
                           // 10. Show success message
+<<<<<<< HEAD
                           showMessage(
                               'Password updated successfully! Please log in again.',
                               false);
+=======
+                          showMessage('Password updated successfully! Please log in again.', false);
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 
                           // 11. Navigate directly without delay
                           // By using WidgetsBinding we trigger navigation in the next frame
@@ -611,8 +635,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 // If deleteAccount succeeds, pop the loading dialog.
                 if (stableContext.mounted) {
+<<<<<<< HEAD
                   Navigator.of(stableContext).pop(); // Pop loading dialog
+=======
+                   Navigator.of(stableContext).pop(); // Pop loading dialog
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                 }
+
               } catch (e) {
                 // Pop loading dialog on error
                 if (stableContext.mounted) {
@@ -623,8 +652,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (stableContext.mounted) {
                   ScaffoldMessenger.of(stableContext).showSnackBar(
                     SnackBar(
+<<<<<<< HEAD
                       content: Text(profileViewModel.errorMessage ??
                           'Failed to delete account: ${e.toString()}'),
+=======
+                      content: Text(profileViewModel.errorMessage?? 'Failed to delete account: ${e.toString()}'),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -913,9 +946,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+<<<<<<< HEAD
   void _showEditProfileDialog(User user) {
     final usernameController =
         TextEditingController(text: _usernameController.text);
+=======
+
+  void _showEditProfileDialog(User user) {
+    final usernameController = TextEditingController(text: _usernameController.text);
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
     final bioController = TextEditingController(text: _bioController.text);
     File? tempImageFile = _imageFile;
 
@@ -946,8 +985,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 : user.avatar != null && user.avatar!.isNotEmpty
                                     ? (user.avatar!.startsWith('http')
                                         ? NetworkImage(user.avatar ?? '')
+<<<<<<< HEAD
                                         : AssetImage(
                                             'assets/images/${user.avatar}.png'))
+=======
+                                        : AssetImage('assets/images/${user.avatar}.png'))
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                                     : null,
                         backgroundColor: Colors.grey[200],
                       ),
@@ -1028,6 +1071,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           try {
                             // Keep local image uploading state
                             setState(() => _isUploadingImage = true);
+<<<<<<< HEAD
                             imageUrl = await profileViewModel
                                 .uploadProfileImageAndGetUrl(tempImageFile);
                           } catch (e) {
@@ -1042,6 +1086,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               setState(() => _isUploadingImage =
                                   false); // Reset image specific state
                             }
+=======
+                            imageUrl = await profileViewModel.uploadProfileImageAndGetUrl(tempImageFile);
+                          } catch (e) {
+                            if (mounted) {
+                               setState(() => _isUploadingImage = false); // Reset image specific state
+                               _showErrorSnackBar('Failed to upload image: $e');
+                            }
+                            return;
+                          } finally {
+                             if (mounted) {
+                               setState(() => _isUploadingImage = false); // Reset image specific state
+                             }
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                           }
                         }
 
@@ -1061,6 +1118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                         // Update local state after successful profile update
                         if (mounted) {
+<<<<<<< HEAD
                           setState(() {
                             _usernameController.text =
                                 usernameController.text.trim();
@@ -1074,6 +1132,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         if (mounted) {
                           _showErrorSnackBar('Failed to update profile: $e');
                         }
+=======
+                           setState(() {
+                             _usernameController.text = usernameController.text.trim();
+                             _bioController.text = bioController.text.trim();
+                             _imageFile = tempImageFile; // Update screen's _imageFile if temp was used
+                           });
+                           _showSuccessSnackBar('Profile updated successfully!');
+                        }
+                      } catch (e) {
+                         if (mounted) {
+                            _showErrorSnackBar('Failed to update profile: $e');
+                         }
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -1111,6 +1182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: const Text(
           'Settings',
+<<<<<<< HEAD
           style: TextStyle(
               color: Colors.white), // Make sure the title is also white
         ),
@@ -1119,6 +1191,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         iconTheme: const IconThemeData(
             color: Colors.white), // <-- This sets the back button color
       ),
+=======
+          style: TextStyle(color: Colors.white), // Make sure the title is also white
+        ),
+        backgroundColor: AppTheme.primaryColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white), // <-- This sets the back button color
+      ),
+
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
       body: profileViewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -1152,21 +1233,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               backgroundColor: Colors.grey[200],
                               backgroundImage: _imageFile != null
                                   ? FileImage(_imageFile!)
+<<<<<<< HEAD
                                   : user?.avatar != null &&
                                           user!.avatar!.isNotEmpty
                                       ? (user.avatar!.startsWith('http')
                                           ? NetworkImage(user.avatar!)
                                           : AssetImage(
                                               'assets/images/${user.avatar}.png'))
+=======
+                                  : user?.avatar != null && user!.avatar!.isNotEmpty
+                                      ? (user.avatar!.startsWith('http')
+                                          ? NetworkImage(user.avatar!)
+                                          : AssetImage('assets/images/${user.avatar}.png'))
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                                       : null,
                               child: _imageFile == null &&
-                                      (user?.avatar == null ||
-                                          user!.avatar!.isEmpty)
-                                  ? const Icon(Icons.person,
-                                      size: 40, color: Colors.grey)
+                                  (user?.avatar == null || user!.avatar!.isEmpty)
+                                  ? const Icon(Icons.person, size: 40, color: Colors.grey)
                                   : null,
                             ),
                           ),
+
                           const SizedBox(width: 24),
                           Expanded(
                             child: Column(

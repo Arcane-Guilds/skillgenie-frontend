@@ -11,8 +11,14 @@ import 'package:skillGenie/presentation/views/news/news_screen.dart';
 import '../../../data/models/user_model.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../../widgets/avatar_widget.dart';
+<<<<<<< HEAD
 /* */ import '../chatbot/lesson_view.dart'; /* */
 
+=======
+import '../chatbot/lesson_view.dart';
+
+// App-wide primary color
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 const Color kPrimaryBlue = Color(0xFF29B6F6);
 
 class HomeScreen extends StatefulWidget {
@@ -28,9 +34,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String _welcomeMessage = "Welcome back!";
   bool _isLoading = true;
   User? _user;
+<<<<<<< HEAD
   bool catEquipped = false;
   Key? catGifKey;
 
+=======
+  
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   @override
   void initState() {
     super.initState();
@@ -38,18 +48,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+<<<<<<< HEAD
 
     _loadUserData();
     _setWelcomeMessage();
     _loadCatEquipped();
   }
 
+=======
+    
+    _loadUserData();
+    _setWelcomeMessage();
+  }
+  
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   void _setWelcomeMessage() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
@@ -62,15 +84,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _loadUserData() async {
+<<<<<<< HEAD
     setState(() => _isLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString("user");
+=======
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? userJson = prefs.getString("user");
+
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
       if (userJson != null) {
         final user = User.fromJson(jsonDecode(userJson));
         setState(() {
           _user = user;
           _username = user.username;
+<<<<<<< HEAD
         });
       }
     } catch (_) {
@@ -143,13 +177,42 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ],
         );
       },
+=======
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _user = null;
+          _username = null;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _user = null;
+        _username = null;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _navigateToChatbot(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
     );
   }
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     final theme = Theme.of(context);
 
+=======
+    final ThemeData theme = Theme.of(context);
+    
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
     return Scaffold(
       body: Stack(
         children: [
@@ -246,6 +309,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ],
             ),
           ),
+<<<<<<< HEAD
 
           // Notification button
           IconButton(
@@ -317,6 +381,51 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             begin: const Offset(0.9, 0.9),
             end: const Offset(1.0, 1.0),
           ),
+=======
+          
+          // Action buttons
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.settings_outlined,
+                  color: kPrimaryBlue,
+                ),
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGenieSection(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      child: Column(
+        children: [
+          // Genie Avatar with animation
+          Container(
+            decoration: BoxDecoration(
+              color: kPrimaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: GenieAvatar(
+              state: AvatarState.celebrating,
+              message: "Ready to continue your learning journey?",
+              size: 90,
+              onMessageComplete: () {},
+            ),
+          ).animate().scale(
+            duration: 600.ms,
+            curve: Curves.easeOutBack,
+            begin: const Offset(0.9, 0.9),
+            end: const Offset(1.0, 1.0),
+          ),
+          
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -337,7 +446,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ],
             ),
+<<<<<<< HEAD
           ).animate().fadeIn(duration: 800.ms, delay: 200.ms),
+=======
+          ).animate().fadeIn(
+            duration: 800.ms,
+            delay: 200.ms,
+          ),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
         ],
       ),
     );

@@ -10,6 +10,8 @@ import 'package:skillGenie/core/constants/api_constants.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:skillGenie/core/theme/app_theme.dart';
+import 'package:skillGenie/presentation/widgets/avatar_widget.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String partyCode;
@@ -91,6 +93,10 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   }
 
   Future<void> _fetchChallengeData() async {
+<<<<<<< HEAD
+=======
+
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
     setState(() {
       isLoading = true;
       _resultMessage = '';
@@ -577,11 +583,11 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text("💡 Défi"),
+        title: const Text("💡 Challenge"),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         actions: [
           IconButton(
@@ -593,17 +599,17 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       ),
       body: isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple))
+              child: CircularProgressIndicator(color: Colors.blue))
           : challengeTitle == null
-              ? Center(
-                  child: Text(_resultMessage.isNotEmpty
-                      ? _resultMessage
-                      : "❌ Aucun défi disponible."))
-              : _isWaitingForSecondUser && partyUsers.length < 2
-                  ? Center(
+              ? const Center(child: Text("❌ Aucun challenge disponible."))
+              : Stack(
+                  children: [
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+<<<<<<< HEAD
                           const CircularProgressIndicator(
                               color: Colors.deepPurple),
                           const SizedBox(height: 16),
@@ -613,28 +619,191 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.deepPurple,
+=======
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.monetization_on, color: Colors.amber, size: 32),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '$_coinBalance',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              CircularCountDownTimer(
+                                duration: 60,
+                                controller: _timerController,
+                                width: 70,
+                                height: 70,
+                                ringColor: Colors.grey[300]!,
+                                fillColor: AppTheme.primaryColor,
+                                backgroundColor: Colors.white,
+                                strokeWidth: 8.0,
+                                textStyle: const TextStyle(
+                                  fontSize: 20.0,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                isReverse: true,
+                                onComplete: () {
+                                  setState(() => _isTimeUp = true);
+                                  Alert(
+                                    context: context,
+                                    title: '⏰ Temps écoulé !',
+                                    desc: 'Vous ne pouvez plus soumettre de réponse.',
+                                    type: AlertType.warning,
+                                  ).show();
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+                          Card(
+                            color: AppTheme.surfaceColor,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            elevation: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    challengeTitle ?? '',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    challengeDescription ?? '',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      height: 1.4,
+                                      color: AppTheme.textSecondaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 8,
+                                    children: [
+                                      Chip(
+                                        avatar: const Icon(Icons.star, size: 18, color: Colors.amber),
+                                        label: Text(
+                                          challengeDifficulty ?? '',
+                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                        ),
+                                        backgroundColor: Colors.amber[100],
+                                      ),
+                                      Chip(
+                                        avatar: const Icon(Icons.code, size: 18, color: Colors.blue),
+                                        label: Text(
+                                          challengeLanguage ?? '',
+                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                        ),
+                                        backgroundColor: Colors.blue[100],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton.icon(
+                                    onPressed: _speakChallenge,
+                                    icon: const Icon(Icons.volume_up),
+                                    label: const Text("Lire le challenge à voix haute"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Code de la fête : ${widget.partyCode}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: _sharePartyCode,
-                            icon: const Icon(Icons.share),
-                            label: const Text('Partager le code'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          const SizedBox(height: 30),
+                          Card(
+                            color: AppTheme.surfaceColor,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            elevation: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "💬 Votre solution :",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.deepPurple,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextField(
+                                    controller: _solutionController,
+                                    maxLines: 5,
+                                    decoration: InputDecoration(
+                                      hintText: "Entrez votre réponse ici...",
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      contentPadding: const EdgeInsets.all(16),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 25),
+                                  ElevatedButton(
+                                    onPressed: _isTimeUp || _hasSubmitted ? null : _checkAnswer,
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      backgroundColor: AppTheme.primaryColor,
+                                    ),
+                                    child: const Text(
+                                      "Vérifier la réponse",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  if (_resultMessage.isNotEmpty) ...[
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      _resultMessage,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: _resultMessage.startsWith('✅')
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ),
                         ],
                       ),
+<<<<<<< HEAD
                     )
                   : Stack(
                       children: [
@@ -898,25 +1067,24 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                               ],
                             ],
                           ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: SlideTransition(
-                              position: _genieOffset,
-                              child: Image.asset(
-                                'assets/images/genie.png',
-                                height: 150,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+=======
                     ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: GenieAvatar(
+                          state: AvatarState.idle,
+                          size: 150,
+                          message: "Bonne chance !",
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
     );
   }
 }

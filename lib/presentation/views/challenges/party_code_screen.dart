@@ -152,10 +152,15 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
+<<<<<<< HEAD
         builder: (context) => ChallengesScreen(
           partyCode: partyCode,
           challengeId: 'challengeId', // Replace with actual challenge ID
         ),
+=======
+        builder: (context) => ChallengesScreen(partyCode: partyCode,
+            challengeId: 'challengeId'), // Replace with actual challenge ID
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
       ),
     );
   }
@@ -191,7 +196,7 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const GenieAvatar(
+                GenieAvatar(
                   state: AvatarState.idle,
                   size: 120,
                   message:
@@ -220,12 +225,19 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         TextField(
                           controller: _partyCodeController,
                           readOnly: true,
+<<<<<<< HEAD
                           style:
                               const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Generated Party Code",
                             labelStyle: const TextStyle(
                                 color: AppTheme.textSecondaryColor),
+=======
+                          style: TextStyle(color: AppTheme.textPrimaryColor),
+                          decoration: InputDecoration(
+                            labelText: "Generated Party Code",
+                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(
@@ -276,12 +288,19 @@ class _PartyCodeScreenState extends State<PartyCodeScreen> {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _joinCodeController,
+<<<<<<< HEAD
                           style:
                               const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             labelText: "Enter Party Code",
                             labelStyle: const TextStyle(
                                 color: AppTheme.textSecondaryColor),
+=======
+                          style: TextStyle(color: AppTheme.textPrimaryColor),
+                          decoration: InputDecoration(
+                            labelText: "Enter Party Code",
+                            labelStyle: TextStyle(color: AppTheme.textSecondaryColor),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(

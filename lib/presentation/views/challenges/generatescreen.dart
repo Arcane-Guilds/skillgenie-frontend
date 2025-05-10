@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+<<<<<<< HEAD
+=======
+import 'package:provider/provider.dart';
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 import 'dart:convert';
+
 import '../../../core/constants/api_constants.dart';
+<<<<<<< HEAD
 import '../../widgets/avatar_widget.dart';
+=======
+import '../../viewmodels/auth/auth_viewmodel.dart';
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 import 'challenges_screen.dart';
 
 import 'package:provider/provider.dart';
@@ -24,6 +33,7 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
   late AnimationController _controller;
   late Animation<Offset> _animation;
   final TextEditingController generatedCodeController = TextEditingController();
+
   bool isPartyCreated = false;
   bool isGenerating = false;
   String? existingPartyCode;
@@ -31,8 +41,6 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
   @override
   void initState() {
     super.initState();
-    print(
-        'GenerateCodeScreen initialized with challengeId: ${widget.challengeId}');
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -50,12 +58,8 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
   }
 
   Future<void> generatePartyCode() async {
-    if (isGenerating) {
-      print('GeneratePartyCode skipped: already generating');
-      return;
-    }
+    if (isGenerating) return;
 
-    // Validate challengeId
     if (widget.challengeId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid challenge ID')),
@@ -63,9 +67,9 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
       return;
     }
 
-    // Get userId from AuthViewModel
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     final userId = authViewModel.currentUser?.id;
+
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User not authenticated')),
@@ -77,18 +81,13 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
       isGenerating = true;
     });
 
-    print(
-        'Generating party code for userId: $userId, challengeId: ${widget.challengeId}');
-
     try {
       String? partyCode = existingPartyCode;
+
       if (partyCode == null) {
-        // Generate new party code
         final response = await http
             .get(Uri.parse('${ApiConstants.baseUrl}/party-code/generate'))
-            .timeout(const Duration(seconds: 5), onTimeout: () {
-          throw Exception('Request timed out: Failed to generate party code');
-        });
+            .timeout(const Duration(seconds: 5));
 
         if (response.statusCode != 200) {
           final errorData = jsonDecode(response.body);
@@ -103,29 +102,23 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
               ),
             ),
           );
-          print(
-              'Failed to generate code: $errorMessage, status: ${response.statusCode}');
           return;
         }
 
         final data = jsonDecode(response.body);
         partyCode = data['code'];
-        print('Generated party code: $partyCode');
       }
 
-      // Update UI with generated code
       setState(() {
         generatedCodeController.text = partyCode!;
         existingPartyCode = partyCode;
       });
 
-      // Join party
       final payload = {
         'code': partyCode,
         'userId': userId,
         'challengeId': widget.challengeId,
       };
-      print('Join party payload: ${jsonEncode(payload)}');
 
       final partyResponse = await http
           .post(
@@ -133,20 +126,14 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       )
-          .timeout(const Duration(seconds: 5), onTimeout: () {
-        throw Exception('Request timed out: Failed to join party');
-      });
+          .timeout(const Duration(seconds: 5));
 
-      print(
-          'Join party response: status=${partyResponse.statusCode}, body=${partyResponse.body}');
-
-      // Check response body for success
       final responseData = jsonDecode(partyResponse.body);
+
       if (partyResponse.statusCode == 200 || responseData['success'] == true) {
         setState(() {
           isPartyCreated = true;
         });
-        print('Party joined successfully with code: $partyCode');
       } else {
         final errorMessage = responseData['message'] ?? 'Failed to join party';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -158,8 +145,6 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
             ),
           ),
         );
-        print(
-            'Failed to join party: $errorMessage, status: ${partyResponse.statusCode}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,7 +156,6 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
           ),
         ),
       );
-      print('Error in generatePartyCode: $e');
     } finally {
       setState(() {
         isGenerating = false;
@@ -203,16 +187,33 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const GenieAvatar(
-                  state: AvatarState.idle,
-                  size: 150,
-                  message: "Generate your party code!",
+                const Text(
+                  '“Generate your party code!”',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.deepPurple,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SlideTransition(
+                  position: _animation,
+                  child: Image.asset(
+                    'assets/images/genie.png',
+                    height: 250,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Card(
                   color: Theme.of(context).colorScheme.surface,
                   shape: RoundedRectangleBorder(
+<<<<<<< HEAD
                       borderRadius: BorderRadius.circular(20)),
+=======
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                   elevation: 4,
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -231,28 +232,46 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
                                           .colorScheme
                                           .primary),
                                   filled: true,
+<<<<<<< HEAD
                                   fillColor:
                                       Theme.of(context).colorScheme.surface,
+=======
+                                  fillColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceVariant,
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30),
                                     borderSide: BorderSide.none,
                                   ),
                                 ),
+<<<<<<< HEAD
                                 style: TextStyle(
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurface),
+=======
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                                 textAlign: TextAlign.center,
                               ),
                             ),
                             IconButton(
+<<<<<<< HEAD
                               icon: Icon(Icons.copy,
                                   color: Theme.of(context).colorScheme.primary),
+=======
+                              icon: Icon(
+                                Icons.copy,
+                                color:
+                                Theme.of(context).colorScheme.primary,
+                              ),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                               onPressed: copyToClipboard,
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
+<<<<<<< HEAD
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -315,6 +334,65 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
                             ),
                           ],
                         ),
+=======
+                        ElevatedButton.icon(
+                          onPressed:
+                          isGenerating ? null : generatePartyCode,
+                          icon: isGenerating
+                              ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                              : const Icon(Icons.refresh),
+                          label: Text(
+                            isGenerating ? 'GENERATING...' : 'GENERATE',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 32),
+                            minimumSize: const Size(140, 50),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (isPartyCreated)
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChallengesScreen(
+                                partyCode: generatedCodeController.text,
+                                challengeId: widget.challengeId,
+                                ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 32),
+                              minimumSize: const Size(140, 50),
+                            ),
+                            child: const Text(
+                              'START CHALLENGE',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                       ],
                     ),
                   ),

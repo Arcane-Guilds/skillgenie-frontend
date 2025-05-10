@@ -12,7 +12,7 @@ class ChallengesHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextEditingController nicknameController = TextEditingController();
-
+    
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
@@ -149,4 +149,8 @@ class ChallengesHomePage extends StatelessWidget {
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+} 
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e

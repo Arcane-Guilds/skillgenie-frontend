@@ -178,10 +178,17 @@ Future<void> setupServiceLocator() async {
     return viewModel;
   });
 
+<<<<<<< HEAD
   serviceLocator.registerFactory<SignUpViewModel>(() => 
     SignUpViewModel(
       authRepository: serviceLocator<AuthRepository>(),
     )
+=======
+  serviceLocator.registerFactory<SignUpViewModel>(() =>
+      SignUpViewModel(
+        authRepository: serviceLocator<AuthRepository>(),
+      )
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   );
 
   serviceLocator.registerFactory<ProfileViewModel>(() =>
@@ -189,6 +196,15 @@ Future<void> setupServiceLocator() async {
         profileRepository: serviceLocator<ProfileRepository>(),
         authViewModel: serviceLocator<AuthViewModel>(),
       ),
+<<<<<<< HEAD
+=======
+  );
+
+  serviceLocator.registerFactory<ChatbotViewModel>(() =>
+      ChatbotViewModel(
+        chatbotRepository: serviceLocator<ChatbotRepository>(),
+      ),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   );
   
   serviceLocator.registerFactory<ChatbotViewModel>(() =>
@@ -198,22 +214,35 @@ Future<void> setupServiceLocator() async {
   );
   
   // Game ViewModels
+<<<<<<< HEAD
   serviceLocator.registerFactory<GameViewModel>(() => 
     GameViewModel(
       gameRepository: serviceLocator<GameRepository>(),
     )
   );
   
+=======
+  serviceLocator.registerFactory<GameViewModel>(() =>
+      GameViewModel(
+        gameRepository: serviceLocator<GameRepository>(),
+      )
+  );
+
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   // Lesson ViewModel
   serviceLocator.registerFactory<MediaGeneratorViewModel>(() =>
       MediaGeneratorViewModel(
         mediaGeneratorRepository: serviceLocator<MediaGeneratorRepository>(),
+<<<<<<< HEAD
     )
+=======
+      )
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   );
 
   // Register QuizViewModel factory
   serviceLocator.registerFactoryParam<QuizViewModel, String, void>(
-    (userId, _) => QuizViewModel(
+        (userId, _) => QuizViewModel(
       userId: userId,
       quizRepository: serviceLocator<QuizRepository>(),
     ),
@@ -240,14 +269,14 @@ Future<void> setupServiceLocator() async {
   );
 
   serviceLocator.registerFactory<ReminderViewModel>(
-    () => ReminderViewModel(
+        () => ReminderViewModel(
       notificationService: serviceLocator<NotificationService>(),
       prefs: serviceLocator<SharedPreferences>(),
     ),
   );
 
   serviceLocator.registerFactory<CommunityViewModel>(
-    () => CommunityViewModel(
+        () => CommunityViewModel(
       communityRepository: serviceLocator<CommunityRepository>(),
       authViewModel: serviceLocator<AuthViewModel>(),
     ),

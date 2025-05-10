@@ -7,7 +7,14 @@ import 'auth/auth_viewmodel.dart';
 
 class ReclamationViewModel extends ChangeNotifier {
   final AuthViewModel _authViewModel;
+<<<<<<< HEAD
   final List<Reclamation> _reclamations = [];
+=======
+  final ReclamationSocketService _socketService;
+  final http.Client _client;
+  final NotificationService _notificationService;
+  List<Reclamation> _reclamations = [];
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
   bool _isLoading = false;
   String? _error;
   bool _isSuccess = false; // Properly declared here

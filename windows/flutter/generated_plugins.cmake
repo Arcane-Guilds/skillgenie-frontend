@@ -7,9 +7,19 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_windows
   flutter_secure_storage_windows
   flutter_tts
+<<<<<<< HEAD
   gal
   permission_handler_windows
   printing
+=======
+<<<<<<< HEAD
+  gal
+  permission_handler_windows
+  printing
+=======
+>>>>>>> origin/Mazigh_Chaima
+  url_launcher_windows
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

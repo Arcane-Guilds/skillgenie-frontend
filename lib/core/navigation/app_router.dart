@@ -34,10 +34,16 @@ import '../../presentation/views/chat/socket_test_screen.dart';
 import '../services/service_locator.dart';
 import '../widgets/responsive_navigation.dart';
 import '../../presentation/views/reclamation/reclamation_screen.dart';
+<<<<<<< HEAD
 import '../../presentation/views/genie_story_screen.dart';
 import '../../presentation/views/game/payment_return_screen.dart';
 import '../../presentation/views/game/payment_screen.dart';
 import '../../presentation/views/rating/ratings_screen.dart';
+=======
+import '../../presentation/views/rating/ratings_screen.dart';
+import '../../presentation/views/genie_story_screen.dart';
+
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
 // ShellScaffold remains the same
 class ShellScaffold extends StatelessWidget {
   final Widget child;
@@ -224,10 +230,6 @@ final appRouter = GoRouter(
       builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
-      path: '/genie-story',
-      builder: (context, state) => const GenieStoryScreen(),
-    ),
-    GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
@@ -239,20 +241,20 @@ final appRouter = GoRouter(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
     ),
-    GoRoute(
-      path: '/verify-otp',
-      builder: (context, state) {
-        final email = (state.extra as Map<String, dynamic>)['email'] as String;
-        return OtpVerificationScreen(email: email);
-      },
-    ),
-    GoRoute(
-      path: '/reset-password',
-      builder: (context, state) {
-        final email = (state.extra as Map<String, dynamic>)['email'] as String;
-        return ResetPasswordScreen(email: email);
-      },
-    ),
+      GoRoute(
+        path: '/otp-verification/:email', // Expects email parameter
+        builder: (context, state) {
+          final email = state.pathParameters['email'] ?? ''; // Extract email
+          return OtpVerificationScreen(email: email);
+        },
+      ),
+      GoRoute(
+        path: '/reset-password/:email', // Expects email parameter
+        builder: (context, state) {
+          final email = state.pathParameters['email'] ?? ''; // Extract email
+          return ResetPasswordScreen(email: email);
+        },
+      ),
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
@@ -360,6 +362,7 @@ final appRouter = GoRouter(
       builder: (context, state) => const SocketTestScreen(),
     ),
     GoRoute(
+<<<<<<< HEAD
       path: '/payment',
       builder: (context, state) => const PaymentScreen(
         coins: 1000,
@@ -381,6 +384,8 @@ final appRouter = GoRouter(
     ),
 
         GoRoute(
+=======
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
       path: '/ratings',
       builder: (context, state) => const RatingsScreen(),
     ),

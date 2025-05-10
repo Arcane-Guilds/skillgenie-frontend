@@ -60,8 +60,12 @@ class _Step2ScreenState extends State<Step2Screen>
                     onPressed: () {
                       Navigator.push(
                         context,
+<<<<<<< HEAD
                         MaterialPageRoute(
                             builder: (context) => const JoinPartyScreen()),
+=======
+                        MaterialPageRoute(builder: (context) => JoinPartyScreen()),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -85,9 +89,15 @@ class _Step2ScreenState extends State<Step2Screen>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
+<<<<<<< HEAD
                             builder: (context) => GenerateCodeScreen(
                                   challengeId: widget.challengeId,
                                 )),
+=======
+                            builder: (context) =>  GenerateCodeScreen(
+                              challengeId: widget.challengeId,
+                            ),),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -95,8 +105,12 @@ class _Step2ScreenState extends State<Step2Screen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
+<<<<<<< HEAD
                       padding: const EdgeInsets.symmetric(
                           vertical: 12, horizontal: 32),
+=======
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+>>>>>>> ab381aea10a277266aa2f4091b857b179b11e70e
                       minimumSize: const Size(140, 50),
                     ),
                     child: const Text(

@@ -10,6 +10,8 @@ import '../../../data/models/user_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../viewmodels/reminder_viewmodel.dart';
 import '../../../core/errors/error_handler.dart';
+import '../../../presentation/viewmodels/rating_viewmodel.dart';
+import '../../viewmodels/reclamation_viewmodel.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,6 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   File? _imageFile;
   bool _isUploadingImage = false;
   double _uploadProgress = 0;
+  bool _isLoading = false;
 
   // Controllers
   late TextEditingController _usernameController;
@@ -37,6 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserProfile();
+      // context.read<ReclamationViewModel>().loadReclamations();
     });
   }
 
@@ -391,7 +395,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           behavior: SnackBarBehavior.floating,
                         );
 
-                        ScaffoldMessenger.of(stableContext).showSnackBar(snackBar);
+                        ScaffoldMessenger.of(stableContext)
+                            .showSnackBar(snackBar);
                       }
 
                       try {
@@ -428,7 +433,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Navigator.of(stableContext).pop();
 
                           // 10. Show success message
-                          showMessage('Password updated successfully! Please log in again.', false);
+                          showMessage(
+                              'Password updated successfully! Please log in again.',
+                              false);
 
                           // 11. Navigate directly without delay
                           // By using WidgetsBinding we trigger navigation in the next frame
@@ -604,9 +611,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 // If deleteAccount succeeds, pop the loading dialog.
                 if (stableContext.mounted) {
-                   Navigator.of(stableContext).pop(); // Pop loading dialog
+                  Navigator.of(stableContext).pop(); // Pop loading dialog
                 }
-
               } catch (e) {
                 // Pop loading dialog on error
                 if (stableContext.mounted) {
@@ -617,7 +623,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (stableContext.mounted) {
                   ScaffoldMessenger.of(stableContext).showSnackBar(
                     SnackBar(
-                      content: Text(profileViewModel.errorMessage?? 'Failed to delete account: ${e.toString()}'),
+                      content: Text(profileViewModel.errorMessage ??
+                          'Failed to delete account: ${e.toString()}'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -906,9 +913,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-
   void _showEditProfileDialog(User user) {
-    final usernameController = TextEditingController(text: _usernameController.text);
+    final usernameController =
+        TextEditingController(text: _usernameController.text);
     final bioController = TextEditingController(text: _bioController.text);
     File? tempImageFile = _imageFile;
 
@@ -923,7 +930,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('Edit Profile',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: _pickImage,
@@ -938,7 +946,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 : user.avatar != null && user.avatar!.isNotEmpty
                                     ? (user.avatar!.startsWith('http')
                                         ? NetworkImage(user.avatar ?? '')
-                                        : AssetImage('assets/images/${user.avatar}.png'))
+                                        : AssetImage(
+                                            'assets/images/${user.avatar}.png'))
                                     : null,
                         backgroundColor: Colors.grey[200],
                       ),
@@ -948,7 +957,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: CircleAvatar(
                           backgroundColor: AppTheme.primaryColor,
                           radius: 18,
-                          child: Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          child: Icon(Icons.camera_alt,
+                              color: Colors.white, size: 20),
                         ),
                       ),
                     ],
@@ -959,7 +969,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: usernameController,
                   decoration: InputDecoration(
                     labelText: 'Username',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -983,7 +994,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     labelText: 'Bio',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
                   validator: (value) {
                     if (value != null && value.length > 150) {
@@ -1002,67 +1014,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _showErrorSnackBar('Username cannot be empty');
                         return;
                       }
-                      
+
                       Navigator.pop(context);
 
                       try {
-                        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+                        final profileViewModel = Provider.of<ProfileViewModel>(
+                            context,
+                            listen: false);
                         String? imageUrl;
-                        
+
                         // First, handle image upload if needed
                         if (tempImageFile != null) {
                           try {
                             // Keep local image uploading state
                             setState(() => _isUploadingImage = true);
-                            imageUrl = await profileViewModel.uploadProfileImageAndGetUrl(tempImageFile);
+                            imageUrl = await profileViewModel
+                                .uploadProfileImageAndGetUrl(tempImageFile);
                           } catch (e) {
                             if (mounted) {
-                               setState(() => _isUploadingImage = false); // Reset image specific state
-                               _showErrorSnackBar('Failed to upload image: $e');
+                              setState(() => _isUploadingImage =
+                                  false); // Reset image specific state
+                              _showErrorSnackBar('Failed to upload image: $e');
                             }
                             return;
                           } finally {
-                             if (mounted) {
-                               setState(() => _isUploadingImage = false); // Reset image specific state
-                             }
+                            if (mounted) {
+                              setState(() => _isUploadingImage =
+                                  false); // Reset image specific state
+                            }
                           }
                         }
-                        
+
                         // Now update the profile with all the data
                         final updateData = {
                           'username': usernameController.text.trim(),
                           'bio': bioController.text.trim(),
                         };
-                        
+
                         // Only add avatar if we have a new image URL
                         if (imageUrl != null && imageUrl.isNotEmpty) {
                           updateData['avatar'] = imageUrl;
                         }
-                        
+
                         // Send direct update with validated data
                         await profileViewModel.updateProfile(updateData);
-                        
+
                         // Update local state after successful profile update
                         if (mounted) {
-                           setState(() {
-                             _usernameController.text = usernameController.text.trim();
-                             _bioController.text = bioController.text.trim();
-                             _imageFile = tempImageFile; // Update screen's _imageFile if temp was used
-                           });
-                           _showSuccessSnackBar('Profile updated successfully!');
+                          setState(() {
+                            _usernameController.text =
+                                usernameController.text.trim();
+                            _bioController.text = bioController.text.trim();
+                            _imageFile =
+                                tempImageFile; // Update screen's _imageFile if temp was used
+                          });
+                          _showSuccessSnackBar('Profile updated successfully!');
                         }
                       } catch (e) {
-                         if (mounted) {
-                            _showErrorSnackBar('Failed to update profile: $e');
-                         }
+                        if (mounted) {
+                          _showErrorSnackBar('Failed to update profile: $e');
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('Save Changes',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -1090,13 +1111,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: const Text(
           'Settings',
-          style: TextStyle(color: Colors.white), // Make sure the title is also white
+          style: TextStyle(
+              color: Colors.white), // Make sure the title is also white
         ),
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white), // <-- This sets the back button color
+        iconTheme: const IconThemeData(
+            color: Colors.white), // <-- This sets the back button color
       ),
-
       body: profileViewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -1130,18 +1152,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               backgroundColor: Colors.grey[200],
                               backgroundImage: _imageFile != null
                                   ? FileImage(_imageFile!)
-                                  : user?.avatar != null && user!.avatar!.isNotEmpty
+                                  : user?.avatar != null &&
+                                          user!.avatar!.isNotEmpty
                                       ? (user.avatar!.startsWith('http')
                                           ? NetworkImage(user.avatar!)
-                                          : AssetImage('assets/images/${user.avatar}.png'))
+                                          : AssetImage(
+                                              'assets/images/${user.avatar}.png'))
                                       : null,
                               child: _imageFile == null &&
-                                  (user?.avatar == null || user!.avatar!.isEmpty)
-                                  ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                                      (user?.avatar == null ||
+                                          user!.avatar!.isEmpty)
+                                  ? const Icon(Icons.person,
+                                      size: 40, color: Colors.grey)
                                   : null,
                             ),
                           ),
-
                           const SizedBox(width: 24),
                           Expanded(
                             child: Column(
@@ -1307,6 +1332,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: TextStyle(color: Colors.red)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: _showDeleteAccountConfirmation,
+                    ),
+                  ),
+                  // App Rating Section
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, bottom: 8),
+                    child: Text(
+                      'App Rating',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Consumer<RatingViewModel>(
+                      builder: (context, ratingVM, _) => ListTile(
+                        leading: const Icon(Icons.star_outline),
+                        title: const Text('App Ratings'),
+                        subtitle: Text(
+                          ratingVM.userRating != null
+                              ? 'Your rating: ${ratingVM.userRating!.stars}/5'
+                              : 'Rate our app',
+                        ),
+                        trailing: Text(
+                          '${ratingVM.averageRating.toStringAsFixed(1)} ★',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onTap: () => context.push('/ratings'),
+                      ),
                     ),
                   ),
                 ],

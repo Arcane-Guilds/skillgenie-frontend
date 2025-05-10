@@ -5,14 +5,15 @@ import 'step2_screen.dart';
 
 class Step1Screen extends StatefulWidget {
   final String name;
+  final String challengeId;
 
-  const Step1Screen({super.key, required this.name});
+  const Step1Screen({super.key, required this.challengeId, required this.name});
 
   @override
   _Step1ScreenState createState() => _Step1ScreenState();
 }
 
-//test 
+//test
 class _Step1ScreenState extends State<Step1Screen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
@@ -45,7 +46,6 @@ class _Step1ScreenState extends State<Step1Screen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-          
               GenieAvatar(
                 state: AvatarState.celebrating,
                 size: 200,
@@ -57,7 +57,9 @@ class _Step1ScreenState extends State<Step1Screen>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => Step2Screen(name: widget.name)),
+                        builder: (context) => Step2Screen(
+                            challengeId: widget.challengeId,
+                            name: widget.name)),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -65,7 +67,8 @@ class _Step1ScreenState extends State<Step1Screen>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
                   minimumSize: const Size(140, 50),
                 ),
                 child: const Text(

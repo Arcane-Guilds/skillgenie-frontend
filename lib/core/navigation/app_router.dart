@@ -37,7 +37,7 @@ import '../../presentation/views/reclamation/reclamation_screen.dart';
 import '../../presentation/views/genie_story_screen.dart';
 import '../../presentation/views/game/payment_return_screen.dart';
 import '../../presentation/views/game/payment_screen.dart';
-
+import '../../presentation/views/rating/ratings_screen.dart';
 // ShellScaffold remains the same
 class ShellScaffold extends StatelessWidget {
   final Widget child;
@@ -351,6 +351,10 @@ final appRouter = GoRouter(
         return ChatDetailScreen(chatId: chatId);
       },
     ),
+
+
+
+
     GoRoute(
       path: '/socket-test',
       builder: (context, state) => const SocketTestScreen(),
@@ -374,6 +378,11 @@ final appRouter = GoRouter(
       builder: (context, state) => PaymentReturnScreen(
         isSuccess: false,
       ),
+    ),
+
+        GoRoute(
+      path: '/ratings',
+      builder: (context, state) => const RatingsScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) {

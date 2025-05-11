@@ -12,7 +12,7 @@ class ChallengesHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextEditingController nicknameController = TextEditingController();
-    
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
@@ -26,7 +26,8 @@ class ChallengesHomePage extends StatelessWidget {
                 const SizedBox(height: 24),
                 Card(
                   color: AppTheme.surfaceColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
                   elevation: 4,
                   child: Padding(
                     padding: const EdgeInsets.all(20),
@@ -34,7 +35,10 @@ class ChallengesHomePage extends StatelessWidget {
                       children: [
                         Text(
                           challenge['title'] ?? 'Challenge',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimaryColor,
                               ),
@@ -44,10 +48,12 @@ class ChallengesHomePage extends StatelessWidget {
                         TextField(
                           controller: nicknameController,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppTheme.textPrimaryColor),
+                          style:
+                              const TextStyle(color: AppTheme.textPrimaryColor),
                           decoration: InputDecoration(
                             hintText: 'NICKNAME',
-                            hintStyle: const TextStyle(color: AppTheme.textSecondaryColor),
+                            hintStyle: const TextStyle(
+                                color: AppTheme.textSecondaryColor),
                             filled: true,
                             fillColor: AppTheme.backgroundColor,
                             border: OutlineInputBorder(
@@ -77,14 +83,16 @@ class ChallengesHomePage extends StatelessWidget {
                                     // Show error if nickname is empty
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Please enter a nickname'),
+                                        content:
+                                            Text('Please enter a nickname'),
                                       ),
                                     );
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
-                                  padding: const EdgeInsets.symmetric(vertical: 15),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 15),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -111,14 +119,16 @@ class ChallengesHomePage extends StatelessWidget {
                                     // Show error if nickname is empty
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Please enter a nickname'),
+                                        content:
+                                            Text('Please enter a nickname'),
                                       ),
                                     );
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
-                                  padding: const EdgeInsets.symmetric(vertical: 15),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 15),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -139,4 +149,4 @@ class ChallengesHomePage extends StatelessWidget {
       ),
     );
   }
-} 
+}

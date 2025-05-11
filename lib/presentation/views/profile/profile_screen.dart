@@ -71,7 +71,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       });
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadInitialData();
+      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+      if (profileViewModel.currentProfile == null) {
+        _loadInitialData();
+      }
       _loadEquippedCosmetics();
     });
   }
@@ -888,7 +891,38 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    // Use context.watch for view models to react to state changes
+    final authViewModel = context.watch<AuthViewModel>();
+    final profileViewModel = context.watch<ProfileViewModel>();
+    final communityViewModel = context.watch<CommunityViewModel>();
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Profile',
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.group, color: kPrimaryBlue),
+            onPressed: () {
+              GoRouter.of(context).go('/friends');
+            },
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.settings,
+              color: kPrimaryBlue,
+            ),
+            onPressed: _navigateToSettings,
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           // Background effect for the entire screen
@@ -898,334 +932,387 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
           
           // Main content
-          SafeArea(
-            child: Consumer2<AuthViewModel, ProfileViewModel>(
-              builder: (context, authViewModel, profileViewModel, _) {
-                if (!authViewModel.isAuthenticated || profileViewModel.isLoading || _isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
-                    ),
-                  );
+          Builder(
+            builder: (context) {
+              // --- Loading State ---
+              final bool isProfileLoading = profileViewModel.isLoading || (authViewModel.isLoading && !authViewModel.authChecked);
+              final bool isPostsLoading = profileViewModel.currentProfile != null &&
+                  (communityViewModel.userPostsStatus == CommunityStatus.initial ||
+                      communityViewModel.userPostsStatus == CommunityStatus.loading);
+
+              if (isProfileLoading || isPostsLoading) {
+                if (profileViewModel.currentProfile != null &&
+                    communityViewModel.userPostsStatus == CommunityStatus.initial) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if(mounted) {
+                      _loadUserPosts(profileViewModel.currentProfile!.id);
+                    }
+                  });
                 }
 
-                final user = profileViewModel.currentProfile;
-                if (user == null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('No profile data available'),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadInitialData,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimaryBlue,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    await _loadInitialData();
-                  },
-                  color: kPrimaryBlue,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 24),
-                        // Profile picture
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Hero(
-                              tag: 'profile_image',
-                              child: GestureDetector(
-                                onTap: _pickImage,
-                                child: Container(
-                                  height: 120,
-                                  width: 120,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(60),
-                                    child: _buildProfileImage(user),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: kPrimaryBlue,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // User name
-                        Text(
-                          user.username,
-                          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // User bio (replace email)
-                        Text(
-                          (user.bio != null && user.bio!.trim().isNotEmpty)
-                              ? user.bio!
-                              : 'No bio set.',
-                          style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
-                            _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: TabBar(
-                            controller: _tabController,
-                            labelColor: kPrimaryBlue,
-                            unselectedLabelColor: Colors.grey,
-                            indicatorColor: kPrimaryBlue,
-                            tabs: const [
-                              Tab(icon: Icon(Icons.list), text: 'Posts'),
-                              Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: 500, // or MediaQuery.of(context).size.height * 0.6, etc.
-                          child: TabBarView(
-                            controller: _tabController,
-                            children: [
-                              // Tab 1: User Posts
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: _buildUserPosts(),
-                              ),
-                              // Tab 2: Achievements & Analytics
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    // Achievements button
-                                    Material(
-                                      elevation: 4,
-                                      borderRadius: BorderRadius.circular(18),
-                                      color: Colors.white,
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(18),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => AchievementsScreen(userId: user.id),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(18),
-                                            gradient: LinearGradient(
-                                              colors: [Colors.amber.shade200, Colors.amber.shade400],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
-                                              const SizedBox(width: 16),
-                                              const Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Achievements',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 18,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 2),
-                                                  Text(
-                                                    'View your badges and milestones',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.black54,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    // Analytics button
-                                    Material(
-                                      elevation: 4,
-                                      borderRadius: BorderRadius.circular(18),
-                                      color: kPrimaryBlue,
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(18),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => AnalyticsScreen(userId: user.id),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                          decoration: const BoxDecoration(
-                                            borderRadius: BorderRadius.all(Radius.circular(18)),
-                                            gradient: LinearGradient(
-                                              colors: [kPrimaryBlue, Colors.lightBlueAccent],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                          ),
-                                          child: const Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.insights, color: Colors.white, size: 32),
-                                              SizedBox(width: 16),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'View Analytics',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 18,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 2),
-                                                  Text(
-                                                    'Track your learning progress',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.white70,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    // Take Quiz button
-                                    Material(
-                                      elevation: 4,
-                                      borderRadius: BorderRadius.circular(18),
-                                      color: Colors.deepPurpleAccent,
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(18),
-                                        onTap: () async {
-                                          final prefs = await SharedPreferences.getInstance();
-                                          final String? userJson = prefs.getString("user");
-                                          if (userJson != null) {
-                                            final user = User.fromJson(jsonDecode(userJson));
-                                            if (!mounted) return;
-                                            context.push('/quiz/${user.id}');
-                                          } else {
-                                            if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('User ID not found')),
-                                            );
-                                          }
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(18),
-                                            gradient: LinearGradient(
-                                              colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                          ),
-                                          child: const Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.quiz, color: Colors.white, size: 32),
-                                              SizedBox(width: 16),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Take Quiz',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 18,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 2),
-                                                  Text(
-                                                    'Get personalized course ',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.white70,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
                   ),
                 );
-              },
-            ),
+              }
+
+              // --- Error State ---
+              final String? profileError = profileViewModel.errorMessage ?? authViewModel.error;
+              final String? postsError = communityViewModel.userPostsStatus == CommunityStatus.error
+                  ? communityViewModel.errorMessage
+                  : null;
+              final String? displayError = profileError ?? postsError;
+
+              if (displayError != null && (profileViewModel.currentProfile == null || postsError != null)) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: $displayError'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          profileViewModel.clearError();
+                          authViewModel.clearError();
+                          communityViewModel.resetError();
+                          _loadInitialData();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryBlue,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // --- No Profile Data State ---
+              final user = profileViewModel.currentProfile;
+              if (user == null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('No profile data available.'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadInitialData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryBlue,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Reload Profile'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // --- Profile Data Loaded State ---
+              return RefreshIndicator(
+                onRefresh: () async {
+                  await _loadInitialData();
+                },
+                color: kPrimaryBlue,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 24),
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Hero(
+                            tag: 'profile_image',
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                height: 120,
+                                width: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: kPrimaryBlue.withOpacity(0.3), width: 3),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(60),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      _buildProfileImage(user),
+                                      if (selectedFrame != null)
+                                        _buildFrameEffect(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: kPrimaryBlue,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // User name
+                      Text(
+                        user.username,
+                        style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // User bio (replace email)
+                      Text(
+                        (user.bio != null && user.bio!.trim().isNotEmpty)
+                            ? user.bio!
+                            : 'No bio set.',
+                        style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildStatCard(context, 'Streak', '${user.streakDays ?? 0} days', Icons.local_fire_department),
+                          _buildStatCard(context, 'Badges', '${profileViewModel.badgeCount}', Icons.emoji_events),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: TabBar(
+                          controller: _tabController,
+                          labelColor: kPrimaryBlue,
+                          unselectedLabelColor: Colors.grey,
+                          indicatorColor: kPrimaryBlue,
+                          tabs: const [
+                            Tab(icon: Icon(Icons.list), text: 'Posts'),
+                            Tab(icon: Icon(Icons.emoji_events), text: 'Insights'),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 500, // or MediaQuery.of(context).size.height * 0.6, etc.
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            // Tab 1: User Posts
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: _buildUserPosts(),
+                            ),
+                            // Tab 2: Achievements & Analytics
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Achievements button
+                                  Material(
+                                    elevation: 4,
+                                    borderRadius: BorderRadius.circular(18),
+                                    color: Colors.white,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(18),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => AchievementsScreen(userId: user.id),
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(18),
+                                          gradient: LinearGradient(
+                                            colors: [Colors.amber.shade200, Colors.amber.shade400],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.emoji_events, color: Colors.amber.shade800, size: 32),
+                                            const SizedBox(width: 16),
+                                            const Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Achievements',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                                Text(
+                                                  'View your badges and milestones',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  // Analytics button
+                                  Material(
+                                    elevation: 4,
+                                    borderRadius: BorderRadius.circular(18),
+                                    color: kPrimaryBlue,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(18),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => AnalyticsScreen(userId: user.id),
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(Radius.circular(18)),
+                                          gradient: LinearGradient(
+                                            colors: [kPrimaryBlue, Colors.lightBlueAccent],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.insights, color: Colors.white, size: 32),
+                                            SizedBox(width: 16),
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'View Analytics',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                                Text(
+                                                  'Track your learning progress',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white70,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  // Take Quiz button
+                                  Material(
+                                    elevation: 4,
+                                    borderRadius: BorderRadius.circular(18),
+                                    color: Colors.deepPurpleAccent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(18),
+                                      onTap: () async {
+                                        final prefs = await SharedPreferences.getInstance();
+                                        final String? userJson = prefs.getString("user");
+                                        if (userJson != null) {
+                                          final user = User.fromJson(jsonDecode(userJson));
+                                          if (!mounted) return;
+                                          context.push('/quiz/${user.id}');
+                                        } else {
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('User ID not found')),
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(18),
+                                          gradient: LinearGradient(
+                                            colors: [Colors.deepPurpleAccent, Colors.purpleAccent.shade100],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.quiz, color: Colors.white, size: 32),
+                                            SizedBox(width: 16),
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Take Quiz',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                                Text(
+                                                  'Get personalized course ',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white70,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
           ),
 
           // Decoration effects overlay

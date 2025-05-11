@@ -38,7 +38,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize code controllers for code questions
     for (int i = 0; i < widget.questions.length; i++) {
       final question = widget.questions[i];
@@ -147,7 +147,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
 
   Widget _buildAnswerField(EvaluationQuestion question, int index) {
     final String questionKey = _getQuestionKey(question.id, index);
-    
+
     if (question.type == 'code') {
       // Get the code controller for this question
       final codeController = _codeControllers[questionKey]!;
@@ -251,15 +251,15 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             ),
             child: _isSubmitting || quizVM.isSubmittingEvaluation
                 ? const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  )
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            )
                 : const Text(
-                    'Submit Evaluation',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              'Submit Evaluation',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         );
       },
@@ -323,19 +323,19 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               ),
             ),
           );
-          
+
           // Generate course based on quiz result
           final courseVM = Provider.of<CourseViewModel>(context, listen: false);
-          
+
           try {
             // Generate course using the user ID
             final course = await courseVM.generateCourse(widget.userId);
-            
+
             // Close the generating course dialog
             if (mounted) {
               Navigator.pop(context);
             }
-            
+
             if (course != null && mounted) {
               // Navigate to home immediately after generation
               context.go('/home');
@@ -345,13 +345,13 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             if (mounted) {
               Navigator.pop(context);
             }
-            
+
             // Show error dialog
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Failed to generate course: $e')),
               );
-              
+
               // Navigate to home even if course generation fails
               context.go('/home');
             }

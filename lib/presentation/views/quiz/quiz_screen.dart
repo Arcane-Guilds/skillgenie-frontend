@@ -212,7 +212,7 @@ class QuizPage extends StatelessWidget {
   // Question Card
   Widget _buildQuestionCard(QuizViewModel quizVM, BuildContext context) {
     final question = quizVM.currentQuestion!;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeOutBack,
@@ -284,7 +284,7 @@ class QuizPage extends StatelessWidget {
   // Option Button with Animated Selection
   Widget _buildOptionButton(QuizViewModel quizVM, QuizQuestion question, String option, BuildContext context) {
     final isSelected = quizVM.answers[question.id] == option;
-    
+
     return GestureDetector(
       onTap: () {
         quizVM.setAnswer(question.id, option);
@@ -319,13 +319,13 @@ class QuizPage extends StatelessWidget {
                 color: isSelected ? AppTheme.primaryColor : Colors.grey.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: isSelected 
-                ? const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 16,
-                  )
-                : null,
+              child: isSelected
+                  ? const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 16,
+              )
+                  : null,
             ),
           ],
         ),
@@ -342,9 +342,9 @@ class QuizPage extends StatelessWidget {
       "Every question brings you closer to your learning goals!",
       "You're on your way to becoming a coding master!"
     ];
-    
+
     final messageIndex = (quizVM.currentQuestionIndex % messages.length);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Animate(
@@ -374,7 +374,7 @@ class QuizPage extends StatelessWidget {
   Widget _buildNavigationButtons(QuizViewModel quizVM, BuildContext context) {
     final isLastQuestion = quizVM.currentQuestionIndex == quizVM.questions.length - 1;
     final hasAnswer = quizVM.answers.containsKey(quizVM.currentQuestion!.id);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
@@ -414,39 +414,39 @@ class QuizPage extends StatelessWidget {
             )
           else
             const SizedBox(width: 120), // Placeholder for balance
-          
+
           ElevatedButton(
             onPressed: hasAnswer
                 ? () async {
-                    if (isLastQuestion) {
-                      // Show loading indicator
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                      
-                      // Submit quiz
-                      final success = await quizVM.submitQuiz();
-                      
-                      // Close loading dialog
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
-                      
-                      if (success && context.mounted) {
-                        // Navigate to evaluation screen
-                        context.go('/evaluation', extra: {
-                          'questions': quizVM.evaluationQuestions,
-                          'userId': userId,
-                        });
-                      }
-                    } else {
-                      quizVM.nextQuestion();
-                    }
-                  }
+              if (isLastQuestion) {
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+
+                // Submit quiz
+                final success = await quizVM.submitQuiz();
+
+                // Close loading dialog
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+
+                if (success && context.mounted) {
+                  // Navigate to evaluation screen
+                  context.go('/evaluation', extra: {
+                    'questions': quizVM.evaluationQuestions,
+                    'userId': userId,
+                  });
+                }
+              } else {
+                quizVM.nextQuestion();
+              }
+            }
                 : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
@@ -479,4 +479,4 @@ class QuizPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

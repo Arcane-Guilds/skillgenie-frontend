@@ -30,17 +30,17 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    
+
     // Add listener to tab controller to reload data when tab changes
     _tabController.addListener(_handleTabChange);
-    
+
     // Listener for friend search controller
     _friendSearchController.addListener(() {
       setState(() {
         _friendSearchQuery = _friendSearchController.text;
       });
     });
-    
+
     // Only load initial data once when the screen is first opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_initialDataLoaded) {
@@ -62,7 +62,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   void _handleTabChange() {
     if (!_tabController.indexIsChanging) {
       final now = DateTime.now();
-      
+
       if (_tabController.index == 0) {
         // Only reload friends if it's been at least 30 seconds since last load
         if (now.difference(_lastFriendsLoad).inSeconds > 30) {
@@ -82,17 +82,17 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   // Load initial data only once
   Future<void> _loadInitialData() async {
     final friendViewModel = Provider.of<FriendViewModel>(context, listen: false);
-    
+
     _initialDataLoaded = true;
     _lastFriendsLoad = DateTime.now();
     _lastRequestsLoad = DateTime.now();
-    
+
     // Load both friends and friend requests
     await friendViewModel.loadFriends();
-    
+
     // Small delay to prevent hammering the server with multiple requests at once
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     if (mounted) {
       await friendViewModel.loadFriendRequests();
     }
@@ -213,8 +213,8 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       if (query.isEmpty) {
         return true; // Show all if query is empty
       }
-      return friend.username.toLowerCase().contains(query) || 
-             friend.email.toLowerCase().contains(query);
+      return friend.username.toLowerCase().contains(query) ||
+          friend.email.toLowerCase().contains(query);
     }).toList();
 
     return Column(
@@ -223,7 +223,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Container(
-             decoration: BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
@@ -241,20 +241,20 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 hintStyle: TextStyle(color: Colors.grey[500]),
                 prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                 suffixIcon: _friendSearchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.grey),
-                      onPressed: () {
-                        _friendSearchController.clear();
-                      },
-                    )
-                  : null,
+                    ? IconButton(
+                  icon: const Icon(Icons.clear, color: Colors.grey),
+                  onPressed: () {
+                    _friendSearchController.clear();
+                  },
+                )
+                    : null,
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
               ),
             ),
           ),
         ),
-        
+
         // Existing RefreshIndicator and ListView
         Expanded(
           child: RefreshIndicator(
@@ -279,10 +279,10 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       ],
     );
   }
-  
+
   // Card specifically for the friends list with chat/remove actions
   Widget _buildFriendCard(FriendViewModel viewModel, User friend) {
-     return Card(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -297,96 +297,96 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             children: [
               // User avatar
               CircleAvatar(
-                 radius: 28,
-                 backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                 backgroundImage: friend.avatar != null && friend.avatar!.isNotEmpty
-                     ? (friend.avatar!.startsWith('http')
-                     ? NetworkImage(friend.avatar!)
-                     : AssetImage('assets/images/${friend.avatar}.png'))
-                     : null,
-                 child: friend.avatar == null || friend.avatar!.isEmpty
-                     ? Text(
-                         friend.username.isNotEmpty 
-                             ? friend.username[0].toUpperCase() 
-                             : '?',
-                         style: TextStyle(
-                           fontSize: 24, 
-                           fontWeight: FontWeight.bold,
-                           color: AppTheme.primaryColor,
-                         ),
-                       )
-                     : null,
-               ),
-               
-               const SizedBox(width: 16),
-               
-               // Friend info
-               Expanded(
-                 child: Column(
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                     Text(
-                       friend.username,
-                       style: const TextStyle(
-                         fontWeight: FontWeight.bold,
-                         fontSize: 16,
-                       ),
-                     ),
-                     const SizedBox(height: 2),
-                     Text(
-                       friend.email,
-                       style: TextStyle(
-                         color: Colors.grey[600],
-                         fontSize: 14,
-                       ),
-                     ),
-                   ],
-                 ),
-               ),
-               
-               // Action buttons
-               Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   // Chat button
-                   Material(
-                     color: AppTheme.primaryColor.withOpacity(0.1),
-                     borderRadius: BorderRadius.circular(30),
-                     child: InkWell(
-                       borderRadius: BorderRadius.circular(30),
-                       onTap: () => _startChatWithUser(friend),
-                       child: Padding(
-                         padding: const EdgeInsets.all(8.0),
-                         child: Icon(
-                           Icons.chat_bubble_outline,
-                           color: AppTheme.primaryColor,
-                           size: 20,
-                         ),
-                       ),
-                     ),
-                   ),
-                   
-                   const SizedBox(width: 8),
-                   
-                   // Remove button
-                   Material(
-                     color: Colors.red.withOpacity(0.1),
-                     borderRadius: BorderRadius.circular(30),
-                     child: InkWell(
-                       borderRadius: BorderRadius.circular(30),
-                       onTap: () => _showRemoveFriendDialog(friend),
-                       child: const Padding(
-                         padding: EdgeInsets.all(8.0),
-                         child: Icon(
-                           Icons.person_remove_outlined,
-                           color: Colors.red,
-                           size: 20,
-                         ),
-                       ),
-                     ),
-                   ),
-                 ],
-               ),
+                radius: 28,
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                backgroundImage: friend.avatar != null && friend.avatar!.isNotEmpty
+                    ? (friend.avatar!.startsWith('http')
+                    ? NetworkImage(friend.avatar!)
+                    : AssetImage('assets/images/${friend.avatar}.png'))
+                    : null,
+                child: friend.avatar == null || friend.avatar!.isEmpty
+                    ? Text(
+                  friend.username.isNotEmpty
+                      ? friend.username[0].toUpperCase()
+                      : '?',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                )
+                    : null,
+              ),
+
+              const SizedBox(width: 16),
+
+              // Friend info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      friend.username,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      friend.email,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Action buttons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Chat button
+                  Material(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(30),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(30),
+                      onTap: () => _startChatWithUser(friend),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.chat_bubble_outline,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // Remove button
+                  Material(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(30),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(30),
+                      onTap: () => _showRemoveFriendDialog(friend),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.person_remove_outlined,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -396,17 +396,17 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
 
   Widget _buildRequestsTab(FriendViewModel viewModel) {
     final requests = viewModel.friendRequests;
-    
+
     // Only reload if we've waited a reasonable time since last load
-    if (requests == null && 
-        !viewModel.isLoading && 
+    if (requests == null &&
+        !viewModel.isLoading &&
         DateTime.now().difference(_lastRequestsLoad).inSeconds > 5) {
       _lastRequestsLoad = DateTime.now();
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) viewModel.loadFriendRequests();
       });
     }
-    
+
     if (viewModel.isLoading && requests == null) {
       return const Center(
         child: CircularProgressIndicator(
@@ -492,7 +492,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               ...requests.received.map((request) => _buildIncomingRequestCard(request)),
               const SizedBox(height: 24),
             ],
-            
+
             if (requests.sent.isNotEmpty) ...[
               const Padding(
                 padding: EdgeInsets.only(left: 8, bottom: 8),
@@ -537,20 +537,20 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                       : null,
                   child: request.sender.avatar == null || request.sender.avatar!.isEmpty
                       ? Text(
-                          request.sender.username.isNotEmpty 
-                              ? request.sender.username[0].toUpperCase() 
-                              : '?',
-                          style: TextStyle(
-                            fontSize: 24, 
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                          ),
-                        )
+                    request.sender.username.isNotEmpty
+                        ? request.sender.username[0].toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  )
                       : null,
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // User info
                 Expanded(
                   child: Column(
@@ -576,9 +576,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Action buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -598,9 +598,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                     onPressed: () => _handleFriendRequestAccept(request),
                   ),
                 ),
-                
+
                 const SizedBox(width: 12),
-                
+
                 // Reject button
                 Expanded(
                   child: OutlinedButton.icon(
@@ -623,7 +623,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   Widget _buildSentRequestCard(FriendRequest request) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -647,20 +647,20 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                   : null,
               child: request.receiver.avatar == null || request.receiver.avatar!.isEmpty
                   ? Text(
-                      request.receiver.username.isNotEmpty 
-                          ? request.receiver.username[0].toUpperCase() 
-                          : '?',
-                      style: const TextStyle(
-                        fontSize: 20, 
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                    )
+                request.receiver.username.isNotEmpty
+                    ? request.receiver.username[0].toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              )
                   : null,
             ),
-            
+
             const SizedBox(width: 16),
-            
+
             // User info
             Expanded(
               child: Column(
@@ -706,7 +706,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 ],
               ),
             ),
-            
+
             // Cancel button
             IconButton(
               icon: const Icon(Icons.cancel_outlined, color: Colors.red),
@@ -717,7 +717,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   void _showCancelRequestDialog(FriendRequest request) {
     showDialog(
       context: context,
@@ -736,10 +736,10 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             onPressed: () async { // Make async
               Navigator.of(context).pop(); // Close dialog first
               final viewModel = Provider.of<FriendViewModel>(context, listen: false);
-              
+
               // Call the ViewModel method
               await viewModel.cancelFriendRequest(request.id);
-              
+
               // Check for errors and show appropriate message
               if (mounted) {
                 if (viewModel.errorMessage != null) {
@@ -773,7 +773,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       // Use a microtask to avoid triggering build during build phase
       Future.microtask(() => viewModel.loadSuggestedFriends());
     }
-    
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -799,14 +799,14 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.grey),
-                        onPressed: () {
-                          _searchController.clear();
-                          viewModel.clearSearchResults();
-                          // Optionally reload suggestions when search is cleared
-                          viewModel.loadSuggestedFriends(); 
-                        },
-                      )
+                  icon: const Icon(Icons.clear, color: Colors.grey),
+                  onPressed: () {
+                    _searchController.clear();
+                    viewModel.clearSearchResults();
+                    // Optionally reload suggestions when search is cleared
+                    viewModel.loadSuggestedFriends();
+                  },
+                )
                     : null,
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15),
@@ -830,9 +830,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               },
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Search Button
           SizedBox(
             width: double.infinity,
@@ -855,9 +855,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               },
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Results Area - Display Search Results OR Suggestions
           Expanded(
             child: _buildResultsArea(viewModel),
@@ -866,14 +866,14 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   // Helper widget to determine what to display in the results area
   Widget _buildResultsArea(FriendViewModel viewModel) {
     // Priority 1: Show search results if available
     if (viewModel.searchResults.isNotEmpty) {
       return _buildSearchResultsList(viewModel);
     }
-    
+
     // Priority 2: Show loading indicator for suggestions
     if (viewModel.isLoadingSuggestions) {
       return const Center(
@@ -895,7 +895,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
 
     // Priority 4: Show error message if suggestions failed to load
     if (viewModel.errorMessage != null && viewModel.suggestedFriends != null && viewModel.suggestedFriends!.isEmpty) {
-       return Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -908,7 +908,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             ),
             const SizedBox(height: 16),
             TextButton.icon(
-              icon: const Icon(Icons.refresh), 
+              icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               onPressed: () => viewModel.loadSuggestedFriends(),
             ),
@@ -916,11 +916,11 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         ),
       );
     }
-    
+
     // Priority 5: Show empty state (no search, no suggestions, no error)
     return _buildEmptySearchState();
   }
-  
+
   // Widget to display when search is empty and no suggestions are available
   Widget _buildEmptySearchState() {
     return Center(
@@ -948,7 +948,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   // Renamed from _buildSuggestedFriends to avoid conflict 
   // This widget now specifically builds the LIST of suggestions
   Widget _buildSuggestedFriendsList(FriendViewModel viewModel) {
@@ -980,13 +980,13 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       ],
     );
   }
-  
+
   // Renamed from _buildSearchResultsList
   Widget _buildSearchResultsList(FriendViewModel viewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Padding(
+        Padding(
           padding: const EdgeInsets.only(left: 8, bottom: 16),
           child: Text(
             'Search Results (${viewModel.searchResults.length})',
@@ -1034,20 +1034,20 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                   : null,
               child: user.avatar == null || user.avatar!.isEmpty
                   ? Text(
-                      user.username.isNotEmpty 
-                          ? user.username[0].toUpperCase() 
-                          : '?',
-                      style: TextStyle(
-                        fontSize: 24, 
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    )
+                user.username.isNotEmpty
+                    ? user.username[0].toUpperCase()
+                    : '?',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              )
                   : null,
             ),
-            
+
             const SizedBox(width: 16),
-            
+
             // User info (Existing Code)
             Expanded(
               child: Column(
@@ -1071,7 +1071,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 ],
               ),
             ),
-            
+
             // Add Friend Button (Existing Code)
             OutlinedButton.icon(
               icon: const Icon(Icons.person_add_outlined, size: 18),
@@ -1090,7 +1090,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       ),
     );
   }
-  
+
   Future<void> _handleSendFriendRequest(FriendViewModel viewModel, User user) async {
     // Show loading indicator in snackbar
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1112,14 +1112,14 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         duration: const Duration(seconds: 1),
       ),
     );
-    
+
     try {
       await viewModel.sendFriendRequest(user.id);
-      
+
       // **** ADD THIS: Refresh requests AFTER sending ****
-      await viewModel.loadFriendRequests(); 
+      await viewModel.loadFriendRequests();
       // ************************************************
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1127,7 +1127,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Switch to requests tab to see the sent request
         _tabController.animateTo(1);
       }
@@ -1142,7 +1142,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       }
     }
   }
-  
+
   void _showRemoveFriendDialog(User friend) {
     showDialog(
       context: context,
@@ -1162,13 +1162,13 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
               child: friend.avatar == null || friend.avatar!.isEmpty
                   ? Text(
-                      friend.username.isNotEmpty ? friend.username[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    )
+                friend.username.isNotEmpty ? friend.username[0].toUpperCase() : '?',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              )
                   : null,
             ),
             const SizedBox(height: 16),
@@ -1256,7 +1256,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     required Function()? onReject,
   }) {
     final user = isReceived ? request.sender : request.receiver;
-    
+
     return ListTile(
       leading: CircleAvatar(
         backgroundImage: user.avatar != null
@@ -1272,18 +1272,18 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       subtitle: Text(isReceived ? 'Wants to be your friend' : 'Request sent'),
       trailing: isReceived
           ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.check, color: Colors.green),
-                  onPressed: onAccept,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  onPressed: onReject,
-                ),
-              ],
-            )
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.check, color: Colors.green),
+            onPressed: onAccept,
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.red),
+            onPressed: onReject,
+          ),
+        ],
+      )
           : const Text('Pending'),
     );
   }
@@ -1292,38 +1292,38 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     // Navigate to chat screen with this user
     final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-    
+
     try {
       // First check if the user is authenticated
       if (!authViewModel.isAuthenticated) {
         print('Chat error: User is not authenticated');
         throw Exception('You need to be logged in to start a chat');
       }
-      
+
       // Additional validation of token
-      if (authViewModel.tokens == null || 
+      if (authViewModel.tokens == null ||
           authViewModel.tokens!.accessToken.isEmpty) {
         print('Chat error: Invalid or missing token');
         throw Exception('Authentication token is missing or invalid');
       }
-      
+
       print('Starting chat with user: ${user.username} (${user.id})');
       print('Current user ID: ${authViewModel.userId}');
       print('Access token available (first 10 chars): ${authViewModel.tokens!.accessToken.substring(0, 10)}...');
-      
+
       // Verify token is in SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final tokenInPrefs = prefs.getString('accessToken');
       if (tokenInPrefs == null) {
         print('WARNING: Token not found in SharedPreferences, refreshing auth status');
         await authViewModel.checkAuthStatus();
-        
+
         // If still not authenticated after refresh, throw error
         if (!authViewModel.isAuthenticated) {
           throw Exception('Authentication failed after refresh');
         }
       }
-      
+
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1344,10 +1344,10 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
           ),
         ),
       );
-      
+
       // Find or create a chat with this user
       final chatId = await chatViewModel.findOrCreateDirectChat(user.id);
-      
+
       if (mounted && chatId != null) {
         print('Chat found/created successfully with ID: $chatId');
         GoRouter.of(context).push('/chat/detail', extra: chatId);
@@ -1357,27 +1357,27 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     } catch (e) {
       if (mounted) {
         print('Chat creation error: $e');
-        
+
         // Show a more detailed message depending on the error
         String errorMessage = 'Failed to start chat: $e';
-        
+
         if (e.toString().contains('401') || e.toString().contains('Authentication failed')) {
           errorMessage = 'Authentication error. Please log out and log in again.';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             duration: const Duration(seconds: 8),
-            action: e.toString().contains('Authentication') ? 
-              SnackBarAction(
-                label: 'Log out',
-                onPressed: () {
-                  authViewModel.signOut().then((_) {
-                    GoRouter.of(context).go('/login');
-                  });
-                },
-              ) : null,
+            action: e.toString().contains('Authentication') ?
+            SnackBarAction(
+              label: 'Log out',
+              onPressed: () {
+                authViewModel.signOut().then((_) {
+                  GoRouter.of(context).go('/login');
+                });
+              },
+            ) : null,
           ),
         );
       }
@@ -1405,9 +1405,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                   : null,
               child: user.avatar == null
                   ? Text(
-                      user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
-                      style: const TextStyle(fontSize: 24),
-                    )
+                user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
+                style: const TextStyle(fontSize: 24),
+              )
                   : null,
             ),
             const SizedBox(height: 16),
@@ -1484,7 +1484,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   // Handle friend request acceptance with immediate UI feedback
   Future<void> _handleFriendRequestAccept(FriendRequest request) async {
     final viewModel = Provider.of<FriendViewModel>(context, listen: false);
-    
+
     // Show loading indicator
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1505,10 +1505,10 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         duration: const Duration(seconds: 2),
       ),
     );
-    
+
     try {
       await viewModel.acceptFriendRequest(request.id);
-      
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1518,7 +1518,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Force update on UI by manually updating timestamps 
         // and switching to friends tab to show the new friend
         setState(() {
@@ -1539,14 +1539,14 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       }
     }
   }
-  
+
   // Handle friend request rejection with immediate UI feedback
   Future<void> _handleFriendRequestReject(String requestId) async {
     final viewModel = Provider.of<FriendViewModel>(context, listen: false);
-    
+
     try {
       await viewModel.rejectFriendRequest(requestId);
-      
+
       // Force update on UI
       setState(() {
         _lastRequestsLoad = DateTime(1970);

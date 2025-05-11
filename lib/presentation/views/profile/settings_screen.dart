@@ -47,7 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadUserProfile() async {
     final profileViewModel =
-        Provider.of<ProfileViewModel>(context, listen: false);
+    Provider.of<ProfileViewModel>(context, listen: false);
     try {
       final profile = await profileViewModel.getUserProfile();
       if (mounted && profile != null) {
@@ -139,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -264,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ? Icons.visibility_off
                                 : Icons.visibility),
                             onPressed: () => setState(
-                                () => obscureCurrent = !obscureCurrent),
+                                    () => obscureCurrent = !obscureCurrent),
                           ),
                         ),
                         validator: (value) => value == null || value.isEmpty
@@ -340,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ? Icons.visibility_off
                                 : Icons.visibility),
                             onPressed: () => setState(
-                                () => obscureConfirm = !obscureConfirm),
+                                    () => obscureConfirm = !obscureConfirm),
                           ),
                         ),
                         validator: (value) {
@@ -453,8 +453,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           final errorMessage = e.toString().contains('401')
                               ? 'Current password is incorrect.'
                               : e.toString().contains('503')
-                                  ? 'Server is currently unavailable. Please try again later.'
-                                  : 'Failed to update password: $e';
+                              ? 'Server is currently unavailable. Please try again later.'
+                              : 'Failed to update password: $e';
 
                           showMessage(errorMessage, true);
                         }
@@ -528,7 +528,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               try {
                 final profileViewModel =
-                    Provider.of<ProfileViewModel>(context, listen: false);
+                Provider.of<ProfileViewModel>(context, listen: false);
                 await profileViewModel.logout();
                 if (mounted) {
                   context.go('/login');
@@ -604,7 +604,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 // If deleteAccount succeeds, pop the loading dialog.
                 if (stableContext.mounted) {
-                   Navigator.of(stableContext).pop(); // Pop loading dialog
+                  Navigator.of(stableContext).pop(); // Pop loading dialog
                 }
 
               } catch (e) {
@@ -696,54 +696,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: _isUploadingImage
                     ? null
                     : () {
-                        setState(() => _imageFile = null);
-                        Navigator.pop(context);
-                      },
+                  setState(() => _imageFile = null);
+                  Navigator.pop(context);
+                },
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: _isUploadingImage
                     ? null
                     : () async {
+                  setDialogState(() {
+                    _isUploadingImage = true;
+                  });
+
+                  try {
+                    final profileViewModel =
+                    Provider.of<ProfileViewModel>(context,
+                        listen: false);
+
+                    await profileViewModel.updateProfileImage(
+                      _imageFile!,
+                      onProgress: (progress) {
                         setDialogState(() {
-                          _isUploadingImage = true;
+                          _uploadProgress = progress;
                         });
-
-                        try {
-                          final profileViewModel =
-                              Provider.of<ProfileViewModel>(context,
-                                  listen: false);
-
-                          await profileViewModel.updateProfileImage(
-                            _imageFile!,
-                            onProgress: (progress) {
-                              setDialogState(() {
-                                _uploadProgress = progress;
-                              });
-                            },
-                          );
-
-                          if (mounted) {
-                            Navigator.pop(context);
-                            _showSuccessSnackBar(
-                                'Profile picture updated successfully!');
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            Navigator.pop(context);
-                            _showErrorSnackBar(
-                                'Failed to update profile picture: ${e.toString()}');
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() {
-                              _isUploadingImage = false;
-                              _uploadProgress = 0;
-                              _imageFile = null;
-                            });
-                          }
-                        }
                       },
+                    );
+
+                    if (mounted) {
+                      Navigator.pop(context);
+                      _showSuccessSnackBar(
+                          'Profile picture updated successfully!');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      Navigator.pop(context);
+                      _showErrorSnackBar(
+                          'Failed to update profile picture: ${e.toString()}');
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() {
+                        _isUploadingImage = false;
+                        _uploadProgress = 0;
+                        _imageFile = null;
+                      });
+                    }
+                  }
+                },
                 child: const Text('Save'),
               ),
             ],
@@ -804,7 +804,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 try {
                   final profileViewModel =
-                      Provider.of<ProfileViewModel>(context, listen: false);
+                  Provider.of<ProfileViewModel>(context, listen: false);
                   await profileViewModel
                       .updateUsername(_usernameController.text.trim());
                   if (mounted) {
@@ -879,7 +879,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 try {
                   final profileViewModel =
-                      Provider.of<ProfileViewModel>(context, listen: false);
+                  Provider.of<ProfileViewModel>(context, listen: false);
                   await profileViewModel.updateBio(_bioController.text.trim());
                   if (mounted) {
                     _showSuccessSnackBar('Bio updated successfully!');
@@ -934,12 +934,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         backgroundImage: tempImageFile != null
                             ? FileImage(tempImageFile)
                             : _imageFile != null
-                                ? FileImage(_imageFile!)
-                                : user.avatar != null && user.avatar!.isNotEmpty
-                                    ? (user.avatar!.startsWith('http')
-                                        ? NetworkImage(user.avatar ?? '')
-                                        : AssetImage('assets/images/${user.avatar}.png'))
-                                    : null,
+                            ? FileImage(_imageFile!)
+                            : user.avatar != null && user.avatar!.isNotEmpty
+                            ? (user.avatar!.startsWith('http')
+                            ? NetworkImage(user.avatar ?? '')
+                            : AssetImage('assets/images/${user.avatar}.png'))
+                            : null,
                         backgroundColor: Colors.grey[200],
                       ),
                       const Positioned(
@@ -1002,13 +1002,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _showErrorSnackBar('Username cannot be empty');
                         return;
                       }
-                      
+
                       Navigator.pop(context);
 
                       try {
                         final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
                         String? imageUrl;
-                        
+
                         // First, handle image upload if needed
                         if (tempImageFile != null) {
                           try {
@@ -1017,44 +1017,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             imageUrl = await profileViewModel.uploadProfileImageAndGetUrl(tempImageFile);
                           } catch (e) {
                             if (mounted) {
-                               setState(() => _isUploadingImage = false); // Reset image specific state
-                               _showErrorSnackBar('Failed to upload image: $e');
+                              setState(() => _isUploadingImage = false); // Reset image specific state
+                              _showErrorSnackBar('Failed to upload image: $e');
                             }
                             return;
                           } finally {
-                             if (mounted) {
-                               setState(() => _isUploadingImage = false); // Reset image specific state
-                             }
+                            if (mounted) {
+                              setState(() => _isUploadingImage = false); // Reset image specific state
+                            }
                           }
                         }
-                        
+
                         // Now update the profile with all the data
                         final updateData = {
                           'username': usernameController.text.trim(),
                           'bio': bioController.text.trim(),
                         };
-                        
+
                         // Only add avatar if we have a new image URL
                         if (imageUrl != null && imageUrl.isNotEmpty) {
                           updateData['avatar'] = imageUrl;
                         }
-                        
+
                         // Send direct update with validated data
                         await profileViewModel.updateProfile(updateData);
-                        
+
                         // Update local state after successful profile update
                         if (mounted) {
-                           setState(() {
-                             _usernameController.text = usernameController.text.trim();
-                             _bioController.text = bioController.text.trim();
-                             _imageFile = tempImageFile; // Update screen's _imageFile if temp was used
-                           });
-                           _showSuccessSnackBar('Profile updated successfully!');
+                          setState(() {
+                            _usernameController.text = usernameController.text.trim();
+                            _bioController.text = bioController.text.trim();
+                            _imageFile = tempImageFile; // Update screen's _imageFile if temp was used
+                          });
+                          _showSuccessSnackBar('Profile updated successfully!');
                         }
                       } catch (e) {
-                         if (mounted) {
-                            _showErrorSnackBar('Failed to update profile: $e');
-                         }
+                        if (mounted) {
+                          _showErrorSnackBar('Failed to update profile: $e');
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -1100,218 +1100,218 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: profileViewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Genie Avatar
-                  const Center(
-                    child: GenieAvatar(
-                      state: AvatarState.idle,
-                      size: 100,
-                      message: "Manage your profile & preferences!",
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Genie Avatar
+            const Center(
+              child: GenieAvatar(
+                state: AvatarState.idle,
+                size: 100,
+                message: "Manage your profile & preferences!",
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Profile Card
+            Card(
+              color: AppTheme.surfaceColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage: _imageFile != null
+                            ? FileImage(_imageFile!)
+                            : user?.avatar != null && user!.avatar!.isNotEmpty
+                            ? (user.avatar!.startsWith('http')
+                            ? NetworkImage(user.avatar!)
+                            : AssetImage('assets/images/${user.avatar}.png'))
+                            : null,
+                        child: _imageFile == null &&
+                            (user?.avatar == null || user!.avatar!.isEmpty)
+                            ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                            : null,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Profile Card
-                  Card(
-                    color: AppTheme.surfaceColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    elevation: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: _pickImage,
-                            child: CircleAvatar(
-                              radius: 40,
-                              backgroundColor: Colors.grey[200],
-                              backgroundImage: _imageFile != null
-                                  ? FileImage(_imageFile!)
-                                  : user?.avatar != null && user!.avatar!.isNotEmpty
-                                      ? (user.avatar!.startsWith('http')
-                                          ? NetworkImage(user.avatar!)
-                                          : AssetImage('assets/images/${user.avatar}.png'))
-                                      : null,
-                              child: _imageFile == null &&
-                                  (user?.avatar == null || user!.avatar!.isEmpty)
-                                  ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                                  : null,
-                            ),
-                          ),
 
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _usernameController.text,
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _bioController.text.isNotEmpty
-                                      ? _bioController.text
-                                      : "No bio set.",
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _usernameController.text,
+                            style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _showEditProfileDialog(user!),
+                          const SizedBox(height: 4),
+                          Text(
+                            _bioController.text.isNotEmpty
+                                ? _bioController.text
+                                : "No bio set.",
+                            style: const TextStyle(color: Colors.grey),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  // Section: Security
-                  const Text('Security',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Card(
-                    color: AppTheme.surfaceColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    elevation: 2,
-                    child: ListTile(
-                      leading:
-                          Icon(Icons.password, color: AppTheme.primaryColor),
-                      title: const Text('Change Password'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: _showChangePasswordDialog,
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () => _showEditProfileDialog(user!),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Section: Reminders
-                  const Text('Reminders',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Consumer<ReminderViewModel>(
-                    builder: (context, reminderVM, _) => Card(
-                      color: AppTheme.surfaceColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      elevation: 2,
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(Icons.notifications_active,
-                              color: AppTheme.primaryColor, size: 28),
-                        ),
-                        title: const Text('Daily Reminder',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(
-                          reminderVM.remindersEnabled
-                              ? 'Set for ${reminderVM.formattedTime}'
-                              : 'No reminder set',
-                          style: TextStyle(
-                            color: reminderVM.remindersEnabled
-                                ? Colors.green
-                                : Colors.grey,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        trailing: Switch(
-                          value: reminderVM.remindersEnabled,
-                          onChanged: (value) async {
-                            if (value && reminderVM.reminderTime == null) {
-                              _showReminderTimePicker(context);
-                              return;
-                            }
-                            await reminderVM.toggleReminders(value);
-                          },
-                          activeColor: AppTheme.primaryColor,
-                        ),
-                        onTap: reminderVM.remindersEnabled
-                            ? () => _showReminderTimePicker(context)
-                            : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text('Support',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  // Reclamation Button
-                  Card(
-                    color: AppTheme.surfaceColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    elevation: 2,
-                    child: ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.report_problem_outlined,
-                          color: Colors.blue,
-                          size: 28,
-                        ),
-                      ),
-                      title: const Text('Submit Reclamation',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text(
-                        'Report issues or submit feedback',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => context.go('/reclamation'),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  // Section: Account Actions
-                  const Text('Account Actions',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Card(
-                    color: AppTheme.surfaceColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    elevation: 2,
-                    child: ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.orange),
-                      title: const Text('Logout'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: _showLogoutConfirmation,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    color: AppTheme.surfaceColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    elevation: 2,
-                    child: ListTile(
-                      leading:
-                          const Icon(Icons.delete_forever, color: Colors.red),
-                      title: const Text('Delete Account',
-                          style: TextStyle(color: Colors.red)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: _showDeleteAccountConfirmation,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+            const SizedBox(height: 32),
+            // Section: Security
+            const Text('Security',
+                style:
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Card(
+              color: AppTheme.surfaceColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              elevation: 2,
+              child: ListTile(
+                leading:
+                Icon(Icons.password, color: AppTheme.primaryColor),
+                title: const Text('Change Password'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: _showChangePasswordDialog,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Section: Reminders
+            const Text('Reminders',
+                style:
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Consumer<ReminderViewModel>(
+              builder: (context, reminderVM, _) => Card(
+                color: AppTheme.surfaceColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+                elevation: 2,
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(Icons.notifications_active,
+                        color: AppTheme.primaryColor, size: 28),
+                  ),
+                  title: const Text('Daily Reminder',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(
+                    reminderVM.remindersEnabled
+                        ? 'Set for ${reminderVM.formattedTime}'
+                        : 'No reminder set',
+                    style: TextStyle(
+                      color: reminderVM.remindersEnabled
+                          ? Colors.green
+                          : Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  trailing: Switch(
+                    value: reminderVM.remindersEnabled,
+                    onChanged: (value) async {
+                      if (value && reminderVM.reminderTime == null) {
+                        _showReminderTimePicker(context);
+                        return;
+                      }
+                      await reminderVM.toggleReminders(value);
+                    },
+                    activeColor: AppTheme.primaryColor,
+                  ),
+                  onTap: reminderVM.remindersEnabled
+                      ? () => _showReminderTimePicker(context)
+                      : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text('Support',
+                style:
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            // Reclamation Button
+            Card(
+              color: AppTheme.surfaceColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              elevation: 2,
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.report_problem_outlined,
+                    color: Colors.blue,
+                    size: 28,
+                  ),
+                ),
+                title: const Text('Submit Reclamation',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text(
+                  'Report issues or submit feedback',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/reclamation'),
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Section: Account Actions
+            const Text('Account Actions',
+                style:
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Card(
+              color: AppTheme.surfaceColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              elevation: 2,
+              child: ListTile(
+                leading: const Icon(Icons.logout, color: Colors.orange),
+                title: const Text('Logout'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: _showLogoutConfirmation,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              color: AppTheme.surfaceColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              elevation: 2,
+              child: ListTile(
+                leading:
+                const Icon(Icons.delete_forever, color: Colors.red),
+                title: const Text('Delete Account',
+                    style: TextStyle(color: Colors.red)),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: _showDeleteAccountConfirmation,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

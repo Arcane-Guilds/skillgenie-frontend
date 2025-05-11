@@ -68,31 +68,6 @@ class _GamesScreenState extends State<GamesScreen> {
         title: 'Games',
         centerTitle: true,
         backgroundColor: AppTheme.surfaceColor,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.brightness_6, color: AppTheme.textPrimaryColor),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Dark mode toggle coming soon!")),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.store, color: AppTheme.textPrimaryColor),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
-              );
-              if (result != null && result is Map<String, bool>) {
-                setState(() {
-                  petEquipped = result['pet']!;
-                  hatEquipped = result['hat']!;
-                });
-              }
-            },
-          ),
-        ],
       ),
       body: Container(
         decoration: BoxDecoration(

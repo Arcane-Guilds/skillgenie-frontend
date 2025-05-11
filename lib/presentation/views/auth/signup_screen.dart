@@ -197,7 +197,7 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              Row(
+                             /* Row(
                                 children: [
                                   Expanded(child: Divider(color: Colors.grey[300])),
                                   Padding(
@@ -212,7 +212,7 @@ class _SignUpScreenContentState extends State<SignUpScreenContent> {
                                   ),
                                   Expanded(child: Divider(color: Colors.grey[300])),
                                 ],
-                              ),
+                              ),*/
                              /* const SizedBox(height: 16),
                               SizedBox(
                                 width: double.infinity,

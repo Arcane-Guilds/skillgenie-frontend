@@ -247,12 +247,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           ),
 
-          // Notification button
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: kPrimaryBlue),
-            onPressed: () {},
-          ),
-
           // News button
           IconButton(
             icon: const Icon(Icons.newspaper_outlined, color: kPrimaryBlue),
@@ -282,12 +276,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 }
               }
             },
-          ),
-
-          // Settings button
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: kPrimaryBlue),
-            onPressed: () {},
           ),
         ],
       ),

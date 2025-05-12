@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:skillGenie/presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'dart:convert';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/app_theme.dart';
 
 class JoinPartyScreen extends StatefulWidget {
   const JoinPartyScreen({super.key});
@@ -146,80 +147,95 @@ class _JoinPartyScreenState extends State<JoinPartyScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const GenieAvatar(state: AvatarState.idle, size: 200),
-              const SizedBox(height: 24),
-              Card(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(horizontal: 32),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Enter your party code!',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.deepPurple,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      TextField(
-                        controller: _partyCodeController,
-                        decoration: InputDecoration(
-                          labelText: "Party Code",
-                          labelStyle: const TextStyle(color: Colors.deepPurple),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.all(16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(
-                                color: Colors.deepPurple, width: 2),
+      backgroundColor: AppTheme.backgroundColor,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SlideTransition(
+                  position: _animation,
+                  child: const GenieAvatar(state: AvatarState.idle, size: 120),
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  color: AppTheme.surfaceColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)
+                  ),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Enter Party Code',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimaryColor,
                           ),
-                          errorText: _errorMessage,
                         ),
-                        style: const TextStyle(color: Colors.black),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                  color: Colors.deepPurple))
-                          : ElevatedButton(
-                              onPressed: _joinParty,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'JOIN PARTY',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                        const SizedBox(height: 24),
+                        TextField(
+                          controller: _partyCodeController,
+                          decoration: InputDecoration(
+                            hintText: "Enter your code here",
+                            hintStyle: TextStyle(color: AppTheme.textSecondaryColor.withOpacity(0.7)),
+                            filled: true,
+                            fillColor: AppTheme.backgroundColor,
+                            contentPadding: const EdgeInsets.all(16),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
                             ),
-                    ],
+                            errorText: _errorMessage,
+                            errorStyle: const TextStyle(color: AppTheme.errorColor),
+                          ),
+                          style: const TextStyle(
+                            color: AppTheme.textPrimaryColor,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryColor
+                                )
+                              )
+                            : SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _joinParty,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'JOIN CHALLENGE',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

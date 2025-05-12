@@ -85,100 +85,139 @@ class ChatViewModel with ChangeNotifier {
       _currentUserId = userId;
       print('ChatViewModel: Setting currentUserId to $userId');
       
-      if (!_socketInitialized) {
+      // Call _initialize only if not already initialized and auth is complete
+      if (!_socketInitialized && _authViewModel.authChecked) {
         _initialize();
       }
-    } else if (!isAuthenticated && _socketInitialized) {
-      _chatRepository.dispose();
-      _socketInitialized = false;
-      _isConnecting = false;
-      _chats = [];
-      _messages = [];
-      _currentChat = null;
-      _messageRefreshTimer?.cancel();
-      _connectionCheckTimer?.cancel();
-      notifyListeners();
+    } else if (!isAuthenticated) {
+      // Cleanup only if previously initialized
+      if (_socketInitialized) {
+        print('ChatViewModel: Cleaning up due to logout or auth loss.');
+        _chatRepository.dispose();
+        _socketInitialized = false;
+        _isConnecting = false;
+        _chats = [];
+        _messages = [];
+        _currentChat = null;
+        _messageRefreshTimer?.cancel();
+        _connectionCheckTimer?.cancel();
+        notifyListeners();
+      }
     }
   }
 
   Future<void> _initialize() async {
+    // Double check authentication status before proceeding
+    if (!_authViewModel.isAuthenticated || _authViewModel.userId == null) {
+      print('ChatViewModel: Initialize called but user is not authenticated. Aborting.');
+      return;
+    }
+
+    if (_socketInitialized || _isConnecting) {
+      print('ChatViewModel: Already initialized or connecting. Skipping initialization.');
+      return;
+    }
+
     print('ChatViewModel: Initializing...');
-    
-    // First, try to get the userId directly from AuthViewModel
-    if (_currentUserId == null) {
-      _currentUserId = _authViewModel.userId;
-      print('ChatViewModel: Got userId from AuthViewModel: $_currentUserId');
-    }
-    
-    _chatRepository.onNewMessage = (message) {
-      if (message is Map<String, dynamic>) {
-        _handleNewMessage(message);
-      } else if (message is Message) {
-        _handleNewMessage(message.toJson());
+    _isConnecting = true;
+    notifyListeners();
+
+    try {
+      // *** Ensure User ID is loaded FIRST ***
+      await ensureCurrentUserId();
+      if (_currentUserId == null) {
+        throw Exception('Failed to retrieve current user ID during initialization.');
       }
-    };
-    
-    _chatRepository.onMessagesRead = (chatId, userId) {
-      _handleMessagesRead({
-        'chatId': chatId,
-        'userId': userId,
-      });
-    };
-    
-    _chatRepository.onNewChat = (chat) {
-      if (chat is Map<String, dynamic>) {
-        _handleNewChat(chat);
-      } else if (chat is Chat) {
-        _handleNewChat(chat.toJson());
-      }
-    };
+      print('ChatViewModel: User ID confirmed: $_currentUserId');
 
-    await _initializeSocket();
+      // Setup repository callbacks
+      _chatRepository.onNewMessage = (message) {
+        if (message is Map<String, dynamic>) {
+          _handleNewMessage(message);
+        } else if (message is Message) {
+          _handleNewMessage(message.toJson());
+        }
+      };
+      _chatRepository.onMessagesRead = (chatId, userId) {
+        _handleMessagesRead({
+          'chatId': chatId,
+          'userId': userId,
+        });
+      };
+      _chatRepository.onNewChat = (chat) {
+        if (chat is Map<String, dynamic>) {
+          _handleNewChat(chat);
+        } else if (chat is Chat) {
+          _handleNewChat(chat.toJson());
+        }
+      };
+      _chatRepository.onConnectionStatusChanged = (bool isConnected) {
+        print('ChatViewModel: Received connection status update: $isConnected');
+        if (isConnected && !_socketInitialized) {
+          _socketInitialized = true;
+          _isConnecting = false;
+          _setError(null);
+          print('ChatViewModel: Socket marked as initialized and connected.');
+          notifyListeners();
+          loadChats();
+          refreshUnreadCounts();
+        } else if (!isConnected && _socketInitialized) {
+          _socketInitialized = false;
+          _isConnecting = false;
+          _setError('Chat connection lost. Attempting to reconnect...');
+          print('ChatViewModel: Socket marked as disconnected.');
+          notifyListeners();
+        } else if (isConnected && _socketInitialized) {
+          print('ChatViewModel: Socket connection confirmed.');
+          _setError(null);
+          notifyListeners();
+        }
+      };
 
-    // If we still don't have a user ID, try to get it from secure storage
-    if (_currentUserId == null) {
-      _currentUserId = await _secureStorage.getUserId();
-      print('ChatViewModel initialized with user ID from storage: $_currentUserId');
+      // Attempt socket connection
+      await _initializeSocket();
+
+      // Load initial data
+      await loadChats();
+      await refreshUnreadCounts();
+
+      // Start connection monitoring
+      _setupConnectionCheckTimer();
+
+    } catch (e) {
+      print('ChatViewModel: Error during initialization: $e');
+      _setError('Failed to initialize chat functionality.');
+    } finally {
+      _isConnecting = false;
+      notifyListeners();
     }
-
-    // If we still don't have a user ID, log an error
-    if (_currentUserId == null) {
-      print('ERROR: ChatViewModel could not get user ID from any source');
-    } else {
-      print('ChatViewModel successfully initialized with user ID: $_currentUserId');
-    }
-
-    await loadChats();
-    await refreshUnreadCounts();
-
-    _setupConnectionCheckTimer();
   }
 
   Future<void> _initializeSocket() async {
-    if (_socketInitialized || _isConnecting) return;
-
+    if (_socketInitialized) {
+       print('ChatViewModel: Socket already initialized.');
+       return;
+    }
+    
+    print('ChatViewModel: Attempting to initialize socket connection...');
+    _setLoading(true);
     _isConnecting = true;
-    notifyListeners();
     
     try {
-      print('ChatViewModel: Attempting to initialize socket connection...');
-      await _chatRepository.initializeSocket();
-      _socketInitialized = true;
-      notifyListeners();
+      final userId = await getCurrentUserId();
+      if (userId == null) {
+        throw Exception('Cannot initialize socket: User ID not available.');
+      }
 
-      _connectionCheckTimer?.cancel();
-      _connectionCheckTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-        if (!_chatRepository.isSocketConnected) {
-          print('Socket disconnected, attempting to reconnect...');
-          _chatRepository.initializeSocket();
-        }
-      });
+      await _chatRepository.initializeSocket();
+      
+      print('ChatViewModel: Socket initialization initiated in repository.');
+
     } catch (e) {
       print('ChatViewModel: Error initializing socket: $e');
-      _errorMessage = 'Failed to initialize chat connection. Please try again.';
-      notifyListeners();
-    } finally {
+      _socketInitialized = false;
       _isConnecting = false;
+      _setError('Failed to initialize chat connection: ${e.toString()}');
       notifyListeners();
     }
   }
@@ -186,9 +225,11 @@ class ChatViewModel with ChangeNotifier {
   void _setupConnectionCheckTimer() {
     _connectionCheckTimer?.cancel();
     _connectionCheckTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      if (!_chatRepository.isSocketConnected && !_isConnecting) {
-        print('Connection check: Socket disconnected, attempting to reconnect...');
-        _initializeSocket();
+      if (_authViewModel.isAuthenticated && !_isConnecting) {
+        if (!_socketInitialized || (_socketInitialized && !_chatRepository.isSocketConnected)) {
+          print('Connection check: Socket not connected or not initialized. Attempting to initialize/reconnect...');
+          _initializeSocket();
+        }
       }
     });
   }
@@ -768,12 +809,20 @@ class ChatViewModel with ChangeNotifier {
 
   void _setLoading(bool loading) {
     _isLoading = loading;
-    if (loading) _errorMessage = null;
+    if (loading) {
+       _errorMessage = null;
+    } else {
+       _isConnecting = false;
+    }
     notifyListeners();
   }
 
-  void _setError(String message) {
+  void _setError(String? message) {
     _errorMessage = message;
+    if (message != null) {
+      _isConnecting = false;
+      _isLoading = false;
+    }
     notifyListeners();
   }
 

@@ -119,27 +119,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Navigator.push(context, MaterialPageRoute(builder: (_) => LessonView()));
               },
             ),
-            /* */
-            ListTile(
-              leading: const Icon(Icons.shopping_cart_outlined),
-              title: const Text("Marketplace"),
-              onTap: () async {
-                Navigator.pop(context);
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
-                );
-                if (result != null && result is bool) {
-                  setState(() {
-                    catEquipped = result;
-                    catGifKey = result ? UniqueKey() : null;
-                  });
-                  if (result) {
-                    PaintingBinding.instance.imageCache.clear();
-                  }
-                }
-              },
-            ),
           ],
         );
       },
@@ -209,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         backgroundColor: kPrimaryBlue,
         foregroundColor: Colors.white,
         onPressed: _showBottomMenu,
-        child: const Icon(Icons.menu),
+        child: const Icon(Icons.chat_bubble_outline),
       ),
     );
   }

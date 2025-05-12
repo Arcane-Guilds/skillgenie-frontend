@@ -839,12 +839,41 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   // Add a method to test socket connection and show diagnostic info
   void _testSocketConnection(BuildContext context) {
     final chatViewModel = Provider.of<ChatViewModel>(context, listen: false);
-    
-    // Show dialog with connection status information
+    bool _isTesting = false;
+    bool? _testResult;
+    String? _testError;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
+        builder: (context, setStateDialog) { // Use setStateDialog for dialog state
+          // Function to run the actual test
+          Future<void> runTest() async {
+            if (_isTesting) return; // Prevent multiple simultaneous tests
+            setStateDialog(() {
+              _isTesting = true;
+              _testResult = null;
+              _testError = null;
+            });
+            try {
+              final result = await chatViewModel.testConnection();
+              setStateDialog(() {
+                _testResult = result;
+                _isTesting = false;
+              });
+            } catch (e) {
+              setStateDialog(() {
+                _testError = e.toString();
+                _isTesting = false;
+              });
+            }
+          }
+
+          // Run the test immediately when the dialog is built for the first time
+          if (!_isTesting && _testResult == null && _testError == null) {
+             WidgetsBinding.instance.addPostFrameCallback((_) => runTest());
+          }
+
           return AlertDialog(
             title: const Text('Socket Connection Test'),
             content: Column(
@@ -854,44 +883,40 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 Text('Connected: ${chatViewModel.isSocketConnected ? 'Yes ✅' : 'No ❌'}'),
                 Text('Connecting: ${chatViewModel.isConnecting ? 'Yes' : 'No'}'),
                 const SizedBox(height: 16),
-                const Text('Connection Test:'),
-                FutureBuilder(
-                  future: chatViewModel.testConnection(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Row(
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          SizedBox(width: 8),
-                          Text('Testing connection...')
-                        ],
-                      );
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else {
-                      final success = snapshot.data as bool? ?? false;
-                      return Text(
-                        success 
-                          ? 'Ping test successful! Server responded. ✅' 
-                          : 'Ping test failed. No response from server. ❌',
-                        style: TextStyle(
-                          color: success ? Colors.green : Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    }
-                  },
-                ),
+                const Text('Connection Test Result:'),
+                if (_isTesting)
+                  const Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Testing connection...')
+                    ],
+                  )
+                else if (_testError != null)
+                  Text('Error: $_testError', style: const TextStyle(color: Colors.red))
+                else if (_testResult != null)
+                  Text(
+                    _testResult! 
+                      ? 'Ping test successful! Server responded. ✅' 
+                      : 'Ping test failed. No response from server. ❌',
+                    style: TextStyle(
+                      color: _testResult! ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                else 
+                   const Text('Press \'Run Test\''), // Initial state
+
                 const SizedBox(height: 16),
                 const Text('Connection Details:'),
                 const SizedBox(height: 8),
-                const Text('Socket URL: Check console logs for complete details'),
+                const Text('Socket URL: Check console logs'), // Show simplified info
                 const SizedBox(height: 8),
-                Text('API Base URL: ${ApiConstants.baseUrl}'),
+                Text('API Base URL: ${ApiConstants.baseUrl}'), // Ensure ApiConstants is imported
               ],
             ),
             actions: [
@@ -900,11 +925,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 child: const Text('Close'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  setState(() {}); // Refresh the dialog
-                  chatViewModel.reconnect();
-                },
-                child: const Text('Retry Connection'),
+                // Use the runTest function for retry
+                onPressed: _isTesting ? null : runTest, 
+                child: const Text('Run Test'),
               ),
             ],
           );

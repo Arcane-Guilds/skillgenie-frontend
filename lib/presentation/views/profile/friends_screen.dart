@@ -1434,15 +1434,6 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               },
             ),
             _buildActionButton(
-              icon: Icons.person_add,
-              label: 'Send Friend Request',
-              onTap: () {
-                Navigator.pop(context);
-                final viewModel = Provider.of<FriendViewModel>(context, listen: false);
-                viewModel.sendFriendRequest(user.id);
-              },
-            ),
-            _buildActionButton(
               icon: Icons.block,
               label: 'Block User',
               onTap: () {

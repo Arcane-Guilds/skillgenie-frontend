@@ -9,7 +9,7 @@ import 'dart:math' as math;
 /// ViewModel for authentication-related operations
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;
-  
+
   User? _user;
   Tokens? _tokens;
   String? _userId;
@@ -21,24 +21,24 @@ class AuthViewModel extends ChangeNotifier {
   // Key for SharedPreferences
   static const String _onboardingCompleteKey = 'hasCompletedOnboarding';
 
-  AuthViewModel({required AuthRepository authRepository}) 
+  AuthViewModel({required AuthRepository authRepository})
       : _authRepository = authRepository {
-        // Optionally load status immediately, but checkAuthStatus might be better
-        // _loadOnboardingStatus(); 
-      }
+    // Optionally load status immediately, but checkAuthStatus might be better
+    // _loadOnboardingStatus();
+  }
 
   /// Get the current user
   User? get user => _user;
-  
+
   /// Get the current tokens
   Tokens? get tokens => _tokens;
-  
+
   /// Get the current user ID
   String? get userId => _userId;
-  
+
   /// Get the current error message
   String? get error => _error;
-  
+
   /// Check if the view model is loading
   bool get isLoading => _isLoading;
 
@@ -80,7 +80,7 @@ class AuthViewModel extends ChangeNotifier {
         print("Saved onboarding status: $_hasCompletedOnboarding");
         notifyListeners(); // Notify listeners as this state change might affect redirection
       } else {
-         print("Error saving onboarding status to SharedPreferences.");
+        print("Error saving onboarding status to SharedPreferences.");
       }
     } catch (e) {
       print("Error saving onboarding status: $e");
@@ -92,66 +92,66 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       print('Attempting to sign in with email: $email');
       AuthResponse authResponse = await _authRepository.signIn(email, password);
       _userId = authResponse.userId;
       _tokens = authResponse.tokens;
-      
+
       // Verify we have received a valid token
       if (_tokens == null || _tokens!.accessToken.isEmpty) {
         throw Exception('Received invalid or empty token from server');
       }
-      
+
       print('Login successful - userId: ${authResponse.userId}');
       print('Access token received (first 15 chars): ${_tokens!.accessToken.substring(0, math.min(15, _tokens!.accessToken.length))}...');
-      
+
       // Save token in multiple places to ensure it's available
       // First, have the auth repository save it (normal flow)
       await _authRepository.saveTokens(_tokens!);
-      
+
       // Second, use our SecureStorage directly for emergency backup
       final secureStorage = await _authRepository.getSecureStorage();
       final tokenSaved = await secureStorage.forceSetToken(_tokens!.accessToken);
-      
+
       if (tokenSaved) {
         print('Token successfully force-saved to multiple storages');
       } else {
         print('WARNING: Force save of token may have failed!');
       }
-      
+
       // Third, manually save to SharedPreferences as last resort
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('accessToken', _tokens!.accessToken);
       final savedToken = prefs.getString('accessToken');
-      
+
       if (savedToken != null && savedToken.isNotEmpty) {
         print('Token also saved to direct SharedPreferences');
       } else {
         print('WARNING: Failed to save token to direct SharedPreferences!');
       }
-      
+
       // Verify token is available via secure storage
       final hasToken = await secureStorage.hasAnyToken();
       if (!hasToken) {
         print('CRITICAL ERROR: Token verification failed! No token found in any storage after saving.');
       }
-      
+
       _user = await _authRepository.getUser();
-      
+
       if (_user != null) {
         print('User loaded successfully: ${_user!.username} (${_user!.id})');
-        
+
         // Also save user ID
         await secureStorage.setUserId(_user!.id);
       } else {
         print('WARNING: User object is null after successful login');
       }
-      
+
       // Load onboarding status after successful login & user fetch
-      await _loadOnboardingStatus(); 
-      
+      await _loadOnboardingStatus();
+
       _isLoading = false;
       _authChecked = true; // Mark auth as checked after successful login
       notifyListeners();
@@ -159,7 +159,7 @@ class AuthViewModel extends ChangeNotifier {
       print('Error during sign in: $e');
       _isLoading = false;
       // Set a generic user-friendly error message
-      _error = 'Invalid email or password. Please try again.'; 
+      _error = 'Invalid email or password. Please try again.';
       _authChecked = true; // Mark as checked even on login failure
       notifyListeners();
       // Do NOT re-throw the exception here. The UI will listen for _error.
@@ -172,17 +172,17 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       AuthResponse authResponse = await _authRepository.signUp(username, email, password);
       _tokens = authResponse.tokens;
       _user = await _authRepository.getUser();
       _isLoading = false;
       notifyListeners();
-      
+
       // Load onboarding status after signup
-      await _loadOnboardingStatus(); 
-      
+      await _loadOnboardingStatus();
+
       _authChecked = true; // Mark auth as checked
       notifyListeners();
     } catch (e) {
@@ -198,7 +198,7 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> setUser(User user) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await _authRepository.saveUser(user);
       _user = user;
@@ -222,10 +222,10 @@ class AuthViewModel extends ChangeNotifier {
     try {
       print('Checking authentication status...');
       _tokens = await _authRepository.getTokens();
-      
+
       if (_tokens != null) {
         print('Tokens found - access token (first 15 chars): ${_tokens!.accessToken.substring(0, 15)}...');
-        
+
         // Double check if token is also in secure storage
         final prefs = await SharedPreferences.getInstance();
         if (prefs.containsKey('accessToken')) {
@@ -236,30 +236,30 @@ class AuthViewModel extends ChangeNotifier {
       } else {
         print('No tokens found, user is not authenticated');
       }
-      
+
       _user = await _authRepository.getUser();
-      
+
       if (_user != null) {
         print('User loaded: ${_user!.username} (${_user!.id})');
         print('Authentication status: User is authenticated');
       } else if (_tokens != null) {
         print('WARNING: Tokens found but user object is null');
       }
-      
+
       // Load onboarding status regardless of auth state
-      await _loadOnboardingStatus(); 
-      
+      await _loadOnboardingStatus();
+
       print('Authentication check complete.');
-      
+
     } catch (e) {
       print('Error checking auth status: $e');
       _error = e.toString();
       // Ensure onboarding status is loaded even if auth check fails
-      await _loadOnboardingStatus(); 
+      await _loadOnboardingStatus();
     } finally {
-       _isLoading = false; // Stop loading indicator
-       _authChecked = true; // Mark that the initial check has been performed
-       notifyListeners(); // Notify completion of check
+      _isLoading = false; // Stop loading indicator
+      _authChecked = true; // Mark that the initial check has been performed
+      notifyListeners(); // Notify completion of check
     }
   }
 
@@ -267,7 +267,7 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> signOut() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await _authRepository.signOut();
       _tokens = null;
@@ -275,7 +275,7 @@ class AuthViewModel extends ChangeNotifier {
       _userId = null;
       _isLoading = false;
       notifyListeners();
-      
+
       _hasCompletedOnboarding = false; // Reset onboarding status on sign out
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_onboardingCompleteKey); // Remove from storage
@@ -283,8 +283,8 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      _hasCompletedOnboarding = false; 
-      _authChecked = false; 
+      _hasCompletedOnboarding = false;
+      _authChecked = false;
       notifyListeners();
       throw Exception(_error);
     }
@@ -295,7 +295,7 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       await _authRepository.forgotPassword(email);
       _isLoading = false;
@@ -313,7 +313,7 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       await _authRepository.resetPassword(email, newPassword);
       _isLoading = false;
@@ -331,7 +331,7 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       await _authRepository.verifyOtp(email, otp);
       _isLoading = false;

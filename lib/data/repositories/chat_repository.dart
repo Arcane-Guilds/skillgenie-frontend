@@ -41,9 +41,19 @@ class ChatRepository {
   // Getter for connection status
   bool get isSocketConnected => _socketConnected;
 
-  // Method to update the socket connection status
+  // Method to update the socket connection status AND notify listener
   void updateSocketConnectionStatus(bool status) {
-    _socketConnected = status;
+    if (_socketConnected != status) {
+       _socketConnected = status;
+       print('ChatRepository: Socket connection status changed to: $status');
+       if (_onConnectionStatusChanged != null) {
+         try {
+            _onConnectionStatusChanged(status);
+         } catch (e) {
+            print('Error calling onConnectionStatusChanged callback: $e');
+         }
+       }
+    }
   }
 
   ChatRepository({
@@ -176,7 +186,7 @@ class ChatRepository {
       _socket?.onConnect((_) {
         print('Socket connected successfully to $socketUrl');
         _reconnectAttempts = 0; // Reset reconnect attempts
-        _socketInitialized = true;
+        // _socketInitialized = true; // ViewModel will manage this based on callback
         updateSocketConnectionStatus(true);
       });
 
@@ -193,6 +203,8 @@ class ChatRepository {
       _socket?.onDisconnect((reason) {
         print('Socket disconnected: $reason');
         updateSocketConnectionStatus(false);
+        // Optionally trigger reconnect attempt here if needed, respecting limits
+        // if (_reconnectAttempts < _maxReconnectAttempts) { ... }
       });
 
       // Specific event listeners
@@ -593,12 +605,16 @@ class ChatRepository {
       final response = await _client.post(
         Uri.parse('$baseUrl/chat/$chatId/read'),
         headers: await _getHeaders(),
-        body: '{}',
+        body: '{}', // Sending an empty JSON object as body
       );
 
-      if (response.statusCode != 200) {
+      // Accept 200 OK or 201 Created as success
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        print('Failed to mark messages as read: ${response.statusCode} - ${response.body}');
         throw Exception(
             'Failed to mark messages as read: ${response.statusCode}');
+      } else {
+        print('Successfully marked messages as read for chat $chatId (Status: ${response.statusCode})');
       }
     } catch (e) {
       print('Error marking messages as read: $e');
@@ -648,6 +664,7 @@ class ChatRepository {
       _socket?.dispose();
       _socket = null;
       updateSocketConnectionStatus(false);
+      _socketInitialized = false; // Also reset initialized flag on dispose
     } catch (e) {
       print('Error disposing socket: $e');
     }

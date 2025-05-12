@@ -126,7 +126,7 @@ class ChallengesHomePage extends StatelessWidget {
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: AppTheme.secondaryColor,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
                                   shape: RoundedRectangleBorder(

@@ -4,11 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/app_theme.dart';
 import 'step1_screen.dart';
-
-// App-wide primary color - changing from purple to blue
-const Color kPrimaryBlue =
-    Color(0xFF29B6F6); // Matching the "New Post" button blue
 
 class Challenge {
   final String id;
@@ -85,13 +82,13 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
   Color _getDifficultyColor(String difficulty) {
     switch (difficulty.toLowerCase()) {
       case 'easy':
-        return const Color(0xFF58CC02); // Green
+        return AppTheme.secondaryColor; // Green
       case 'medium':
-        return const Color(0xFFFF9600); // Orange
+        return AppTheme.accentColor; // Orange
       case 'hard':
-        return const Color(0xFFFF4B4B); // Red
+        return AppTheme.errorColor; // Red
       default:
-        return kPrimaryBlue; // Changed to blue
+        return AppTheme.primaryColor; // Blue
     }
   }
 
@@ -123,7 +120,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              kPrimaryBlue.withOpacity(0.2), // Changed to blue
+              AppTheme.primaryColor.withOpacity(0.2),
               colorScheme.surface,
             ],
           ),
@@ -139,39 +136,10 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: kPrimaryBlue
-                                .withOpacity(0.3), // Changed to blue
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new,
-                            color: kPrimaryBlue, // Changed to blue
-                            size: 20,
-                          ),
-                        ),
-                      ),
                       Text(
                         'Challenges Library',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color:
-                              kPrimaryBlue.withOpacity(0.3), // Changed to blue
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: kPrimaryBlue, // Changed to blue
-                          size: 20,
                         ),
                       ),
                     ],
@@ -181,9 +149,9 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
               // Content
               Expanded(
                 child: _isLoading
-                    ? const Center(
+                    ? Center(
                         child: CircularProgressIndicator(
-                          color: kPrimaryBlue, // Changed to blue
+                          color: AppTheme.primaryColor,
                         ),
                       )
                     : _errorMessage.isNotEmpty
@@ -207,9 +175,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
             ),
           );
         },
-        backgroundColor: kPrimaryBlue, // Changed to blue
-        foregroundColor: Colors.white,
-        elevation: 2,
+        backgroundColor: AppTheme.primaryColor,
         child: const Icon(Icons.add),
       ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.3, end: 0),
     );
@@ -256,7 +222,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryBlue, // Changed to blue
+                backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -281,17 +247,17 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
-                color: kPrimaryBlue.withOpacity(0.1), // Changed to blue
+                color: AppTheme.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: kPrimaryBlue.withOpacity(0.2), // Changed to blue
+                  color: AppTheme.primaryColor.withOpacity(0.2),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.search,
-                    color: kPrimaryBlue.withOpacity(0.6), // Changed to blue
+                    color: AppTheme.primaryColor.withOpacity(0.6),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -300,8 +266,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                         hintText: 'Search challenges',
                         border: InputBorder.none,
                         hintStyle: TextStyle(
-                          color:
-                              kPrimaryBlue.withOpacity(0.6), // Changed to blue
+                          color: AppTheme.primaryColor.withOpacity(0.6),
                         ),
                       ),
                       style: theme.textTheme.bodyLarge,
@@ -309,7 +274,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                   ),
                   Icon(
                     Icons.mic,
-                    color: kPrimaryBlue.withOpacity(0.6), // Changed to blue
+                    color: AppTheme.primaryColor.withOpacity(0.6),
                   ),
                 ],
               ),
@@ -338,14 +303,14 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? kPrimaryBlue // Changed to blue
-                            : kPrimaryBlue.withOpacity(0.1), // Changed to blue
+                            ? AppTheme.primaryColor
+                            : AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: isSelected
                             ? null
                             : Border.all(
-                                color: kPrimaryBlue
-                                    .withOpacity(0.3)), // Changed to blue
+                                color: AppTheme.primaryColor
+                                    .withOpacity(0.3)),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -355,7 +320,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                               isSelected ? FontWeight.bold : FontWeight.normal,
                           color: isSelected
                               ? Colors.white
-                              : kPrimaryBlue, // Changed to blue
+                              : AppTheme.primaryColor,
                         ),
                       ),
                     ),
@@ -561,7 +526,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(
-                    color: kPrimaryBlue.withOpacity(0.1), // Changed to blue
+                    color: AppTheme.primaryColor.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -630,8 +595,8 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                               Text(
                                 'Languages: ${challenge.languages.join(', ')}',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: kPrimaryBlue
-                                      .withOpacity(0.8), // Changed to blue
+                                  color: AppTheme.primaryColor
+                                      .withOpacity(0.8),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -663,8 +628,7 @@ class _ChallengesLibraryScreenState extends State<ChallengesLibraryScreen> {
                         // Arrow icon
                         Icon(
                           Icons.arrow_forward_ios,
-                          color:
-                              kPrimaryBlue.withOpacity(0.6), // Changed to blue
+                          color: AppTheme.primaryColor.withOpacity(0.6),
                           size: 16,
                         ),
                       ],

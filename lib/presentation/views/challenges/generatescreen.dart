@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../widgets/avatar_widget.dart';
 import 'challenges_screen.dart';
+import '../../../core/utils/share_utils.dart';
 
 import 'package:provider/provider.dart';
 
@@ -192,10 +194,25 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
     );
   }
 
+  void _sharePartyCode() {
+    if (generatedCodeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No code to share')),
+      );
+      return;
+    }
+    
+    ShareUtils.showShareOptions(
+      context,
+      generatedCodeController.text,
+      'Skill Challenge',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -203,118 +220,167 @@ class _GenerateCodeScreenState extends State<GenerateCodeScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const GenieAvatar(
-                  state: AvatarState.idle,
-                  size: 150,
-                  message: "Generate your party code!",
+                SlideTransition(
+                  position: _animation,
+                  child: const GenieAvatar(
+                    state: AvatarState.idle,
+                    size: 120,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Card(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: AppTheme.surfaceColor,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   elevation: 4,
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: generatedCodeController,
-                                readOnly: true,
-                                decoration: InputDecoration(
-                                  labelText: "Generated Code",
-                                  labelStyle: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary),
-                                  filled: true,
-                                  fillColor:
-                                      Theme.of(context).colorScheme.surface,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                                style: TextStyle(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface),
-                                textAlign: TextAlign.center,
+                        Text(
+                          'Skill Challenge',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimaryColor,
                               ),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.copy,
-                                  color: Theme.of(context).colorScheme.primary),
-                              onPressed: copyToClipboard,
-                            ),
-                          ],
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed:
-                                    isGenerating ? null : generatePartyCode,
-                                icon: isGenerating
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
-                                      )
-                                    : const Icon(Icons.refresh),
-                                label: const Text('GENERATE'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12, horizontal: 32),
-                                  minimumSize: const Size(140, 50),
+                        const SizedBox(height: 16),
+                        if (!isPartyCreated) ...[
+                          const Text(
+                            'Generate a unique code to invite a friend to a skill challenge!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppTheme.textPrimaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: isGenerating ? null : generatePartyCode,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
+                                disabledBackgroundColor:
+                                    AppTheme.primaryColor.withOpacity(0.6),
+                              ),
+                              child: isGenerating
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
+                                    )
+                                  : const Text('GENERATE CODE'),
+                            ),
+                          ),
+                        ],
+                        if (isPartyCreated) ...[
+                          const Text(
+                            'Share this code with a friend to start the challenge:',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppTheme.textPrimaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          TextField(
+                            controller: generatedCodeController,
+                            readOnly: true,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                              color: AppTheme.primaryColor,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppTheme.primaryColor.withOpacity(0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.copy),
+                                color: AppTheme.primaryColor,
+                                onPressed: copyToClipboard,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: isPartyCreated
-                                    ? () {
-                                        print(
-                                            'Navigating to ChallengesScreen with party code: ${generatedCodeController.text}');
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ChallengesScreen(
-                                              partyCode:
-                                                  generatedCodeController.text,
-                                              challengeId: widget.challengeId,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    : null,
-                                icon: const Icon(Icons.login),
-                                label: const Text('JOIN'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.purple,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Waiting for someone to join...',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                              color: AppTheme.textSecondaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _sharePartyCode,
+                                  icon: const Icon(Icons.share),
+                                  label: const Text('SHARE CODE'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 15),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12, horizontal: 32),
-                                  minimumSize: const Size(140, 50),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChallengesScreen(
+                                          partyCode:
+                                              generatedCodeController.text,
+                                          challengeId: widget.challengeId,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('START'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.secondaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 15),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),

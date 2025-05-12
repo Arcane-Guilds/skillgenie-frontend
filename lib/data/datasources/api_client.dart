@@ -13,17 +13,17 @@ class ApiClient {
 
   ApiClient()
       : _dio = Dio(BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 50),
-          receiveTimeout: const Duration(seconds: 50),
-          validateStatus: (status) {
-            return true; // Accept all status codes for manual handling
-          },
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        )) {
+    baseUrl: ApiConstants.baseUrl,
+    connectTimeout: const Duration(seconds: 50),
+    receiveTimeout: const Duration(seconds: 50),
+    validateStatus: (status) {
+      return true; // Accept all status codes for manual handling
+    },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  )) {
     // Add logging interceptor
     _dio.interceptors.add(PrettyDioLogger(
       requestHeader: true,
@@ -73,7 +73,7 @@ class ApiClient {
     try {
       _logger.info('POST request to: $url');
       _logger.info('POST data: $data');
-      
+
       // Special handling for web
       final options = Options(
         headers: {
@@ -81,22 +81,22 @@ class ApiClient {
           'Accept': 'application/json',
         },
       );
-      
+
       // Make the POST request
       final response = await _dio.post(url, data: data, options: options);
       _logger.info('POST response status: ${response.statusCode}');
-      
+
       return response;
     } on DioException catch (e) {
       _logger.severe('Dio error during POST request: ${e.toString()}');
       _logger.severe('Request URL: ${e.requestOptions.uri}');
       _logger.severe('Request data: ${e.requestOptions.data}');
-      
+
       if (e.response != null) {
         _logger.severe('Response status: ${e.response?.statusCode}');
         _logger.severe('Response data: ${e.response?.data}');
       }
-      
+
       throw _handleDioError(e);
     } catch (e) {
       _logger.severe('Error during POST request: $e');

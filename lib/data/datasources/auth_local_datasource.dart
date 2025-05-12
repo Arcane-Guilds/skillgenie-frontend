@@ -24,7 +24,7 @@ class AuthLocalDataSource {
       _logger.info('No user found in local storage');
       return null;
     }
-    
+
     _logger.info('User found in local storage');
     return User.fromJson(jsonDecode(userJson));
   }
@@ -45,7 +45,7 @@ class AuthLocalDataSource {
       _logger.info('No tokens found in local storage');
       return null;
     }
-    
+
     _logger.info('Tokens found in local storage');
     return Tokens(accessToken: accessToken, refreshToken: refreshToken);
   }

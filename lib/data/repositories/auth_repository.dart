@@ -29,7 +29,7 @@ class AuthRepository {
         _logger.info('Getting SecureStorage from service locator');
         return serviceLocator<SecureStorage>();
       }
-      
+
       // If not registered, create a new instance
       _logger.warning('SecureStorage not registered, creating new instance');
       final prefs = await SharedPreferences.getInstance();
@@ -47,16 +47,16 @@ class AuthRepository {
     try {
       _logger.info('Signing in with email: $email');
       final authResponse = await _remoteDataSource.signIn(email, password);
-      
+
       // Save tokens to local storage
       await _localDataSource.saveTokens(authResponse.tokens);
-      
+
       // Decode JWT and save user to local storage
       final user = _remoteDataSource.decodeJwt(authResponse.tokens.accessToken);
       if (user != null) {
         await _localDataSource.saveUser(user);
       }
-      
+
       return authResponse;
     } catch (e) {
       _logger.severe('Error signing in: $e');
@@ -69,16 +69,16 @@ class AuthRepository {
     try {
       _logger.info('Signing up with email: $email');
       final authResponse = await _remoteDataSource.signUp(username, email, password);
-      
+
       // Save tokens to local storage
       await _localDataSource.saveTokens(authResponse.tokens);
-      
+
       // Decode JWT and save user to local storage
       final user = _remoteDataSource.decodeJwt(authResponse.tokens.accessToken);
       if (user != null) {
         await _localDataSource.saveUser(user);
       }
-      
+
       return authResponse;
     } catch (e) {
       _logger.severe('Error signing up: $e');

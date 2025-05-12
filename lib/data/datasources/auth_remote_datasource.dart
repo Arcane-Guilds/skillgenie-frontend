@@ -19,9 +19,9 @@ class AuthRemoteDataSource {
       "email": email,
       "password": password,
     });
-    
+
     _logger.info('Response status code: ${response.statusCode}');
-    
+
     if (response.statusCode == 401 && response.data['message'] == 'Incorrect password') {
       _logger.warning('Sign in failed: Incorrect password');
       throw Exception('Incorrect password');
@@ -38,7 +38,7 @@ class AuthRemoteDataSource {
       "email": email,
       "password": password,
     });
-    
+
     _logger.info('Response status code: ${response.statusCode}');
     return AuthResponse.fromJson(response.data);
   }

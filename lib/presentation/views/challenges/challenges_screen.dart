@@ -10,6 +10,8 @@ import 'package:skillGenie/core/constants/api_constants.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/share_utils.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String partyCode;
@@ -277,6 +279,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
               type: AlertType.warning,
               buttons: [
                 DialogButton(
+                  color: AppTheme.primaryColor,
                   child: const Text(
                     'OK',
                     style: TextStyle(color: Colors.white, fontSize: 20),
@@ -398,7 +401,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
               _timerController.pause();
               _localTimer?.cancel();
               _pollTimer?.cancel();
-              _showWinAlert();
+              _showRewardAlert();
               _declareWinner(userId);
               _addCoins(userId, 10);
             }
@@ -492,11 +495,56 @@ class _ChallengesScreenState extends State<ChallengesScreen>
     }
   }
 
-  void _showWinAlert() {
+  void _showSuccessAlert() {
+    Alert(
+      context: context,
+      title: '🎉 Bien joué !',
+      desc: 'Vous avez résolu le défi correctement !',
+      type: AlertType.success,
+      buttons: [
+        DialogButton(
+          color: AppTheme.primaryColor,
+          child: const Text(
+            'OK',
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Close alert
+            Navigator.pop(context); // Exit challenge screen
+          },
+        ),
+      ],
+    ).show();
+  }
+
+  void _showFailureAlert() {
+    Alert(
+      context: context,
+      title: '❌ Réponse incorrecte',
+      desc: 'Votre réponse ne correspond pas.',
+      type: AlertType.error,
+      buttons: [
+        DialogButton(
+          color: AppTheme.primaryColor,
+          child: const Text(
+            'Réessayer',
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Close alert
+            _solutionController.clear();
+          },
+        ),
+      ],
+    ).show();
+  }
+
+  void _showRewardAlert() {
     Alert(
       context: context,
       title: '🎉 Félicitations !',
-      desc: 'Vous avez gagné ! 🎉',
+      desc: 'Vous avez remporté ce défi !',
+      type: AlertType.success,
       content: Column(
         children: [
           Lottie.asset(
@@ -506,14 +554,15 @@ class _ChallengesScreenState extends State<ChallengesScreen>
             fit: BoxFit.cover,
           ),
           const SizedBox(height: 10),
-          Text(
+          const Text(
             'Vous avez gagné 10 pièces ! 🎊',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),
       buttons: [
         DialogButton(
+          color: AppTheme.primaryColor,
           child: const Text(
             'OK',
             style: TextStyle(color: Colors.white, fontSize: 20),
@@ -535,6 +584,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       type: AlertType.warning,
       buttons: [
         DialogButton(
+          color: AppTheme.primaryColor,
           child: const Text(
             'OK',
             style: TextStyle(color: Colors.white, fontSize: 20),
@@ -562,26 +612,21 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   }
 
   void _sharePartyCode() {
-    final String textToShare =
-        'Rejoignez mon défi avec le code de la fête : ${widget.partyCode}';
-    Clipboard.setData(ClipboardData(text: textToShare)).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Code copié dans le presse-papiers'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    });
+    ShareUtils.showShareOptions(
+      context,
+      widget.partyCode,
+      challengeTitle ?? 'Skill Challenge',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: const Text("💡 Défi"),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         actions: [
           IconButton(
@@ -593,7 +638,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       ),
       body: isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple))
+              child: CircularProgressIndicator(color: AppTheme.primaryColor))
           : challengeTitle == null
               ? Center(
                   child: Text(_resultMessage.isNotEmpty
@@ -605,14 +650,14 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const CircularProgressIndicator(
-                              color: Colors.deepPurple),
+                              color: AppTheme.primaryColor),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'En attente d\'un autre joueur...',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -626,7 +671,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                             icon: const Icon(Icons.share),
                             label: const Text('Partager le code'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
+                              backgroundColor: AppTheme.primaryColor,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -657,10 +702,10 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                                       const SizedBox(width: 8),
                                       Text(
                                         '$_coinBalance',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurple,
+                                          color: AppTheme.primaryColor,
                                         ),
                                       ),
                                     ],
@@ -671,7 +716,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                                     width: 70,
                                     height: 70,
                                     ringColor: Colors.grey[300]!,
-                                    fillColor: Colors.deepPurple,
+                                    fillColor: AppTheme.primaryColor,
                                     backgroundColor: Colors.white,
                                     strokeWidth: 8.0,
                                     textStyle: const TextStyle(
@@ -695,6 +740,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                                           type: AlertType.warning,
                                           buttons: [
                                             DialogButton(
+                                              color: AppTheme.primaryColor,
                                               child: const Text(
                                                 'OK',
                                                 style: TextStyle(
